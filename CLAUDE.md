@@ -27,10 +27,10 @@
 
 ## 三、当前进度
 
-- **Phase**:Phase 0 安全网 ✅ 完成(git 基线 + 前后端跑通 + 冒烟基线)。
-- **下一步**:Phase 2 规划第一个功能(建议:替换微信登录 → JWT);Phase 1 理解已有现成资产可复用(BACKEND_OVERVIEW.md、backend_scan/、learning-notes/)。
-- **进行中的功能工单**:无(Phase 0 工单见 `docs/changes/0000`;冒烟基线见 `docs/smoke-tests.md`)。
-- **git**:已初始化(main,4 commits);前后端可跑,命令见 `docs/WORKFLOW.md`「常用命令」。
+- **Phase**:Phase 2 规划完成(功能 0001「C 端认证改造」:微信登录 → 本地账密 + JWT + Spring Security)。ADR / 契约 / 工单三件套已就位。
+- **下一步**:Phase 3 执行 0001——开 `feature/cend-auth-jwt`,从工单步骤1(DB 迁移)起,一步一 subagent、一步一测试门、一步一 commit。
+- **进行中的功能工单**:0001(`docs/changes/0001-*.md`,状态 TODO;ADR `docs/decisions/0001-*.md`;契约 `docs/api-contract/*`)。
+- **git**:main(前后端可跑,命令见 `docs/WORKFLOW.md`「常用命令」);冒烟基线见 `docs/smoke-tests.md`。
 
 > 本节是**当前快照**,只写"现在":**覆盖式更新**(改写这几行,不往下追加历史),
 > 永远保持这个长度。完成了什么、里程碑历史,看 `git log` 和 `docs/changes/` 里的
