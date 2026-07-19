@@ -27,10 +27,10 @@
 
 ## 三、当前进度
 
-- **Phase**:尚未开始(准备中)。地基文档刚建好。
-- **下一步**:Phase 0 安全网 —— `git init` + 让项目跑起来 + 补关键路径测试。
-- **进行中的功能工单**:无。
-- **git**:尚未初始化。
+- **Phase**:Phase 0 安全网 ✅ 完成(git 基线 + 前后端跑通 + 冒烟基线)。
+- **下一步**:Phase 2 规划第一个功能(建议:替换微信登录 → JWT);Phase 1 理解已有现成资产可复用(BACKEND_OVERVIEW.md、backend_scan/、learning-notes/)。
+- **进行中的功能工单**:无(Phase 0 工单见 `docs/changes/0000`;冒烟基线见 `docs/smoke-tests.md`)。
+- **git**:已初始化(main,4 commits);前后端可跑,命令见 `docs/WORKFLOW.md`「常用命令」。
 
 > 本节是**当前快照**,只写"现在":**覆盖式更新**(改写这几行,不往下追加历史),
 > 永远保持这个长度。完成了什么、里程碑历史,看 `git log` 和 `docs/changes/` 里的

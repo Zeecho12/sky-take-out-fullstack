@@ -237,8 +237,11 @@
 - **新窗口指路模板**:
   > "继续 feature NNNN。按铁律 1,先读 `docs/changes/NNNN-*.md`,复述当前状态和
   > 下一步,先别写代码。"
-- **常用命令**(Phase 0 跑起来后补全到这里):
-  - 后端启动: _待补_
-  - 跑测试: _待补_
-  - 前端启动: _待补_
+- **常用命令**(本机环境:JDK17=D:\Program\hspjdk17,Maven=D:\CQWM2\.tools\apache-maven-3.9.9):
+  - 起 Redis: `docker start sky-redis`(首次已用 `docker run -d -p 6379:6379 --name sky-redis redis` 建好)
+  - 后端构建: `& 'D:\CQWM2\.tools\apache-maven-3.9.9\bin\mvn.cmd' -f 'D:\CQWM2\sky-take-out\pom.xml' clean package -DskipTests`
+  - 后端启动: `& 'D:\Program\hspjdk17\bin\java.exe' -jar 'D:\CQWM2\sky-take-out\sky-server\target\sky-server-1.0-SNAPSHOT.jar'`
+  - knife4j 接口文档: http://localhost:8080/doc.html
+  - 前端启动: 在 `project-sky-admin-vue-ts` 下 `$env:NODE_OPTIONS='--openssl-legacy-provider'; npm run serve`(http://localhost:8888)
+  - 登录冒烟: `curl -s -X POST http://localhost:8080/admin/employee/login -H "Content-Type: application/json" -d '{\"username\":\"admin\",\"password\":\"123456\"}'`
 ```
