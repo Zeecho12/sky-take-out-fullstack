@@ -27,3 +27,6 @@ Thumbs.db
 # ===== 日志 =====
 *.log
 logs/
+
+# 原始下载仓库残留的 .git 备份(不跟踪)
+/.backup-original-git/
