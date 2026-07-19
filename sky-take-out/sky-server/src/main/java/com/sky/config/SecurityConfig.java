@@ -18,8 +18,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 /**
  * Spring Security 配置(工单 0001)。
  * 步骤2:骨架 + permitAll。
- * 步骤3(本次):加 JWT 认证过滤器(Bearer -> SecurityContext + BaseContext)与 AuthenticationManager;
- *   授权仍 permitAll(真正的 /admin|/user 授权规则、删手写拦截器留步骤4)。
+ * 步骤3:加 JWT 认证过滤器(Bearer -> SecurityContext + BaseContext)与 AuthenticationManager。
+ * 步骤4(本次):加授权规则(/admin=ADMIN,/user=USER)+ 白名单 + 401/403。
  */
 @Configuration
 @EnableWebSecurity
@@ -34,7 +34,31 @@ public class SecurityConfig {
                 .csrf().disable()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
-                .authorizeRequests().anyRequest().permitAll()
+                .authorizeRequests()
+                // 免认证白名单(必须在 /admin/**、/user/** 规则之前)
+                .antMatchers(
+                        "/admin/employee/login",
+                        "/user/user/login",
+                        "/user/user/register",
+                        "/user/shop/status").permitAll()
+                // 角色授权
+                .antMatchers("/admin/**").hasRole("ADMIN")
+                .antMatchers("/user/**").hasRole("USER")
+                // 其余(knife4j /doc.html、/webjars/**、/swagger-resources、/v2/api-docs、支付回调、websocket 等)放行
+                .anyRequest().permitAll()
+                .and()
+                // 401:未认证/令牌无效;403:已认证但无权限
+                .exceptionHandling()
+                .authenticationEntryPoint((request, response, ex) -> {
+                    response.setStatus(401);
+                    response.setContentType("application/json;charset=UTF-8");
+                    response.getWriter().write("{\"code\":0,\"msg\":\"未认证或令牌无效\",\"data\":null}");
+                })
+                .accessDeniedHandler((request, response, ex) -> {
+                    response.setStatus(403);
+                    response.setContentType("application/json;charset=UTF-8");
+                    response.getWriter().write("{\"code\":0,\"msg\":\"无访问权限\",\"data\":null}");
+                })
                 .and()
                 .addFilterBefore(new JwtAuthenticationFilter(jwtProperties),
                         UsernamePasswordAuthenticationFilter.class);

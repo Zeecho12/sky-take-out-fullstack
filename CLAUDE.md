@@ -27,10 +27,10 @@
 
 ## 三、当前进度
 
-- **Phase**:Phase 2 规划完成(功能 0001「C 端认证改造」:微信登录 → 本地账密 + JWT + Spring Security)。ADR / 契约 / 工单三件套已就位。
-- **下一步**:Phase 3 执行 0001——开 `feature/cend-auth-jwt`,从工单步骤1(DB 迁移)起,一步一 subagent、一步一测试门、一步一 commit。
-- **进行中的功能工单**:0001(`docs/changes/0001-*.md`,状态 TODO;ADR `docs/decisions/0001-*.md`;契约 `docs/api-contract/*`)。
-- **git**:main(前后端可跑,命令见 `docs/WORKFLOW.md`「常用命令」);冒烟基线见 `docs/smoke-tests.md`。
+- **Phase**:Phase 3 执行中(功能 0001「C 端认证改造」)。**步骤 1–4 已 TESTED 并提交——后端认证改造完成**:全站统一 Spring Security + 单套 JWT(`/admin/**`=ADMIN、`/user/**`=USER、401/403);admin+C 端均 BCrypt;旧手写拦截器与双 secret 已清除。回归+授权门全绿。
+- **下一步**:**步骤5(admin 前端改 `Authorization: Bearer` 头)+ 步骤6(最小 C 端 Vue3+Vite)可并行**,然后步骤7 冒烟收尾。详见工单交接段。
+- **进行中的功能工单**:0001(`docs/changes/0001-*.md`,状态 IN_PROGRESS;分支 `feature/cend-auth-jwt`;ADR 含 Addendum;契约 `docs/api-contract/*`)。
+- **git**:在 `feature/cend-auth-jwt`(未合 main);构建前先停后端 jar;本机 MySQL 5.7 客户端连库需 `--ssl-mode=DISABLED`(详见工单交接段「验证命令」)。冒烟基线 `docs/smoke-tests.md`。
 
 > 本节是**当前快照**,只写"现在":**覆盖式更新**(改写这几行,不往下追加历史),
 > 永远保持这个长度。完成了什么、里程碑历史,看 `git log` 和 `docs/changes/` 里的

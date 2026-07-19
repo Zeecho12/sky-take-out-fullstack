@@ -1,7 +1,7 @@
 # [0001] C 端认证改造:微信登录 → 本地账密 + JWT + Spring Security
 
 ## 元信息
-- 状态: IN_PROGRESS(Phase 3 执行中;步骤1、2、3 已 TESTED)
+- 状态: IN_PROGRESS(Phase 3 执行中;步骤1、2、3、4 已 TESTED——后端认证改造完成)
 - 分支: feature/cend-auth-jwt(已创建)
 - 关联 ADR: docs/decisions/0001-cend-auth-local-jwt-spring-security.md
 - 关联契约: docs/api-contract/用户端接口.md(认证约定 + 注册/登录/改密/退出)、docs/api-contract/管理端接口.md(header 标准化)
@@ -46,7 +46,7 @@
 - [x] 步骤1 DB 迁移:`user` 表加 `username`(唯一索引)+ `password` 列;`employee` seed 用户 admin 密码改 BCrypt 值。 —— TESTED
 - [x] 步骤2 Security 骨架:sky-server 引入 `spring-boot-starter-security`;新增 `SecurityConfig`(`SecurityFilterChain` + `BCryptPasswordEncoder`),先保证项目能启动。 —— TESTED(依赖 1)
 - [x] 步骤3 C 端认证后端(**认证 authn**):`User` 加字段;`UserMapper.getByUsername/updatePassword/insert`(+xml);`UserService` register/login/changePassword;`UserController` 四端点;`UserDetailsService`+`LoginUser`+`AuthenticationManager`;**JWT `OncePerRequestFilter`(读 Bearer→校验→填 `SecurityContext`+`BaseContext`)已并入本步**;旧 user 拦截器排除 `/user/user/**`。 —— TESTED(依赖 2)
-- [ ] 步骤4 统一**授权 authz** + 清理:`SecurityConfig` 授权规则(`/admin/**`=ADMIN、`/user/**`=USER)+ 免认证白名单;admin 登录改 BCrypt + 签发统一 JWT(role=ADMIN);**删两个手写拦截器 + `WebMvcConfiguration` 注册 + 清理旧 `JwtProperties` admin/user 双 secret 字段**。(JWT 认证过滤器已在步骤3 完成) —— TODO(依赖 2、3)
+- [x] 步骤4 统一**授权 authz** + 清理:`SecurityConfig` 授权规则(`/admin/**`=ADMIN、`/user/**`=USER)+ 免认证白名单 + 401/403 handler;admin 登录改 BCrypt(方案 A 手动 matches)+ 签发统一 JWT(role=ADMIN);**删两个手写拦截器 + `WebMvcConfiguration` 注册 + 清理旧 `JwtProperties` admin/user 双 secret 字段 + yml**。(JWT 认证过滤器已在步骤3 完成) —— TESTED(依赖 2、3)
 - [ ] 步骤5 admin 前端:请求头改 `Authorization: Bearer`;回归 admin 冒烟。 —— TODO(依赖 4)
 - [ ] 步骤6 最小 C 端 Web:Vue3 + Vite 骨架 + axios 拦截器(token 注入 + 401 处理)+ 登录 / 注册 / 改密页;联调打通。 —— TODO(依赖 3、4;契约已定死,可与 5 并行)
 - [ ] 步骤7 冒烟 & 验收:`docs/smoke-tests.md` 增 C 端注册 / 登录 / 改密 / 登出;全绿。 —— TODO(收尾)
@@ -63,11 +63,15 @@
 - 07-19: 执行**步骤3(C 端认证后端 + JWT 认证过滤器)**。两处规划期决策(见 ADR-0001 addendum):①登录走 **AuthenticationManager + UserDetailsService + 自定义 `LoginUser`**(而非手动 matches);②**JWT `OncePerRequestFilter` 从步骤4 提前到本步**,确立 authn(步骤3)/ authz(步骤4)分离。改动:`User` 加 `username`/`password`;`UserLoginDTO`→账密、新增 `UserRegisterDTO`/`UserChangePasswordDTO`、`UserLoginVO`→`{id,username,token}`;`JwtProperties` 加单套 `secretKey`/`ttl` + `application.yml`;`UserMapper` 加 `getByUsername`/`updatePassword` + xml、`insert` 补两列;新增 `security/{LoginUser,UserDetailsServiceImpl,JwtAuthenticationFilter}`;`SecurityConfig` 加 filter + `AuthenticationManager`(仍 permitAll);`WebMvcConfiguration` 旧 user 拦截器排除 `/user/user/**`;去微信化(删 `UserServiceImpl.wxLogin/getOpenid`)。**测试门全绿**(端到端 curl):注册`code:1`+JWT 载荷 `{sub,role:USER,exp}`、登录、Bearer 改密、旧密码失败、新密码成功、登出、重复注册报"用户名已存在"、无 token 改密优雅报错;DB 落库 `$2a$10$` 60 字符。
   - **修复(测试门抓到的真 bug)**:`UserMapper.insert` 原带 `@AutoFill(INSERT)`,该切面反射调 `setCreateUser/setUpdateTime/setUpdateUser`,但 `User` 无这些审计字段 → `NoSuchMethodException` 500(原项目潜伏 bug,wxLogin 从没被测过)。已摘掉 `insert` 的 `@AutoFill`(createTime 由 register 手动 set)。
   - **步骤4 待办提醒**:无 token 访问受保护端点现返 `code:0`(HTTP 200)而非 401——因授权仍 permitAll;步骤4 加 `/user/**`=USER 规则后自然变 401。
+- 07-19: 执行**步骤4(统一授权 + 清理)**——**后端认证改造至此完成**。方案 A(admin 手动 `passwordEncoder.matches`)。改动:`EmployeeServiceImpl.login` MD5→BCrypt matches、`save` 默认密码→`encode`;`EmployeeController.login` 改单套 secret + 载荷 `{sub:empId, role:ADMIN}`;`SecurityConfig` 授权规则(白名单 permitAll → `/admin/**`=hasRole("ADMIN") → `/user/**`=hasRole("USER") → 尾 permitAll)+ 自定义 401 entryPoint / 403 accessDeniedHandler;**删 `JwtTokenAdminInterceptor`/`JwtTokenUserInterceptor` 两文件 + `WebMvcConfiguration` 的 `addInterceptors`**;清理 `JwtProperties` 6 个旧字段 + `application.yml` 6 行旧配置(单套 `secret-key`/`ttl` 保留)。**回归+授权门全绿**:`admin/123456` 登录恢复(JWT `{sub,role:ADMIN}`)、错密码报"密码错误";ADMIN token 访 `/admin/**`=200、无 token=401、USER token=403;USER token 访 `/user/addressBook/list`=200(统一鉴权打通 C 端业务端点)、无 token=401、ADMIN token=403;`/doc.html`=200。`anyRequest().permitAll()` 尾规则有意保留(只强制护 `/admin`、`/user`,与原拦截器覆盖面一致)。
+  - **观察(非本工单)**:`EmployeeController.page` 返回体含 employee `password` 字段(BCrypt 明文哈希);`getById` 已掩码为 `****` 但分页查询未掩,属既有信息泄露点,记此备将来清理。
 
 ## ⭐ 交接:给下一个窗口的话
-- **当前**:Phase 3 执行中,分支 `feature/cend-auth-jwt`;**步骤1、2、3 均已 TESTED 并提交**。C 端账密认证后端 + JWT 认证过滤器已打通(端到端 curl 全绿);Security 仍 `permitAll()`(授权规则未加),旧手写拦截器仍管 `/admin/**` 与 `/user/**`(除 `/user/user/**`、`/user/shop/status`)。单套 JWT:`sky.jwt.secret-key`/`ttl`,载荷 `{sub,role,exp}`。
-- **下一步**:**步骤4(统一授权 + 清理)**——①`SecurityConfig` 授权规则:`/admin/**` 需 ROLE_ADMIN、`/user/**` 需 ROLE_USER、白名单(`/user/user/register`、`/user/user/login`、`/user/shop/status`、`/doc.html`+`/webjars/**`+swagger 资源、admin login);把 `anyRequest().permitAll()` 换成按路径授权 + `.authenticated()`;②admin 侧:`EmployeeServiceImpl.login` 改用 `passwordEncoder.matches`(弃 MD5)、`EmployeeController.login` 改用**单套 secret** 签发 `{sub:empId, role:ADMIN, exp}`;JWT 过滤器已能认 ADMIN(role→ROLE_ADMIN);③**删** `JwtTokenAdminInterceptor`、`JwtTokenUserInterceptor` 及 `WebMvcConfiguration` 里的注册;清理 `JwtProperties` 旧 admin/user 双 secret 字段 + yml 旧配置;④测试门:admin 登录冒烟恢复(`admin/123456`)、带 ADMIN token 访问 `/admin/**` 通、带 USER token 访问 `/admin/**` 得 403、无 token 访问受保护端点得 401、C 端新 token 现在能访问 `/user/**` 业务端点。
-- **注意**:admin 登录**现仍是坏的**(库 BCrypt、`EmployeeServiceImpl` 仍 MD5)——步骤4 第②步修复;这正是步骤4 的核心回归门。`AuthenticationManager` 目前只挂了 C 端 `UserDetailsServiceImpl`(user 表);步骤4 admin 若也走 AuthenticationManager 需处理双表(employee/user 同名),或 admin login 维持手动 matches——步骤4 开工时定。
+- **当前**:Phase 3 执行中,分支 `feature/cend-auth-jwt`;**步骤1、2、3、4 均已 TESTED 并提交——后端认证改造完成**。全站统一 Spring Security + 单套 JWT:`/admin/**`=ROLE_ADMIN、`/user/**`=ROLE_USER、白名单免认证、401/403 语义;admin+C 端都用 BCrypt;旧手写拦截器与双 secret 已清除。回归+授权门全绿(见变更记录 07-19 步骤4)。
+- **下一步**:**步骤5(admin 前端改 token 头)** 与 **步骤6(最小 C 端 Vue3+Vite)可并行**。
+  - **步骤5**:`project-sky-admin-vue-ts` 现在把 token 放旧自定义头(登录后请求带 `token: <jwt>`),后端已改成认 `Authorization: Bearer <jwt>` → **admin 前端登录后所有 `/admin/**` 请求会 401**,需改前端请求拦截器为 `Authorization: 'Bearer ' + token`;然后回归 admin 冒烟(登录→进后台→某个列表页)。
+  - **步骤6**:按 `docs/api-contract/用户端接口.md` 建最小 C 端 Web(Vue3+Vite + axios 拦截器 token 注入/401 处理 + 注册/登录/改密/登出页),联调打通。契约已定死,可与步骤5 并行。
+- **注意**:①`/user/shop/status` 仍会 500(Redis db10 无 `SHOP_STATUS`,既有数据态,留步骤7 冒烟时 `redis-cli -n 10 set SHOP_STATUS 1` 或走 admin 端设置);②后端已用 `Authorization: Bearer`,前端(admin + 新 C 端)都按此发;③`OrderServiceImpl.payment()` 的 openid 仍留给 0002(账密新用户 openid=null,支付要到 0002 才通)。
 - **别碰**:`reference/`(只读)、`.backup-original-git/`、`.tools/`;`OrderServiceImpl.payment()` 的 openid 调用(留给 0002)。
 - **验证命令**:后端构建/起 jar/前端见 docs/WORKFLOW.md「常用命令」。**构建前先停后端 jar**(否则 `target` 里的 jar 被占,`clean` 失败):
   `Get-CimInstance Win32_Process -Filter "Name='java.exe'"` 找到 `sky-server-...jar` 的进程 → `Stop-Process -Id <pid> -Force`。

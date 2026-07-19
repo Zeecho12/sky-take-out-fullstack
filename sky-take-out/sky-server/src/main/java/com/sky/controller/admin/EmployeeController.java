@@ -1,6 +1,5 @@
 package com.sky.controller.admin;
 
-import com.sky.constant.JwtClaimsConstant;
 import com.sky.dto.EmployeeDTO;
 import com.sky.dto.EmployeeLoginDTO;
 import com.sky.dto.EmployeePageQueryDTO;
@@ -46,12 +45,13 @@ public class EmployeeController {
 
         Employee employee = employeeService.login(employeeLoginDTO);
 
-        //登录成功后，生成jwt令牌
+        //登录成功后，生成jwt令牌(工单 0001:单套 secret,载荷 {sub, role:ADMIN, exp})
         Map<String, Object> claims = new HashMap<>();
-        claims.put(JwtClaimsConstant.EMP_ID, employee.getId());
+        claims.put("sub", String.valueOf(employee.getId()));
+        claims.put("role", "ADMIN");
         String token = JwtUtil.createJWT(
-                jwtProperties.getAdminSecretKey(),
-                jwtProperties.getAdminTtl(),
+                jwtProperties.getSecretKey(),
+                jwtProperties.getTtl(),
                 claims);
 
         EmployeeLoginVO employeeLoginVO = EmployeeLoginVO.builder()
