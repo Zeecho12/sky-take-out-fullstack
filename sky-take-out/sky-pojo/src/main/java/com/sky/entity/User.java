@@ -22,6 +22,12 @@ public class User implements Serializable {
     //微信用户唯一标识
     private String openid;
 
+    //登录用户名
+    private String username;
+
+    //登录密码(BCrypt 加密)
+    private String password;
+
     //姓名
     private String name;
 

@@ -45,6 +45,9 @@ sky:
     user-secret-key: itheima
     user-ttl: 7200000
     user-token-name: authentication
+    # C端本地账密登录统一 JWT 配置(工单 0001)
+    secret-key: sky-take-out-cend-auth-unified-secret-2026
+    ttl: 7200000
   alioss:
     endpoint: ${sky.alioss.endpoint}
     access-key-id: ${sky.alioss.access-key-id}

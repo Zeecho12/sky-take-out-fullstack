@@ -1,13 +1,12 @@
 package com.sky.service;
 
+import com.sky.dto.UserChangePasswordDTO;
 import com.sky.dto.UserLoginDTO;
-import com.sky.entity.User;
+import com.sky.dto.UserRegisterDTO;
+import com.sky.vo.UserLoginVO;
 
 public interface UserService {
-    /**
-     * 微信登录
-     * @param userLoginDTO
-     * @return
-     */
-    User wxLogin(UserLoginDTO userLoginDTO);
+    UserLoginVO register(UserRegisterDTO userRegisterDTO);
+    UserLoginVO login(UserLoginDTO userLoginDTO);
+    void changePassword(UserChangePasswordDTO userChangePasswordDTO);
 }
