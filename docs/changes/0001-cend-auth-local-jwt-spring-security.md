@@ -1,7 +1,7 @@
 # [0001] C 端认证改造:微信登录 → 本地账密 + JWT + Spring Security
 
 ## 元信息
-- 状态: IN_PROGRESS(Phase 3 执行中;步骤1–6 已 TESTED——后端 + admin 前端 + C 端 Web 全部打通,仅剩步骤7 冒烟收尾)
+- 状态: IN_PROGRESS(步骤1–7 全部 TESTED、DoD 全绿——功能实现+冒烟完成,待 Phase 4 合并 main)
 - 分支: feature/cend-auth-jwt(已创建)
 - 关联 ADR: docs/decisions/0001-cend-auth-local-jwt-spring-security.md
 - 关联契约: docs/api-contract/用户端接口.md(认证约定 + 注册/登录/改密/退出)、docs/api-contract/管理端接口.md(header 标准化)
@@ -40,7 +40,7 @@
 - [x] 最小 C 端 Web(Vue3 + Vite)能完成注册 / 登录 / 改密 / 登出联调
 - [x] docs/api-contract/* 已更新(随规划已更新)
 - [x] ADR-0001 已写(已完成)
-- [ ] docs/smoke-tests.md 增补 C 端认证冒烟且全绿
+- [x] docs/smoke-tests.md 增补 C 端认证冒烟且全绿
 
 ## 工单清单 (每步一个测试门;标了串行依赖)
 - [x] 步骤1 DB 迁移:`user` 表加 `username`(唯一索引)+ `password` 列;`employee` seed 用户 admin 密码改 BCrypt 值。 —— TESTED
@@ -49,7 +49,7 @@
 - [x] 步骤4 统一**授权 authz** + 清理:`SecurityConfig` 授权规则(`/admin/**`=ADMIN、`/user/**`=USER)+ 免认证白名单 + 401/403 handler;admin 登录改 BCrypt(方案 A 手动 matches)+ 签发统一 JWT(role=ADMIN);**删两个手写拦截器 + `WebMvcConfiguration` 注册 + 清理旧 `JwtProperties` admin/user 双 secret 字段 + yml**。(JWT 认证过滤器已在步骤3 完成) —— TESTED(依赖 2、3)
 - [x] 步骤5 admin 前端:请求头改 `Authorization: Bearer`;回归 admin 冒烟。 —— TESTED(依赖 4)
 - [x] 步骤6 最小 C 端 Web:Vue3 + Vite 骨架 + axios 拦截器(token 注入 + 401 处理)+ 登录 / 注册 / 改密页;联调打通。 —— TESTED(依赖 3、4;契约已定死,与 5 并行)
-- [ ] 步骤7 冒烟 & 验收:`docs/smoke-tests.md` 增 C 端注册 / 登录 / 改密 / 登出;全绿。 —— TODO(收尾)
+- [x] 步骤7 冒烟 & 验收:`docs/smoke-tests.md` 增 C 端注册 / 登录 / 改密 / 登出;全绿。 —— TESTED(收尾)
 
 > 依赖链:1 → 2 → 3 → 4;5 依赖 4;6 依赖 3/4(契约定死后可与 5 并行);7 收尾。
 > 状态标记:TODO / IN_PROGRESS(~) / CODE_DONE / TESTED
@@ -70,10 +70,12 @@
 
 - 07-19: 执行**步骤6(最小 C 端 Web:Vue3 + Vite + TS + Pinia)——本功能实现步至此全部完成**。新建独立工程 `project-sky-user-vue3/`(与 admin 工程分离),不碰后端:①`vite.config.ts` 用 dev proxy 把 `/api` 转发到 :8080(rewrite 剥前缀)绕开 CORS,与 admin `/api` 代理同款;②`utils/request.ts` axios 拦截器注入 `Authorization: Bearer` + 响应 401 清态跳登录;③`stores/user.ts`(Pinia)存 token/user 并持久化 localStorage;④`router` 含守卫(未登录访受保护页跳登录);⑤`views/` 注册/登录/改密/首页(手写最小表单,不引 UI 库);⑥`api/user.ts` 对齐契约四端点。**测试门全绿(真浏览器端到端驱动、打实时后端)**:注册→自动登录进首页(`POST /api/user/user/register`=200)、受保护端点带 Bearer(`GET /api/user/addressBook/list`=200/`code:1,data:[]`)、改密(`PUT .../password`=200)→自动登出、新密码重登(`POST .../login`=200,证明改密真生效)、登出(`POST .../logout`=200,localStorage 清空)、路由守卫拦截未登录。Vite 无需 admin 的 `--openssl-legacy-provider`。
 
+- 07-19: 执行**步骤7(冒烟 & 验收)——功能 0001 实现 + 冒烟全部完成**。①**修数据态**:`/user/shop/status` 因 Redis(db10)无 `SHOP_STATUS` 键、`getStatus` 对 null 拆箱 NPE→500;用 **admin `PUT /admin/shop/1`(Bearer)** 初始化为 1(走 admin 接口保证与 `RedisTemplate` 序列化器一致,裸 `redis-cli set` 会因类型不符失败),验 `GET /user/shop/status`=200/`data:1`。②**更新 `docs/smoke-tests.md`**:第 3 项 admin 鉴权头 `token`→`Authorization: Bearer`(旧头现 401),新增第 6 段 C 端认证冒烟(注册/登录/受保护端点/401 负例/改密+新密码重登/登出/shop 状态),补前置(C 端 :5173 + shop 初始化)。**全套冒烟 2026-07-19 实测全绿**([A]~[L] + 6.1~6.7)。本步零代码改动(仅数据态 + 文档)。
+
 ## ⭐ 交接:给下一个窗口的话
-- **当前**:Phase 3 执行中,分支 `feature/cend-auth-jwt`;**步骤1–6 均已 TESTED 并提交——本功能全部实现步完成,仅剩步骤7 冒烟收尾**。后端:全站统一 Spring Security + 单套 JWT(`/admin/**`=ROLE_ADMIN、`/user/**`=ROLE_USER、白名单免认证、401/403;admin+C 端 BCrypt;旧手写拦截器与双 secret 已清除)。admin 前端:三处旧 `token` 头已改 `Authorization: Bearer`。C 端:新工程 `project-sky-user-vue3`(Vue3+Vite+TS+Pinia),注册/登录/改密/登出/受保护端点全链路端到端跑通(见变更记录 07-19 步骤4、5、6)。
-- **下一步**:**步骤7 冒烟 & 验收(收尾)**——把 C 端 注册/登录/改密/登出 + admin 回归写进 `docs/smoke-tests.md` 并全绿;顺手处理 `/user/shop/status` 的 Redis 数据态(见注意①)。全绿后本功能可进 Phase 4(合并 main + 面试笔记)。
-- **注意**:①`/user/shop/status` 仍会 500(Redis db10 无 `SHOP_STATUS`,既有数据态,留步骤7 冒烟时 `redis-cli -n 10 set SHOP_STATUS 1` 或走 admin 端设置);②后端已用 `Authorization: Bearer`,前端(admin + 新 C 端)都按此发;③`OrderServiceImpl.payment()` 的 openid 仍留给 0002(账密新用户 openid=null,支付要到 0002 才通)。
+- **当前**:Phase 3 收尾完成,分支 `feature/cend-auth-jwt`(未合 main)。**步骤1–7 全部 TESTED、DoD 全绿——功能 0001 实现 + 冒烟完成**。后端:全站统一 Spring Security + 单套 JWT(`/admin/**`=ROLE_ADMIN、`/user/**`=ROLE_USER、白名单免认证、401/403;admin+C 端 BCrypt;旧手写拦截器与双 secret 已清除)。admin 前端:旧 `token` 头已迁 `Authorization: Bearer`。C 端:新工程 `project-sky-user-vue3`(Vue3+Vite+TS+Pinia)全链路端到端跑通。冒烟基线 `docs/smoke-tests.md` 已更新且全绿(见变更记录 07-19 步骤4~7)。
+- **下一步**:**进入 Phase 4(验证与学习)**——(a)Tech Lead 审各步 diff;(b)把 `feature/cend-auth-jwt` 合并回 `main`(一功能一次合并);(c)补/复核面试笔记(ADR-0001 已含面试要点,可选用 `create-note` 生成源码精读笔记);(d)里程碑处再生 `docs/BACKEND_OVERVIEW.md`。**合并前先停后端 jar**。
+- **注意**:①`/user/shop/status` 的 500 已在步骤7 修复(admin `PUT /admin/shop/1` 初始化 `SHOP_STATUS`=1);**重启 Redis / 清库后需重新 set**(见 `docs/smoke-tests.md` 前置第 6 步;勿用裸 `redis-cli set`——与 `RedisTemplate` 序列化器不符);②后端已用 `Authorization: Bearer`,前端(admin + C 端)都按此发;③`OrderServiceImpl.payment()` 的 openid 仍留给 0002(账密新用户 openid=null,支付要到 0002 才通)。
 - **别碰**:`reference/`(只读)、`.backup-original-git/`、`.tools/`;`OrderServiceImpl.payment()` 的 openid 调用(留给 0002)。
 - **验证命令**:后端构建/起 jar/前端见 docs/WORKFLOW.md「常用命令」。**构建前先停后端 jar**(否则 `target` 里的 jar 被占,`clean` 失败):
   `Get-CimInstance Win32_Process -Filter "Name='java.exe'"` 找到 `sky-server-...jar` 的进程 → `Stop-Process -Id <pid> -Force`。

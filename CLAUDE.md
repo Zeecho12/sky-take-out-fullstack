@@ -27,8 +27,8 @@
 
 ## 三、当前进度
 
-- **Phase**:Phase 3 执行中(功能 0001「C 端认证改造」)。**步骤 1–6 已 TESTED 并提交——本功能全部实现步完成,仅剩步骤7 冒烟收尾**:后端全站统一 Spring Security + 单套 JWT(`/admin/**`=ADMIN、`/user/**`=USER、401/403、BCrypt);admin 前端认证头已改 `Authorization: Bearer`;新建 C 端 Web `project-sky-user-vue3`(Vue3+Vite+TS+Pinia),注册/登录/改密/登出/受保护端点端到端跑通。
-- **下一步**:**步骤7 冒烟 & 验收(收尾)**:补 `docs/smoke-tests.md`(C 端四流 + admin 回归)全绿,再进 Phase 4 合并 main。详见工单交接段。
+- **Phase**:功能 0001「C 端认证改造」**Phase 3 全部完成(步骤 1–7 TESTED、DoD 全绿)**,待进 Phase 4 合并 main:后端全站统一 Spring Security + 单套 JWT(`/admin/**`=ADMIN、`/user/**`=USER、401/403、BCrypt);admin 前端认证头迁 `Authorization: Bearer`;新建 C 端 Web `project-sky-user-vue3`(Vue3+Vite+TS+Pinia)全链路端到端跑通;`docs/smoke-tests.md` 已更新且全绿。
+- **下一步**:**Phase 4(验证与学习)**:审 diff → 合并 `feature/cend-auth-jwt` 回 main → 复核/补面试笔记 → 里程碑再生 `BACKEND_OVERVIEW.md`。详见工单交接段。
 - **进行中的功能工单**:0001(`docs/changes/0001-*.md`,状态 IN_PROGRESS;分支 `feature/cend-auth-jwt`;ADR 含 Addendum;契约 `docs/api-contract/*`)。
 - **git**:在 `feature/cend-auth-jwt`(未合 main);构建前先停后端 jar;本机 MySQL 5.7 客户端连库需 `--ssl-mode=DISABLED`(详见工单交接段「验证命令」)。冒烟基线 `docs/smoke-tests.md`。
 
