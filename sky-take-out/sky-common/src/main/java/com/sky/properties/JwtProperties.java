@@ -10,17 +10,9 @@ import org.springframework.stereotype.Component;
 public class JwtProperties {
 
     /**
-     * 管理端员工生成jwt令牌相关配置
+     * C端本地账密登录统一 JWT 配置(工单 0001,单套 secret)
      */
-    private String adminSecretKey;
-    private long adminTtl;
-    private String adminTokenName;
-
-    /**
-     * 用户端微信用户生成jwt令牌相关配置
-     */
-    private String userSecretKey;
-    private long userTtl;
-    private String userTokenName;
+    private String secretKey;
+    private long ttl;
 
 }

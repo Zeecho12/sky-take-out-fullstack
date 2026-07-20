@@ -140,7 +140,7 @@ CREATE TABLE `employee` (
   UNIQUE KEY `idx_username` (`username`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_bin COMMENT='员工信息';
 
-INSERT INTO `employee` VALUES (1,'管理员','admin','123456','13812312312','1','110101199001010047',1,'2022-02-15 15:51:20','2022-02-17 09:16:20',10,1);
+INSERT INTO `employee` VALUES (1,'管理员','admin','$2a$10$h3pWxrN1VUO/Ufe57AdH3.zmJaUsHRIt90xI8HRY7nxRfx015.eFS','13812312312','1','110101199001010047',1,'2022-02-15 15:51:20','2022-02-17 09:16:20',10,1);
 
 DROP TABLE IF EXISTS `order_detail`;
 CREATE TABLE `order_detail` (
@@ -232,11 +232,14 @@ DROP TABLE IF EXISTS `user`;
 CREATE TABLE `user` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键',
   `openid` varchar(45) COLLATE utf8_bin DEFAULT NULL COMMENT '微信用户唯一标识',
+  `username` varchar(32) COLLATE utf8_bin DEFAULT NULL COMMENT '登录用户名',
+  `password` varchar(64) COLLATE utf8_bin DEFAULT NULL COMMENT '密码(BCrypt)',
   `name` varchar(32) COLLATE utf8_bin DEFAULT NULL COMMENT '姓名',
   `phone` varchar(11) COLLATE utf8_bin DEFAULT NULL COMMENT '手机号',
   `sex` varchar(2) COLLATE utf8_bin DEFAULT NULL COMMENT '性别',
   `id_number` varchar(18) COLLATE utf8_bin DEFAULT NULL COMMENT '身份证号',
   `avatar` varchar(500) COLLATE utf8_bin DEFAULT NULL COMMENT '头像',
   `create_time` datetime DEFAULT NULL,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `idx_username` (`username`)
 ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_bin COMMENT='用户信息';

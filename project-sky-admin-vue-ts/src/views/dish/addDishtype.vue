@@ -158,7 +158,8 @@ export default class extends Vue {
   private index = 0
   private inputStyle = { flex: 1 }
   private headers = {
-    token: getToken()
+    // 0001 改造:上传绕过 axios 拦截器,需自带统一认证头 Authorization: Bearer <token>
+    Authorization: 'Bearer ' + getToken()
   }
   private ruleForm = {
     name: '',

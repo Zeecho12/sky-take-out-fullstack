@@ -1,0 +1,99 @@
+:root {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+  color: #2c3e50;
+  background: #f5f6f8;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+.app {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.card {
+  width: 100%;
+  max-width: 360px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  padding: 28px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.card h2 {
+  margin: 0 0 4px;
+  font-size: 20px;
+  text-align: center;
+}
+
+.card label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  color: #666;
+}
+
+.card input {
+  padding: 10px 12px;
+  border: 1px solid #dcdfe6;
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+}
+
+.card input:focus { border-color: #ffc200; }
+
+.card button {
+  margin-top: 4px;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 8px;
+  background: #ffc200;
+  color: #333;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.card button:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.card .link { font-size: 13px; text-align: center; color: #888; }
+.card .link a { color: #e6a23c; text-decoration: none; }
+
+.err { color: #f56c6c; font-size: 13px; margin: 0; }
+.ok { color: #67c23a; font-size: 13px; margin: 0; }
+
+.user-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+}
+
+.row { display: flex; gap: 10px; }
+.row button { flex: 1; }
+
+.ghost { background: #f0f2f5 !important; color: #555 !important; }
+
+pre {
+  background: #f5f6f8;
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 12px;
+  max-height: 200px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
