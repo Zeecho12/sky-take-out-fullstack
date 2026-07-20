@@ -22,7 +22,8 @@ service.interceptors.request.use(
     // config.data = config.params
     // Add X-Access-Token header to every request, you can add other custom headers here
     if (UserModule.token) {
-      config.headers['token'] = UserModule.token
+      // 0001 改造:后端已统一 Spring Security,只认 Authorization: Bearer <token>(替代旧自定义头 token)
+      config.headers['Authorization'] = 'Bearer ' + UserModule.token
     } else if (UserModule.token && config.url != '/login') {
       window.location.href = '/login'
       return false
