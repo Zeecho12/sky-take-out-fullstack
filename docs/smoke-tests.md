@@ -69,7 +69,7 @@ orders, setmeal, setmeal_dish, shopping_cart, user)。
 ### 6.【0001】C 端认证冒烟 —— Spring Security 统一鉴权 + 单套 JWT + C 端本地账密
 > 后端契约见 `docs/api-contract/用户端接口.md`。C 端 Web(:5173)已用**真浏览器端到端**
 > 验证过完整闭环(注册→自动登录→受保护端点→改密→登出→路由守卫拦截),见
-> `docs/changes/0001-*.md` 变更记录 07-19 步骤6。下列 curl **直打后端 :8080**,验证认证
+> `docs/features/0001-cend-auth-jwt/progress.md` 07-19 步骤6。下列 curl **直打后端 :8080**,验证认证
 > 契约本身。全部于 2026-07-19 实测全绿。
 
 **6.1 注册(免认证,成功直接签发 JWT)** —— 用户名唯一,重复注册返回"用户名已存在"

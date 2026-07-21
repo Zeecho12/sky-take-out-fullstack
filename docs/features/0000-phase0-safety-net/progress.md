@@ -25,7 +25,7 @@
   - Redis:docker 容器 sky-redis(6379)。
   - winget / wsl / docker:均可用。
 - 已有分析资产(用户先前产出,Phase 1 可复用):docs/BACKEND_OVERVIEW.md、
-  docs/api-contract/*.html、docs/learning-notes/*、
+  docs/api-contract/*.html、docs/divedeep/*、
   sky-take-out/backend_scan/PROJECT_S1-S5.md、sky-take-out/NOTE*。
 - ⚠ 安全提醒: application-dev.yml 内含阿里云 OSS / 微信密钥(疑似课程公开示例密钥)。
   本地仓库无泄露风险;**将来推送到你自己的 GitHub 前必须清理**(列为后续任务)。
@@ -62,6 +62,6 @@
 后端/前端 dev server 在这次会话里可能仍后台运行;重启顺序:docker start sky-redis →
 后端 jar → 前端 npm run serve。
 下一步:进 Phase 2 规划第一个功能(建议"替换微信登录 → JWT")——但 Phase 1 理解已有
-现成资产(BACKEND_OVERVIEW.md、backend_scan/、learning-notes/)可直接复用。
+现成资产(BACKEND_OVERVIEW.md、backend_scan/、divedeep/)可直接复用。
 别碰:reference/(只读)、.backup-original-git/(备份)、.tools/(本地 Maven)。
 后续任务备忘:推送到自己的 GitHub 前,清理 application-dev.yml 里的密钥。

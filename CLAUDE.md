@@ -1,7 +1,7 @@
 # CQWM2 —— 苍穹外卖学习改造项目
 
 > 这份文件每个新窗口开机自动加载。它是本项目的"宪法":定义我们怎么协作、
-> 铁律有哪些、文档放在哪。**详细操作手册见 [docs/WORKFLOW.md](docs/WORKFLOW.md)。**
+> 铁律有哪些、文档放在哪。**方法论详见 [GOOD.md](GOOD.md);本机命令速查见 [docs/WORKFLOW.md](docs/WORKFLOW.md)。**
 
 ---
 
@@ -27,29 +27,31 @@
 
 ## 三、当前进度
 
-- **Phase**:功能 0001「C 端认证改造」**Phase 3 全部完成(步骤 1–7 TESTED、DoD 全绿)**,待进 Phase 4 合并 main:后端全站统一 Spring Security + 单套 JWT(`/admin/**`=ADMIN、`/user/**`=USER、401/403、BCrypt);admin 前端认证头迁 `Authorization: Bearer`;新建 C 端 Web `project-sky-user-vue3`(Vue3+Vite+TS+Pinia)全链路端到端跑通;`docs/smoke-tests.md` 已更新且全绿。
-- **下一步**:**Phase 4(验证与学习)**:审 diff → 合并 `feature/cend-auth-jwt` 回 main → 复核/补面试笔记 → 里程碑再生 `BACKEND_OVERVIEW.md`。详见工单交接段。
-- **进行中的功能工单**:0001(`docs/changes/0001-*.md`,状态 IN_PROGRESS;分支 `feature/cend-auth-jwt`;ADR 含 Addendum;契约 `docs/api-contract/*`)。
-- **git**:在 `feature/cend-auth-jwt`(未合 main);构建前先停后端 jar;本机 MySQL 5.7 客户端连库需 `--ssl-mode=DISABLED`(详见工单交接段「验证命令」)。冒烟基线 `docs/smoke-tests.md`。
+- **Phase**:功能 0001「C 端认证改造」**已交付并合并回 `main`(merge `b02590b`,DoD 全绿)**:后端全站统一 Spring Security + 单套 JWT(`/admin/**`=ADMIN、`/user/**`=USER、401/403、BCrypt);admin 前端认证头迁 `Authorization: Bearer`;新建 C 端 Web `project-sky-user-vue3`(Vue3+Vite+TS+Pinia)全链路端到端跑通;`docs/smoke-tests.md` 全绿。
+- **进行中**:文档方法论体系定稿(GOOD.md 五类文档 + C 混合布局 + Phase 4 改「验证与收尾」+ ADR 写法标准),本轮改动直接提交到 `main`。
+- **下一步**:功能 0002「支付 mock」(解 `OrderServiceImpl.payment()` 的 openid 遗留,见 0001 Requirement Out of Scope);启动时按 Phase 2 走(写 Requirement → 探讨 ADR → 定契约 → 拆 Proposal)。按需从 ADR-0001 的 divedeep backlog 挑深读笔记。
+- **git**:当前在 `main`;`feature/cend-auth-jwt` 分支已合并(未删)。构建前先停后端 jar;本机 MySQL 5.7 客户端连库需 `--ssl-mode=DISABLED`(详见 `docs/WORKFLOW.md`)。冒烟基线 `docs/smoke-tests.md`。
 
 > 本节是**当前快照**,只写"现在":**覆盖式更新**(改写这几行,不往下追加历史),
-> 永远保持这个长度。完成了什么、里程碑历史,看 `git log` 和 `docs/changes/` 里的
-> 已完成工单,不写进这里。
+> 永远保持这个长度。完成了什么、里程碑历史,看 `git log` 和各功能的 `progress.md`,
+> 不写进这里。
 
 ## 四、铁律(每个窗口都必须遵守)
 
 1. **开工前先读状态、先复述、后动手**:动任何代码前,先读对应的
-   `docs/changes/NNNN-*.md` 的「交接段」和清单,并向我复述"当前在哪一步 / 下一步
-   做什么 / 打算改哪些文件 / 怎么验证",**我确认后才动手**。
+   `docs/features/NNNN-slug/proposal.md` 的「交接头」和实施清单,并向我复述"当前在哪一步 /
+   下一步做什么 / 打算改哪些文件 / 怎么验证",**我确认后才动手**。
 2. **提交粒度**:一步一 commit,一功能一分支(`feature/xxx`),一功能一次合并。
-3. **契约优先(contract-first)**:全栈功能先在 `docs/api-contract.md` 定死接口契约,
+3. **契约优先(contract-first)**:全栈功能先在 `docs/api-contract/` 定死接口契约,
    再实现;契约定死后前后端才可并行。
-4. **完成的定义(DoD)**:代码 + 测试 + 相关文档 + ADR 全部更新,才算 `DONE`。
-   文档更新不是事后补,是"完成"的一部分。
-5. **收工前更新交接段**:每个窗口结束前,更新对应 `docs/changes/NNNN` 的「交接段」
-   （当前在哪 / 下一步 / 别碰什么 / 验证命令）。
-6. **决策必留痕**:带设计决策的改动必须写 ADR(`docs/decisions/NNNN-*.md`),
-   含方案对比、决策理由、trade-off、面试要点。
+4. **完成的定义(DoD)**:代码 + 测试 + 相关文档(requirement / proposal / progress)+ ADR
+   全部更新,才算 `DONE`。文档更新不是事后补,是"完成"的一部分。**这是全站统一 DoD;
+   各功能 Requirement 里只写功能级验收标准(Acceptance Criteria),不重抄本条。**
+5. **收工前更新交接**:每个窗口结束前,更新对应 `proposal.md` 的「交接头」(当前 / 下一步 /
+   别碰什么 / 怎么验证)+ 追加一条 `progress.md` 现场笔记。
+6. **决策留痕(广度)、机制留笔记(深度)**:带设计决策的改动写 ADR(`docs/decisions/NNNN-*.md`,
+   含方案对比、理由、trade-off、面试要点);值得吃透的机制用 `divedeep` 写源码精读笔记
+   (`docs/divedeep/`)。
 7. **派生文档不手改**:`docs/BACKEND_OVERVIEW.md` 等能从代码再生的文档,里程碑再生,
    不逐次手动维护;接口文档尽量用 Swagger 注解自动生成(改注解即改文档)。
 8. **外包劳动、自留决策**:读取量大 / 边界清晰的活可派 subagent(如扫描、按规格实现
@@ -62,19 +64,21 @@
 | 文档 | 类型 | 说明 |
 |---|---|---|
 | `CLAUDE.md`(本文件) | 常驻 | 协作宪法,自动加载 |
-| `docs/WORKFLOW.md` | 流程 | 5 阶段操作手册 + 模板(proto-skill) |
-| `docs/BACKEND_OVERVIEW.md` | 派生 | backend-scan 产出的架构总览,里程碑再生 |
-| `docs/api-contract.md` | 源头 | 前后端接口契约 |
-| `docs/changes/NNNN-*.md` | 源头/living | 每个功能一份工单,含清单与交接段 |
-| `docs/decisions/NNNN-*.md` | 源头/永久 | ADR 决策记录,面试学习资产 |
+| `GOOD.md` | 方法论 | 可移植主文档,方法论的唯一真相源 |
+| `docs/WORKFLOW.md` | 项目速查 | 本机命令 / 环境 / 踩坑(不含方法论) |
+| `docs/features/NNNN-slug/` | 源头/living | 每功能一文件夹:requirement + proposal(含交接头) + progress |
+| `docs/decisions/NNNN-*.md` | 源头/永久 | ADR 决策记录(广度学习资产) |
+| `docs/divedeep/*.md` | 学习/永久 | 源码精读笔记(深度学习资产) |
+| `docs/api-contract/` | 源头 | 前后端接口契约 |
+| `docs/BACKEND_OVERVIEW.md` | 派生 | 架构总览,里程碑再生 |
 | `reference/` | 只读 | 参考资料(微信小程序源码等) |
 
-## 六、5 阶段流程(一句话版,详见 WORKFLOW.md)
+## 六、5 阶段流程(一句话版,详见 GOOD.md §3)
 
 ```
 Phase 0 安全网   git + 跑起来 + 关键路径测试(动业务代码前的前提)
 Phase 1 理解     backend-scan 产出架构总览(派 subagent 读)
-Phase 2 规划     探讨 trade-off → 写 ADR → 拆工单 → 定契约(主窗口,我在环)
-Phase 3 执行     一步一 subagent,串行卡测试门;契约定死后前后端可并行
-Phase 4 验证学习 跑测试 + 审 diff + 写 ADR/面试笔记
+Phase 2 规划     写 Requirement + 探讨写 ADR → 定契约 → 拆 Proposal(主窗口,我在环)
+Phase 3 执行     按 Proposal 一步一 subagent,串行卡测试门;契约定死后前后端可并行
+Phase 4 验证收尾 验证 + 合并回 main + 复核 ADR / 收口 divedeep backlog + 再生派生文档 + 更新快照
 ```

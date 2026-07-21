@@ -14,7 +14,7 @@
 --   可直接 `mysql < file` 执行,可重复执行不报错。
 --
 -- 运行方式:
---   mysql -uroot -p123456 sky_take_out < docs/changes/0001-migration.sql
+--   mysql -uroot -p123456 sky_take_out < docs/features/0001-cend-auth-jwt/0001-migration.sql
 -- =============================================================================
 
 
