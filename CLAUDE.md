@@ -78,7 +78,7 @@
 ```
 Phase 0 安全网   git + 跑起来 + 关键路径测试(动业务代码前的前提)
 Phase 1 理解     backend-scan 产出架构总览(派 subagent 读)
-Phase 2 规划     写 Requirement + 探讨写 ADR → 定契约 → 拆 Proposal(主窗口,我在环)
+Phase 2 规划     写 Requirement + 探讨写 ADR → 定契约 → 拆 Proposal → R1/R2 评审(主窗口,我在环)
 Phase 3 执行     按 Proposal 一步一 subagent,串行卡测试门;契约定死后前后端可并行
 Phase 4 验证收尾 验证 + 合并回 main + 复核 ADR / 收口 divedeep backlog + 再生派生文档 + 更新快照
 ```
