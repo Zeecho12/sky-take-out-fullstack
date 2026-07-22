@@ -20,6 +20,14 @@
 - C 端前端:`npm --prefix project-sky-user-vue3 run dev`(http://localhost:5173,需后端 :8080;首次先 `npm install --prefix project-sky-user-vue3`)
 - 登录冒烟:`curl -s -X POST http://localhost:8080/admin/employee/login -H "Content-Type: application/json" -d '{\"username\":\"admin\",\"password\":\"123456\"}'`
 
+## Phase 2 计划外审(DeepSeek CLI,全局工具)
+> 方法论见 GOOD.md §3 Phase 2 步骤5(内审 + 外审**双路必跑**)。内审 = 会话内开全新上下文敌对 subagent;
+> 外审 = 下面的 DeepSeek CLI。工具在**全局** `C:\Users\18582\.claude\tools\`(跨项目复用;key 不进任何 repo)。
+- 列模型:`python "C:\Users\18582\.claude\tools\deepseek_review.py" --key-file "C:\Users\18582\.claude\tools\deepseek.key" --list-models`
+- 外审一份计划(敌对提示词放文件;输出写 UTF-8 文件避免控制台中文乱码):
+  `python "C:\Users\18582\.claude\tools\deepseek_review.py" --key-file "C:\Users\18582\.claude\tools\deepseek.key" --model deepseek-v4-pro --system "$(Get-Content critic.txt -Raw)" --file docs\decisions\NNNN-xxx.md --file docs\features\NNNN-slug\requirement.md --out result.md`
+- 模型:`deepseek-v4-pro`(推理,免费档可用)。同目录还有 `gemini_review.py`(Gemini 版,免费档只有 3.x Flash)。
+
 ## 本机踩坑(gotchas)
 - **构建前先停后端 jar**(否则 `target` 里的 jar 被占,`clean` 失败):
   `Get-CimInstance Win32_Process -Filter "Name='java.exe'"` 找到跑 `sky-server-...jar` 的进程 → `Stop-Process -Id <pid> -Force`。
