@@ -70,7 +70,7 @@
 | `docs/decisions/NNNN-*.md` | 源头/永久 | ADR 决策记录(广度学习资产) |
 | `docs/divedeep/*.md` | 学习/永久 | 源码精读笔记(深度学习资产) |
 | `docs/api-contract/` | 源头 | 前后端接口契约 |
-| `docs/BACKEND_OVERVIEW.md` | 派生 | 架构总览,里程碑再生 |
+| `docs/Backend_scan/` | 派生 | Phase 1 backend-scan 产出(S1~SN + BACKEND_OVERVIEW.md),里程碑再生 |
 | `reference/` | 只读 | 参考资料(微信小程序源码等) |
 
 ## 六、5 阶段流程(一句话版,详见 GOOD.md §3)

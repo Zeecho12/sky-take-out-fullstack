@@ -138,7 +138,8 @@ Phase 4 验证收尾 Close-out   验证 + 合并回 main + 复核 ADR / 收口 d
 
 - **目的**:搞清架构、模块职责、耦合关系,建立"空间地图"。
 - **步骤**:
-  1. 扫描项目,产出 `docs/BACKEND_OVERVIEW.md`(架构总览)。
+  1. 扫描项目,产出 `docs/Backend_scan/`(Phase 1 专用文件夹):里面放 backend-scan 的
+     **全部产出**——各步原始输出 `PROJECT_S1~SN_*.md` + 合并后的 `BACKEND_OVERVIEW.md`(架构总览,下游 AI 读它)。
      > 用户已有一套 `backend-scan-*` skill(单体版 / 微服务版)专做这件事;若无,则
      > 由 AI 系统性地读目录结构、配置、启动类、调用链,产出等价的总览文档。
   2. 额外产出一张**耦合地图**:哪些模块互相依赖、哪些代码被多端共用。**它决定
@@ -211,7 +212,7 @@ Phase 4 验证收尾 Close-out   验证 + 合并回 main + 复核 ADR / 收口 d
      把值得深挖的机制**记进 divedeep backlog**(ADR 的面试要点即 backlog)。
      —— `divedeep` 是**跨阶段的按需活动**(可在 Phase 1 理解时写、也可日后从 backlog 挑着写),
      **不是本阶段的强制交付**;写不写、何时写由用户触发。
-  4. **再生派生文档**:里程碑处**再生** `BACKEND_OVERVIEW.md`。
+  4. **再生派生文档**:里程碑处**再生** `docs/Backend_scan/BACKEND_OVERVIEW.md`(及需要时的 S 系列)。
   5. **收尾快照**:覆盖式更新 `CLAUDE.md` 的「当前进度」。
 - **谁做**:验证 / 合并 / 拍板在主窗口;独立复审、(按需)写 divedeep 可派 subagent。
 - **完成标准**:功能已合并;DoD 全部满足;派生文档已再生;学习入口(ADR / backlog)已收口。
@@ -318,7 +319,9 @@ Phase 4 验证收尾 Close-out   验证 + 合并回 main + 复核 ADR / 收口 d
 ├─ GOOD.md                           # [方法论] 可移植主文档(从主副本复制进来,不分叉)
 └─ docs/
    ├─ WORKFLOW.md                    # [项目速查] 本机命令/环境/踩坑(方法论看 GOOD.md)
-   ├─ BACKEND_OVERVIEW.md            # [派生] 架构总览,里程碑再生
+   ├─ Backend_scan/                  # [派生] Phase 1 backend-scan 产出,里程碑再生
+   │    ├─ PROJECT_S1~SN_*.md        #   各步扫描原始输出
+   │    └─ BACKEND_OVERVIEW.md       #   合并的架构总览(下游 AI 读它)
    ├─ api-contract/                  # [源头] 前后端接口契约
    ├─ features/                      # [源头/living] per-feature 工作文档,按功能共置
    │    └─ 0001-<slug>/
@@ -498,7 +501,7 @@ Phase 4 验证收尾 Close-out   验证 + 合并回 main + 复核 ADR / 收口 d
 | docs/decisions/NNNN-*.md | 源头/永久 | ADR(广度学习资产) |
 | docs/divedeep/*.md | 学习/永久 | 源码精读(深度学习资产) |
 | docs/api-contract/ | 源头 | 接口契约 |
-| docs/BACKEND_OVERVIEW.md | 派生 | 架构总览,里程碑再生 |
+| docs/Backend_scan/ | 派生 | Phase 1 backend-scan 产出(S1~SN + BACKEND_OVERVIEW.md),里程碑再生 |
 | reference/ | 只读 | 参考资料 |
 
 ## 六、5 阶段流程(一句话版,详见 GOOD.md §3)
@@ -581,7 +584,7 @@ Phase 4 验证收尾 Close-out   验证 + 合并回 main + 复核 ADR / 收口 d
 - 怎么验证: 关键命令(构建 / 起服务 / 冒烟)
 
 ## 1. 现状(与本改动相关的技术起点)
-> 只写和本功能相关的;全局架构看 BACKEND_OVERVIEW。
+> 只写和本功能相关的;全局架构看 docs/Backend_scan/BACKEND_OVERVIEW.md。
 现在怎么实现、涉及哪些文件、关键数据怎么流。
 
 ## 2. 方案总览(选定方案长什么样)
