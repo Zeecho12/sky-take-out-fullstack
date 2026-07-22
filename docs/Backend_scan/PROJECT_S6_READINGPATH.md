@@ -1,126 +1,115 @@
 # PROJECT_S6_READINGPATH — 推荐阅读路线
 
-> 项目名称：user-center-backend（用户中心后端）
-> 项目类型：单体应用（Monolith），标准分层架构（Layered Architecture）
-> 核心业务链路：用户注册（User Registration）— Controller → Service → Mapper → MySQL
+> 项目名称：sky-take-out（苍穹外卖）
+> 面向读者：没有实际项目经验的学生；目标是"从易到难读懂这个项目"
+> 说明：本项目是标准分层单体（Layered Monolith）CRUD 项目，S5 只有一条深追主链（C 端下单 `submitOrder`）+ 三条浅链（鉴权 / 推送 / 缓存），**不存在** OJ 判题 / 支付对账这类"同时用多种设计模式的复杂子系统"，故不做"按设计模式拆分成多站"处理。
+> 编排原则应用顺序：先静态后动态（站 1-2）→ 先数据后逻辑（站 3）→ 先底层后上层（站 4-6，Mapper→Service→Controller，仲裁规则优先于"先骨架后细节"）→ 核心链路优先、外围分支后置（站 7-9，三条浅链）。
 
 ---
 
 ## 推荐阅读路线
 
-第 1 站：配置文件——看懂项目的"出生证明"和外部连接点
-  - 目标文件：  
-    - src/main/resources/application.yml
-    - src/main/resources/application-prod.yml
-  - 阅读重点：重点看 4 样东西  
-    - ① server.port 和 server.servlet.context-path（项目监听哪个端口、URL 前缀是什么）；    
-    - ② spring.datasource.*（连接的是哪个数据库、用什么账号密码）；  
-    - ③ mybatis-plus 的逻辑删除配置（isDelete 字段的 0/1 含义）；  
-    - ④ prod 配置与默认配置的差异（数据库地址、账号密码在生产环境被覆盖）。
-  读完后你能理解：项目启动后会在 8080 端口监听，所有接口以 /api 开头，连接的是 MySQL 的 yupi 库，逻辑删除用 isDelete 字段标记。
-  - 理由：  
-    - 使用原则：先静态后动态——配置文件是项目启动前就确定的"静态参数"，是理解一切动态代码行为的前提。  
-    - 不按此顺序的代价：如果跳过配置文件直接读代码，你会在 Controller 里看到接口路径是 `/user/register`，却不知道完整 URL 其实是 `http://localhost:8080/api/user/register`（因为 context-path=/api 只写在配置文件里）；读到 Service 里的逻辑删除判断时，也不知道 isDelete=1 到底是"已删除"还是"未删除"。
+第 1 站：配置文件——看懂项目的出生点与外部连接点
+  目标文件：
+    - D:\CQWM2\sky-take-out\sky-server\src\main\resources\application.yml
+    - D:\CQWM2\sky-take-out\sky-server\src\main\resources\application-dev.yml
+  阅读重点：`server.port`(8080)、`spring.profiles.active: dev`；`spring.datasource.druid.*` 里的 `${sky.datasource.*}` 占位符如何由 `application-dev.yml` 的 `sky.datasource.*` 填值（连到 `jdbc:mysql://localhost:3306/sky_take_out`）；`spring.redis.*`；`mybatis.mapper-locations: classpath:mapper/*.xml`、`mybatis.type-aliases-package: com.sky.entity`、`map-underscore-to-camel-case: true`；`sky.jwt.secret-key` / `sky.jwt.ttl`。**重点是"占位符 + 填值"两份文件配合，不是同名 key 覆盖。**
+  读完后你能理解：项目跑在哪个端口、连哪个 MySQL / Redis、配置是"骨架(application.yml) + dev 填值(application-dev.yml)"的组织方式、MyBatis 去哪里找 SQL 映射文件与实体别名。
+  理由：
+    - 使用原则：先静态后动态（原则 1）——配置是项目的"出生点"和"外部连接点"，先看它才知道整套程序在什么环境里跑。
+    - 不按此顺序的代价：如果先扎进业务代码，读到 Mapper 时会不知道 `resources/mapper/*.xml` 为什么会被加载、下划线列名为什么能自动映射到驼峰属性、`orders` 表到底在哪个库；这些"底层默认行为"全由这两份 yml 的开关决定，跳过它们你会把框架行为误当成"魔法"。
 
----
+第 2 站：启动类 SkyApplication——看懂全站能力开关
+  目标文件：
+    - D:\CQWM2\sky-take-out\sky-server\src\main\java\com\sky\SkyApplication.java
+  阅读重点：类上的 5 个注解及其开启的能力——`@SpringBootApplication`（以 `com.sky` 为根扫描 Controller/Service/Mapper/Config）、`@EnableTransactionManagement`（让 `@Transactional` 生效）、`@EnableCaching`（让 `@Cacheable`/`@CacheEvict` 生效，后端为 Redis）、`@EnableScheduling`（让 `task` 包的 `@Scheduled` 生效）、`@Slf4j`。只读类声明头，不读 `main` 方法体。
+  读完后你能理解：整个项目开启了哪些框架能力（事务、缓存、定时任务）、Spring 从哪个包开始扫描并装配所有 Bean。
+  理由：
+    - 使用原则：先静态后动态（原则 1）——启动类是程序的静态总入口，是所有"能力开关"的集中地。
+    - 不按此顺序的代价：如果不先看它，后面在 Service 上遇到 `@Transactional`、在 `SetmealController` 上遇到 `@Cacheable`、在 `task` 包遇到 `@Scheduled` 时，会不知道这些注解"凭什么生效"——它们的总开关都贴在这一个类上，先看一眼就免去后面反复困惑。
 
-第 2 站：数据库建表脚本——看懂项目在操作什么"东西"
-  - 目标文件：
-    - sql/create_table.sql
-  - 阅读重点：重点看 user 表的字段定义——每个字段的名称、类型、默认值、注释。特别关注：
-    - ① id 是自增主键（bigint）；
-    - ② userAccount 和 planetCode 有什么业务含义；
-    - ③ userPassword 存的是加密后的密文；
-    - ④ isDelete 是逻辑删除标记（tinyint，默认 0）；
-    - ⑤ userRole 是用户角色标识（0=普通用户 / 1=管理员）。
-  - 读完后你能理解：整个项目只有一张 user 表，共 14 个字段，你会知道每个字段存什么、什么类型、有什么约束。
-  - 理由：
-    - 使用原则：先数据后逻辑——数据库表结构定义了项目操作的"对象"，是所有业务逻辑的根基。  
-    - 不按此顺序的代价：如果跳过建表脚本直接读 Java 代码，你会在 Service 里看到 `user.setUserRole(0)`、`user.setPlanetCode(planetCode)` 这些操作，却不知道 userRole=0 代表什么角色、planetCode 是个什么概念、这些字段在数据库里是什么类型。每遇到一个字段都要回头查表结构，阅读节奏会被反复打断。
+第 3 站：建表脚本 + 核心实体——看懂项目在处理什么"东西"
+  目标文件：
+    - D:\CQWM2\sky.sql
+    - D:\CQWM2\sky-take-out\sky-pojo\src\main\java\com\sky\entity\Orders.java
+    - D:\CQWM2\sky-take-out\sky-pojo\src\main\java\com\sky\entity\OrderDetail.java
+    - D:\CQWM2\sky-take-out\sky-pojo\src\main\java\com\sky\entity\ShoppingCart.java
+    - D:\CQWM2\sky-take-out\sky-pojo\src\main\java\com\sky\entity\AddressBook.java
+    - D:\CQWM2\sky-take-out\sky-pojo\src\main\java\com\sky\entity\User.java
+  阅读重点：`sky.sql` 里 11 张表的字段与 COMMENT，尤其 `orders.status`（1 待付款…6 已取消）、`orders.pay_status`（0 未支付 / 1 已支付 / 2 退款）的合法值；表之间靠 `xxx_id` **逻辑关联、无物理外键**；`create_time/update_time/create_user/update_user` 公共四件套只在 category/dish/setmeal/employee 出现；`orders` 里 phone/address/consignee 等"下单快照"字段。实体侧对照 `Orders` 的 `PENDING_PAYMENT`/`UN_PAID` 等静态常量与列的对应。
+  读完后你能理解：项目围绕哪 11 个数据实体运转、订单状态机有哪些合法值、表关系靠约定的 `xxx_id` 维系、为什么订单要冗余存地址/手机号快照。
+  理由：
+    - 使用原则：先数据后逻辑（原则 2）——先知道系统在搬运什么"东西"，再看操作这些东西的代码。
+    - 不按此顺序的代价：如果先读 `OrderServiceImpl` 再读实体，Service 里到处是 `order.setStatus(Orders.PENDING_PAYMENT)`、`order.setPayStatus(Orders.UN_PAID)`，你不知道 status 有哪些合法值、这些常量对应数据库哪一列、`address_book` 与 `orders` 靠什么关联，只能一行一跳出去查表结构，认知不断被打断。
 
----
+第 4 站：主链数据访问层 OrderMapper（+ 同名 XML）——看懂下单是怎么存取数据的
+  目标文件：
+    - D:\CQWM2\sky-take-out\sky-server\src\main\java\com\sky\mapper\OrderMapper.java
+    - D:\CQWM2\sky-take-out\sky-server\src\main\java\com\sky\mapper\AddressBookMapper.java
+    - D:\CQWM2\sky-take-out\sky-server\src\main\java\com\sky\mapper\ShoppingCartMapper.java
+    - D:\CQWM2\sky-take-out\sky-server\src\main\java\com\sky\mapper\OrderDetailMapper.java
+    - D:\CQWM2\sky-take-out\sky-server\src\main\resources\mapper\OrderMapper.xml
+  阅读重点：这是**原生 MyBatis** 接口（类级 `@Mapper` 被扫描，非 MyBatis-Plus，不继承 BaseMapper），接口里只有方法签名，真实 SQL 在同名 XML 里。重点看主链要用的 `OrderMapper#insert`（配合 XML 的 `useGeneratedKeys`/`keyProperty` 回填自增 id）、`AddressBookMapper#getById`、`ShoppingCartMapper#list`/`deleteByUserId`、`OrderDetailMapper#insertBatch`。对照 `OrderMapper.xml` 看一条 `insert` 长什么样即可，其余 XML 按需查。
+  读完后你能理解：下单链路每一步落到数据库上究竟做了哪种 CRUD、MyBatis "接口声明 + XML 写 SQL"的分工、insert 后自增主键怎么回填给后续明细当外键。
+  理由：
+    - 使用原则：先底层后上层（原则 3）+ 仲裁规则（"先底层后上层"优先于"先骨架后细节"）——数据访问层是认知链条的最底层，先看它才有后面各层的地基。
+    - 不按此顺序的代价：如果按执行顺序先读 `OrderServiceImpl`，会在 Service 里连续撞见 `orderMapper.insert(order)`、`orderDetailMapper.insertBatch(...)`、`shoppingCartMapper.deleteByUserId(...)` 一串调用，却不知道每个方法在操作哪张表、insert 之后 id 从哪冒出来，业务逻辑读得磕磕绊绊；先读 Mapper 后，这些调用一看就懂在干嘛。
 
-第 3 站：启动类——看懂项目怎么"跑起来"
-  - 目标文件：
-    - src/main/java/com/yupi/usercenter/UserCenterApplication.java
-  - 阅读重点：重点看两样东西  
-    - ① @SpringBootApplication 注解（它是三个注解的合体：自动配置 + 组件扫描 + 配置类声明）；
-    - ② @MapperScan("com.yupi.usercenter.mapper") 注解（告诉 MyBatis-Plus 去哪个包下扫描 Mapper 接口并自动生成实现类）。这个文件很短，一般不超过 10 行。
-  - 读完后你能理解：整个项目从这一个 main 方法启动，Spring Boot 会自动扫描 com.yupi.usercenter 包下所有组件，MyBatis-Plus 会为 mapper 包下的接口自动生成代理实现。
-  - 理由：
-    - 使用原则：先静态后动态——启动类是项目的"点火开关"，它的注解决定了 Spring 容器会加载哪些组件，是理解后续所有 Bean 如何被发现和注入的前提。
-    - 不按此顺序的代价：如果跳过启动类直接读 Mapper，你会疑惑"UserMapper 只是一个接口，没有任何实现类，它是怎么工作的？"——答案就在启动类的 @MapperScan 注解里，它告诉 Spring 在启动时自动为这些接口生成代理。不看启动类，这个关键机制就成了黑箱。
+第 5 站：主链业务逻辑层 OrderServiceImpl#submitOrder——看懂下单的完整业务编排
+  目标文件：
+    - D:\CQWM2\sky-take-out\sky-server\src\main\java\com\sky\service\impl\OrderServiceImpl.java
+  阅读重点：只聚焦 `submitOrder` 一个方法的六步编排——① `addressBookMapper.getById` 校验收货地址（空则抛 `AddressBookBusinessException`）；② 私有方法 `checkOutOfRange` 同步调百度地图 API 做配送范围校验（>5km 抛"超出配送范围"）；③ `BaseContext.getCurrentId()` 取当前用户 id + `shoppingCartMapper.list` 查购物车；④ 组装 `Orders`（status=`PENDING_PAYMENT`、payStatus=`UN_PAID`、number=`System.currentTimeMillis()`）后 `orderMapper.insert`；⑤ 购物车逐条转 `OrderDetail` 后 `insertBatch`；⑥ `deleteByUserId` 清空购物车。**特别注意：本方法没有 `@Transactional`，三次写库不在同一事务内，中途失败会数据不一致——这是可写进 ADR / divedeep 的真实观察点。**
+  读完后你能理解：一次"下单"的完整业务规则与数据流（校验→组装→落库→清车）、为什么下单后订单是"待付款"而非已支付、以及多步写库缺事务的一致性风险。
+  理由：
+    - 使用原则：先底层后上层（原则 3）+ 核心链路优先（原则 4）——Service 是业务最密集的一层，且 `submitOrder` 是全项目的价值产出点（主链主干），排在 Mapper 之后、Controller 之前。
+    - 不按此顺序的代价：如果没先读第 3 站实体，这里的 `order.setStatus(Orders.PENDING_PAYMENT)` 你不懂常量含义；如果没先读第 4 站 Mapper，这里每个 `xxxMapper.xxx()` 你不知道在动哪张表——两块地基缺一，这一层就是一团看不懂的调用堆叠。
 
----
+第 6 站：主链表现层 user/OrderController——看懂对外接口长什么样
+  目标文件：
+    - D:\CQWM2\sky-take-out\sky-server\src\main\java\com\sky\controller\user\OrderController.java
+  阅读重点：类级 `@RestController("userOrderController")`（**显式指定 Bean 名**，因为 admin 端另有同名 `OrderController`，避免 Bean 名冲突）、`@RequestMapping("/user/order")`；方法级 `@PostMapping("/submit")` + `@RequestBody OrdersSubmitDTO` 参数绑定；方法体只有一行转调 `orderService.submitOrder(...)` + `Result.success(...)` 封装。注意完整 URL = 空 context-path + `/user/order` + `/submit` = `POST /user/order/submit`。
+  读完后你能理解：HTTP 请求怎么进入下单链路、URL 前缀怎么由类级+方法级注解拼出来、返回值怎么被统一封装成 `Result`、表现层为什么"很薄"。
+  理由：
+    - 使用原则：先底层后上层（原则 3，Controller 放最后）——仲裁规则明确 Controller 最后读。
+    - 不按此顺序的代价：如果一上来先读 Controller，会觉得"就一行转调、没内容"而抓不到重点，真正的业务在 Service 里却还没读；反过来 Mapper→Service 读透后再看 Controller，只剩路由 + 参数绑定 + 封装，几乎一眼看穿，这一站变得非常轻松。
 
-第 4 站：数据模型——看懂代码里传来传去的"信封"长什么样
-  - 目标文件：
-    - src/main/java/com/yupi/usercenter/model/domain/User.java
-    - src/main/java/com/yupi/usercenter/model/domain/request/UserRegisterRequest.java
-    - src/main/java/com/yupi/usercenter/model/domain/request/UserLoginRequest.java
-  - 阅读重点：
-    - ① User.java 重点看字段与数据库表的映射关系（@TableId、@TableField、@TableLogic 等 MyBatis-Plus 注解），以及 Lombok 的 @Data 注解（自动生成 getter/setter）；
-    - ② UserRegisterRequest 和 UserLoginRequest 重点看它们分别封装了哪些请求参数（这些类决定了前端注册/登录时要传什么字段）。 
-  - 读完后你能理解：User 实体类的每个字段如何对应数据库表的列，前端注册时要传 userAccount + userPassword + checkPassword + planetCode，登录时要传 userAccount + userPassword。
-  - 理由：
-    - 使用原则：先数据后逻辑——数据模型是在 Controller、Service、Mapper 三层之间传递的"信封"，三层代码里到处都是 `User user`、`UserRegisterRequest request` 这些对象，不认识它们就读不懂任何一层。
-    - 不按此顺序的代价：如果跳过数据模型直接读 Service，你会在 UserServiceImpl 里看到 `user.setUserAccount(userAccount)`、`user.setUserPassword(encryptPassword)` 等大量字段操作，却不知道 User 类一共有哪些字段、哪些是必填的、哪些有默认值。你还会看到方法参数 `UserRegisterRequest`，却不知道这个请求对象里装了什么。
+第 7 站：鉴权浅链 JwtAuthenticationFilter——看懂请求进业务前的身份识别
+  目标文件：
+    - D:\CQWM2\sky-take-out\sky-server\src\main\java\com\sky\security\JwtAuthenticationFilter.java
+  阅读重点：`doFilterInternal` 读请求头 `Authorization: Bearer`、截取 token、`JwtUtil.parseJWT` 解析出 `sub`(userId) 与 `role`，组装 `UsernamePasswordAuthenticationToken`（权限 `ROLE_<role>`）写入 `SecurityContext`，并 `BaseContext.setCurrentId(userId)` 塞进 ThreadLocal；继承 `OncePerRequestFilter` 保证每请求只过一次，`finally` 里 `removeCurrentId()` 防线程复用串号。（授权规则 `/admin/**`=ADMIN、`/user/**`=USER 在 `SecurityConfig`，本站不展开配置类。）
+  读完后你能理解：无状态（stateless）JWT 认证怎么运作、主链第 5 站里凭空出现的 `BaseContext.getCurrentId()` 的 userId 到底是谁在什么时候塞进去的。
+  理由：
+    - 使用原则：核心链路优先、外围分支后置（原则 4）——鉴权是主链之外的独立机制（浅链 1），放主链之后读。
+    - 不按此顺序的代价：这条浅链恰好补上主链的一个悬念——第 5 站 `submitOrder` 用 `BaseContext.getCurrentId()` 却没交代 userId 从哪来；若不放在主链后面读，你要么在主链中途被迫跳去读过滤器打断节奏，要么一直误以为 userId 是"下单请求里传来的"。
 
----
+第 8 站：推送浅链 WebSocketServer——看懂服务端如何主动推送
+  目标文件：
+    - D:\CQWM2\sky-take-out\sky-server\src\main\java\com\sky\websocket\WebSocketServer.java
+  阅读重点：`@ServerEndpoint("/ws/{sid}")` 声明长连接端点（`ws://localhost:8080/ws/{sid}`）、用静态 `Map<String,Session> sessionMap` 保存所有会话、`sendToAllClient` 遍历群发 `sendText`。注意它的调用入口是 `OrderServiceImpl#paySuccess`（支付成功来单提醒 type=1）和 `#reminder`（C 端催单 type=2），**都不在主链 `submit` 上**（下单只到"待付款"，此时还没推送）。
+  读完后你能理解：服务器怎么突破 HTTP"客户端问、服务端才答"的被动模型，一有新单/催单就主动把消息推给商家端浏览器，而不用商家端轮询。
+  理由：
+    - 使用原则：核心链路优先、外围分支后置（原则 4）——推送是主链覆盖不到的独立实时通信机制（浅链 2）。
+    - 不按此顺序的代价：如果在读主链途中插进来看它，会误以为"下单就会推送"；实际上推送发生在支付/催单而非下单，放主链之后单独读，才能把"下单只到待付款、推送另有触发点"这条边界理清，不至于把两个阶段混为一谈。
 
-第 5 站：Mapper 层——看懂数据怎么进出数据库
-  - 目标文件：
-    - src/main/java/com/yupi/usercenter/mapper/UserMapper.java
-  - 阅读重点：这个文件非常简短——UserMapper 接口继承了 MyBatis-Plus 的 BaseMapper<User>，自身没有定义任何方法。重点理解：
-    - ① 继承 BaseMapper<User> 意味着自动拥有了 insert、deleteById、selectById、selectList、selectCount 等十几个通用 CRUD 方法；
-    - ② 泛型 <User> 告诉 MyBatis-Plus 这个 Mapper 操作的是 user 表（通过 User 实体类上的注解映射）。
-  - 读完后你能理解：本项目的所有数据库操作都由 MyBatis-Plus 自动生成，不需要手写 SQL。UserMapper 虽然是个"空接口"，但通过继承 BaseMapper 获得了完整的 CRUD 能力。
-  - 理由：
-    - 使用原则：先底层后上层——Mapper 是分层架构中的最底层（直接与数据库交互），Service 层的所有数据操作最终都通过 Mapper 执行。
-    - 不按此顺序的代价：如果跳过 Mapper 直接读 Service，你会在 UserServiceImpl 里看到 `this.count(queryWrapper)`、`this.save(user)` 这些调用，却不知道它们背后执行的是什么 SQL、操作的是哪张表。理解了 Mapper 层的"BaseMapper 自动提供 CRUD"机制后，Service 里的这些调用就一目了然了。
-
----
-
-第 6 站：Service 层——看懂核心业务逻辑怎么运转
-  - 目标文件：
-    - src/main/java/com/yupi/usercenter/service/UserService.java
-    - src/main/java/com/yupi/usercenter/service/impl/UserServiceImpl.java
-  - 阅读重点：
-    - ① 先看 UserService 接口，了解对外暴露了哪些业务方法（userRegister、userLogin、userLogout、getSafetyUser、searchUsers、deleteUser 等）；
-    - ② 再看 UserServiceImpl 实现类，这是整个项目最核心的文件，重点读 userRegister 方法的完整逻辑——7 项参数校验（非空、长度、特殊字符正则、密码一致性）→ synchronized 块内的数据库唯一性检查 → MD5 加盐密码加密 → this.save() 写入数据库；
-    - ③ 注意 UserServiceImpl 继承了 ServiceImpl<UserMapper, User>，所以 this.count()、this.save() 等方法来自 MyBatis-Plus 的 Service 基类。
-  - 读完后你能理解：注册流程的每一步校验和处理逻辑，登录流程的密码比对和 Session 写入机制，以及为什么要用 synchronized 防止并发注册同名账号。
-  - 理由：
-    - 使用原则：先底层后上层——Service 是业务逻辑的核心层，位于 Mapper（已读）和 Controller（下一站）之间。读完 Mapper 后再读 Service，遇到 `this.count()` 和 `this.save()` 就能立刻理解它们是在通过 UserMapper 执行 SQL。
-    - 不按此顺序的代价：如果先读 Controller 再读 Service，你在 Controller 里只能看到 `userService.userRegister(...)` 这样的方法调用，知道"调了注册方法"但不知道里面做了什么。而如果先读 Service 再读 Controller，到了 Controller 那一站就会发现它只是做了参数提取和非空检查，核心逻辑你在 Service 里已经全部看过了，理解起来毫不费力。
-
----
-
-第 7 站：Controller 层——看懂外部请求怎么进来、怎么出去
-  - 目标文件：
-    - src/main/java/com/yupi/usercenter/controller/UserController.java
-  - 阅读重点：
-    - ① 类级别的 @RestController 和 @RequestMapping("/user") 注解（所有接口路径以 /user 开头，结合配置文件的 context-path=/api，完整路径为 /api/user/xxx）；
-    - ② 每个方法的 HTTP 方法注解（@PostMapping("/register")、@PostMapping("/login")、@GetMapping("/current")、@PostMapping("/logout")、@GetMapping("/search")、@PostMapping("/delete")）；
-    - ③ 参数接收方式（@RequestBody 接收 JSON 请求体、HttpServletRequest 获取 Session）；
-    - ④ 返回值统一用 BaseResponse 包装（通过 ResultUtils.success() 和 ResultUtils.error()）。
-  - 读完后你能理解：项目对外暴露了哪些 API 接口、每个接口的 URL 路径和 HTTP 方法、前端需要传什么参数、后端返回什么格式的响应。至此，从"请求进来"到"数据库操作"到"响应返回"的完整链路你已经全部走通。
-  - 理由：
-    - 使用原则：先底层后上层——Controller 是分层架构中的最上层（直接面向前端请求），也是阅读路线的"终点站"。前面 6 站已经打好了全部基础：配置文件告诉你端口和路径前缀，数据模型告诉你请求/响应长什么样，Mapper 告诉你数据怎么存取，Service 告诉你业务逻辑怎么运转——到了 Controller 这一站，你只需要关注"路由映射"和"参数校验"这两件轻量级的事。
-    - 不按此顺序的代价：如果一上来就读 Controller（很多初学者的本能反应），你会遇到一连串看不懂的东西——`UserRegisterRequest` 是什么？`userService.userRegister()` 里面做了什么？`ResultUtils.success()` 返回的是什么格式？`request.getSession()` 的 Session 哪来的？每一行都要跳到别的文件去查，阅读体验就像在迷宫里乱走。
-
----
+第 9 站：缓存浅链 user/SetmealController——看懂声明式缓存
+  目标文件：
+    - D:\CQWM2\sky-take-out\sky-server\src\main\java\com\sky\controller\user\SetmealController.java
+  阅读重点：方法 `list` 上的 `@Cacheable(cacheNames = "setmealCache", key = "#categoryId")`——命中则直接从 Redis 取、不进方法体、不查库；未命中则执行 `setmealService.list(...)` 查库并把返回值自动写回 Redis；key 用 SpEL `#categoryId` 按分类分桶。写侧配套是 `admin/SetmealController` 的 `@CacheEvict(cacheNames="setmealCache")`（管理端改套餐时清缓存）。
+  读完后你能理解：`@Cacheable` 声明式缓存（Declarative Caching）怎么用一个注解把"查缓存→未命中查库→回填"的样板逻辑交给框架，从而给高频只读接口降压、减少打到 MySQL 的请求。
+  理由：
+    - 使用原则：核心链路优先、外围分支后置（原则 4）——读缓存是主链（写路径）覆盖不到的旁路机制（浅链 3），放最后。
+    - 不按此顺序的代价：这一站依赖第 2 站启动类的 `@EnableCaching` 和第 1 站的 Redis 配置——若不先读那两站，你会不明白一个注解凭什么就能缓存；放到最后读，正好把前面看过的"能力开关 + Redis 连接"落到一个具体用例上，形成闭环。
 
 ## 先跳过这些
 
 | 文件/目录 | 跳过原因（40 字以内） | 什么时候再回来看 |
 |---|---|---|
-| src/main/java/com/yupi/usercenter/common/BaseResponse.java | 统一响应封装类，格式固定，不影响理解业务流程 | 读完第 7 站 Controller 后，想了解返回格式的细节时再看 |
-| src/main/java/com/yupi/usercenter/common/ErrorCode.java | 错误码枚举，查表即可，无需提前通读 | 读 Service/Controller 时遇到 `ErrorCode.PARAMS_ERROR` 等引用，点进去对照一下即可 |
-| src/main/java/com/yupi/usercenter/common/ResultUtils.java | 响应工具类，只有两三个静态方法，一眼能看懂 | 读 Controller 时遇到 `ResultUtils.success()` 调用，点进去瞄一眼即可 |
-| src/main/java/com/yupi/usercenter/contant/UserConstant.java | 常量定义类，查表即可，无需提前通读 | 读 Service 时遇到角色常量引用（如 `ADMIN_ROLE`），点进去对照一下即可 |
-| src/main/java/com/yupi/usercenter/exception/BusinessException.java | 自定义异常类，继承 RuntimeException 加了几个字段 | 读 Service 时遇到 `throw new BusinessException(...)` 想了解异常结构时再看 |
-| src/main/java/com/yupi/usercenter/exception/GlobalExceptionHandler.java | 全局异常拦截器，是兜底逻辑而非主线逻辑 | 读完全部主线代码后，作为"Spring MVC 异常处理机制"的扩展阅读 |
-| src/test/ | 测试代码，验证逻辑正确性，不影响理解业务本身 | 读完全部主线代码后，想了解如何编写单元测试时再看 |
-| target/ | Maven 构建输出目录，是编译生成的产物，不是源码 | 无需阅读，除非你想了解 Maven 的构建产物结构 |
-| Dockerfile | 容器化部署配置，与业务代码无关 | 想了解项目如何部署到 Docker 时再看 |
+| D:\CQWM2\sky-take-out\sky-common\src\main\java\com\sky\utils\（AliOssUtil / HttpClientUtil / JwtUtil / WeChatPayUtil） | 工具类，脱离调用场景单独读没有上下文 | 读主线代码遇到不认识的工具方法（如 JwtUtil.parseJWT）时，再点进去看 |
+| D:\CQWM2\sky-take-out\sky-common\src\main\java\com\sky\exception\ + sky-server\...\handler\GlobalExceptionHandler.java | 异常与全局兜底逻辑，格式固定，不影响业务流程理解 | 学完主线业务后，作为"统一错误响应规范"扩展阅读 |
+| D:\CQWM2\sky-take-out\sky-common\src\main\java\com\sky\constant\ + enumeration\ | 常量与枚举，是被引用的值，无独立逻辑 | 主线代码引用到某常量（如 StatusConstant.ENABLE）时顺手点进去 |
+| D:\CQWM2\sky-take-out\sky-pojo\src\main\java\com\sky\dto\ + vo\ | 纯数据对象，字段已在 S4B 数据模型登记过 | 读 Service/Controller 遇到某 DTO/VO 想确认字段时，回 S4B 或点进去 |
+| D:\CQWM2\sky-take-out\sky-server\src\main\java\com\sky\aspect\AutoFillAspect.java + annotation\AutoFill.java | AOP 横切增强（自动填公共字段），非主线业务逻辑 | 读到 category/dish/setmeal 的 create_time 想知道谁填的时候 |
+| D:\CQWM2\sky-take-out\sky-server\src\main\java\com\sky\config\（Oss/Redis/WebMvc/Security/WebSocket Configuration） | Bean 装配类，属基础设施而非业务流程 | 学完鉴权浅链后回看 SecurityConfig 的过滤器链/授权规则 |
+| D:\CQWM2\sky-take-out\sky-server\src\main\java\com\sky\task\（OrderTask / WebSocketTask / MyTask） | 定时任务，由调度器触发，非请求主线 | 学完订单主链后，想了解超时订单如何自动流转时 |
+| D:\CQWM2\sky-take-out\sky-server\src\main\java\com\sky\controller\notify\PayNotifyController.java | 支付回调入口，微信遗留、待改造（功能 0002） | 做功能 0002「支付 mock」或研究异步回调时 |
+| D:\CQWM2\sky-take-out\sky-server\src\main\java\com\sky\controller\admin\（Report / WorkSpace / Shop / Common Controller）+ service\impl\ReportServiceImpl.java | 报表/工作台/店铺/上传等外围管理端功能，与核心下单链路无关 | 学完核心链路后，按兴趣挑报表聚合或 OSS 上传单独读 |

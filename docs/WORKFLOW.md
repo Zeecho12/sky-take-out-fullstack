@@ -26,7 +26,7 @@
 - 列模型:`python "C:\Users\18582\.claude\tools\deepseek_review.py" --key-file "C:\Users\18582\.claude\tools\deepseek.key" --list-models`
 - 外审一份计划(敌对提示词放文件;输出写 UTF-8 文件避免控制台中文乱码):
   `python "C:\Users\18582\.claude\tools\deepseek_review.py" --key-file "C:\Users\18582\.claude\tools\deepseek.key" --model deepseek-v4-pro --system "$(Get-Content critic.txt -Raw)" --file docs\decisions\NNNN-xxx.md --file docs\features\NNNN-slug\requirement.md --out result.md`
-- 模型:`deepseek-v4-pro`(推理,免费档可用)。同目录还有 `gemini_review.py`(Gemini 版,免费档只有 3.x Flash)。
+- 模型:`deepseek-v4-pro`(推理,免费档可用)
 
 ## 本机踩坑(gotchas)
 - **构建前先停后端 jar**(否则 `target` 里的 jar 被占,`clean` 失败):
