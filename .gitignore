@@ -33,3 +33,7 @@ logs/
 
 # 本地工具(如手动安装的 Maven),不跟踪
 /.tools/
+
+# ===== Claude Code =====
+# 本地个人配置(权限/偏好等),不入库;launch.json 等项目级配置可按需手动跟踪
+.claude/settings.local.json

@@ -28,8 +28,8 @@
 ## 三、当前进度
 
 - **Phase**:功能 0001「C 端认证改造」**已交付并合并回 `main`(merge `b02590b`,DoD 全绿)**:后端全站统一 Spring Security + 单套 JWT(`/admin/**`=ADMIN、`/user/**`=USER、401/403、BCrypt);admin 前端认证头迁 `Authorization: Bearer`;新建 C 端 Web `project-sky-user-vue3`(Vue3+Vite+TS+Pinia)全链路端到端跑通;`docs/smoke-tests.md` 全绿。
-- **进行中**:文档方法论体系定稿(GOOD.md 五类文档 + C 混合布局 + Phase 4 改「验证与收尾」+ ADR 写法标准),本轮改动直接提交到 `main`。
-- **下一步**:功能 0002「支付 mock」(解 `OrderServiceImpl.payment()` 的 openid 遗留,见 0001 Requirement Out of Scope);启动时按 Phase 2 走(写 Requirement → 探讨 ADR → 定契约 → 拆 Proposal)。按需从 ADR-0001 的 divedeep backlog 挑深读笔记。
+- **进行中**:大工程「C 端完整重建(含 mock 支付)」立项 —— 照 `reference/` 微信小程序把 C 端 Web 端到端重建,拆 **0002~0005 四个 feature 串行推进**(路线图见 `docs/blueprint.md`)。跨功能决策已拍板:UI=**Vant**、**整站登录门槛**、后端**改造复用**、认证复用 0001。当前在 **Phase 2 规划 0002「商品浏览 + 购物车」**。
+- **下一步**:写 0002 Requirement + ADR(Vant / 登录门槛)→ 校准 `docs/api-contract/` → 拆 Proposal → 内审 + DeepSeek 双路评审 → 进 Phase 3。0003(地址簿+下单)/0004(mock 支付)/0005(订单管理)依次跟进(见 `docs/blueprint.md`)。
 - **git**:当前在 `main`;`feature/cend-auth-jwt` 分支已合并(未删)。构建前先停后端 jar;本机 MySQL 5.7 客户端连库需 `--ssl-mode=DISABLED`(详见 `docs/WORKFLOW.md`)。冒烟基线 `docs/smoke-tests.md`。
 
 > 本节是**当前快照**,只写"现在":**覆盖式更新**(改写这几行,不往下追加历史),
@@ -66,6 +66,7 @@
 | `CLAUDE.md`(本文件) | 常驻 | 协作宪法,自动加载 |
 | `GOOD.md` | 方法论 | 可移植主文档,方法论的唯一真相源 |
 | `docs/WORKFLOW.md` | 项目速查 | 本机命令 / 环境 / 踩坑(不含方法论) |
+| `docs/blueprint.md` | 备忘/索引 | 跨 feature 大工程路线图(如 C 端重建 0002~0005);一行一 feature,详情看各 requirement,里程碑更新 |
 | `docs/features/NNNN-slug/` | 源头/living | 每功能一文件夹:requirement + proposal(含交接头) + progress |
 | `docs/decisions/NNNN-*.md` | 源头/永久 | ADR 决策记录(广度学习资产) |
 | `docs/divedeep/*.md` | 学习/永久 | 源码精读笔记(深度学习资产) |
