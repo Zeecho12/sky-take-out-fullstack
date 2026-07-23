@@ -3,7 +3,7 @@ import type { RouteRecordRaw } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 
 const routes: RouteRecordRaw[] = [
-  { path: '/', redirect: '/home' },
+  { path: '/', redirect: '/menu' },
   { path: '/login', name: 'login', component: () => import('@/views/Login.vue'), meta: { public: true } },
   { path: '/register', name: 'register', component: () => import('@/views/Register.vue'), meta: { public: true } },
   { path: '/home', name: 'home', component: () => import('@/views/Home.vue') },
@@ -26,7 +26,7 @@ router.beforeEach((to) => {
     return { path: '/login', query: { redirect: to.fullPath } }
   }
   if (to.meta.public && userStore.isLoggedIn && (to.name === 'login' || to.name === 'register')) {
-    return { path: '/home' }
+    return { path: '/menu' }
   }
   return true
 })

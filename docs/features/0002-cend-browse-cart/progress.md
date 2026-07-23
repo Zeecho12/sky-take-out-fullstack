@@ -48,3 +48,17 @@
   - Vant `van-popup` 隐藏后仍在 DOM,多个 popup 有多个 `.van-overlay`;关闭要点可见的那个(否则 overlay 拦截点击)——验证时踩到一次。
   - 全局 `button` 金色主题渗进 Vant 主按钮(见 AD2),外观可接受。
 - **关联**: 见本步 commit / ADR AD1(number 持久化)、AD2(Vant 全量 + 样式渗透)、D4(串行化)
+
+### 步骤7 (2026-07-22) — 登录门槛 + 落地路由 + 类型检查固化(Phase 3 收官)
+- **改了什么**:
+  - `router/index.ts`:根 `/` redirect 与守卫"已登录回跳登录/注册页"两处 `/home`→`/menu`。`/menu` 登录门槛靠**现有反向机制**(`beforeEach`:`!to.meta.public && !isLoggedIn` → 跳 `/login?redirect=to.fullPath`),`/menu` 无 `meta.public` 故本就受保护,未新增 meta。
+  - `Home.vue`:加 `<van-button type="primary" block>进入点餐</van-button>` 逃生入口(`router.push('/menu')`);改密/登出/"验证 token"全保留,**不做纯重定向**(留可回退门)。
+  - **落地兜底散点收敛**:实现时发现"登录后落地页"不止 router 两处——`Login.vue` 的 `const redirect = route.query.redirect || '/home'` 与 `Register.vue` 注册成功 `router.push('/home')` 也是落地页,一并 `/home`→`/menu`(保留 `redirect` query 优先机制)。故本步实改 **4 个源文件**,非原计划 2 个。
+  - `package.json`:加 `vue-tsc@^2.1.10` devDep(typescript 已有 `^5.6.3`)、新增 `type-check: vue-tsc --noEmit`、`build` 改 `vue-tsc --noEmit && vite build`。
+- **验证**(对应 Proposal 步骤7 测试门,独立 verifier subagent 真浏览器 + 命令,STEP7 ALL PASS):A 清 storage 访问 `/menu`→最终 `/login?redirect=/menu`、无菜单 DOM、console 无错;B 注册 `s7v_2268`(id=8)+ 裸 `/login` 登录均落地 `/menu`;C Home 四入口齐全、点"进入点餐"→`/menu`;D 登出→`/login`、再访问 `/menu` 又被拦;E 裸 `fetch('/api/user/shoppingCart/list')`(无 Authorization)→**HTTP 401**;F 加 dishId=67(¥72)→ `localStorage.clear()` 重登同账号 → 服务端仍 1 行/¥72(**跨会话一致**、证服务端权威)→ 清空复原。`type-check`/`build` 均 exit 0。
+- **发现 / 踩坑 / 临场决策**:
+  - **`/menu` 门槛是"反向白名单"而非 `requiresAuth`**:0001 的守卫设计成"默认全拦,`meta.public` 才放行",所以步骤4–6 加 `/menu` 时无需任何 meta 就自动受保护——这是 0001 认证脚手架复用的红利。
+  - **`npm run build` 原来不查类型**(Gate G 暴露):`build` 只有 `vite build`,而 Vite 用 **esbuild 转译**——esbuild 为速度只做"逐文件剥类型注解",**不做跨文件类型检查**;类型错误能静默进产物。这正是 create-vue 官方模板把 `type-check`(`vue-tsc`)与 `build-only`(`vite build`)**分成两个脚本**的原因。verifier 起初按测试门跑 `npm run build` 发现它不查类型 → 临时 `npx vue-tsc --noEmit` 补验(绿)→ 主窗口据此请 Tech Lead 拍板,**选择固化**:让 `build` 先 `vue-tsc --noEmit` 再 `vite build`,后续 0003–0005 有真类型门。**面试点**:esbuild/SWC 转译 vs `tsc` 类型检查的区别;为何前端构建普遍"转译与类型检查解耦"(速度 vs 正确性)。→ 候选 ADR-0002 Addendum AD3(留 Phase 4 定)。
+  - 登录门槛的"无闪烁"本质:Vue Router `beforeEach` 返回重定向对象是**导航前同步拦截**,目标组件根本不 mount,故不存在"先看到 /menu 再跳走"的闪烁(区别于 mount 后在 `onMounted` 里 replace 的做法)。
+  - verifier 注册的 `s7v_2268`(id=8)留库供后续步骤复用,购物车已清空无脏数据。
+- **关联**: 见本步 commit / ADR D2(登录门槛)、AD3(候选:类型检查固化)/ 里程碑 B(登录门槛 + 落地路由端到端)

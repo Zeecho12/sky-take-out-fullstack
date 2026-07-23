@@ -2,15 +2,15 @@
 
 ## 元信息
 - 编号: 0002
-- 状态: 规划中(Proposal 待双路评审)
-- 分支: feature/0002-cend-browse-cart(执行期创建)
+- 状态: Phase 3 完成(步骤 1–7 全 TESTED),待 0002 验收 + 合并回 main
+- 分支: feature/0002-cend-browse-cart
 - 关联: Requirement → ./requirement.md | Progress → ./progress.md | ADR → ../../decisions/0002-cend-browse-cart.md | 契约 → ../../api-contract/用户端接口.md
 
 ## ⭐ 交接头(覆盖式,永远只写"现在")
-- **当前**:Phase 3 进行中。**步骤 1–6 已 TESTED(里程碑 A:点餐页端到端跑通)**。真浏览器实测:菜单渲染、分类切换、shop 状态、规格弹层选择+加购、**未选规格不发请求(负例)**、数量增到 3 且刷新后持久(¥216)、购物车明细 +/-、套餐含菜弹层、套餐加购(→4/¥315)全绿,无 console 报错。环境:Docker/Redis + shop 已初始化;后端 :8080、前端 :5173。
-- **下一步(铁律 8:派 subagent 实现,勿在主窗口内联写代码)**:步骤7 —— 登录门槛 + 落地路由(`/`→`/menu` + Home 逃生 + `/home` 两处)+ 端到端(登出后访问 /menu 负例 + 第二浏览器一致性)。主窗口只编排 + 审 diff + 把门 + 提交。
+- **当前**:**Phase 3 全部完成 —— 步骤 1–7 全 TESTED**(里程碑 A 点餐页端到端 + 步骤7 登录门槛/落地路由)。步骤7 独立 verifier 端到端 STEP7 ALL PASS(A 未登录拦截无闪烁 / B 登录·注册落地 `/menu` / C Home 逃生入口 / D 登出再拦 / E 无 token→401 / F 服务端权威跨会话一致);`npm run build`(已固化 `vue-tsc --noEmit` 类型检查门)exit 0、零类型错误。环境:Docker/Redis + shop 已初始化;后端 :8080、前端 :5173。
+- **下一步**:0002 验收(冒烟基线 `docs/smoke-tests.md` C 端相关项)→ **合并回 main(一功能一次合并;合并前与 Tech Lead 确认)** → Phase 4 收尾(复核 ADR-0002 是否补 D2/类型检查 Addendum、覆盖式更新 `CLAUDE.md` 当前进度、按需再生派生文档)。
 - **别碰**:后端**除 `ShoppingCartMapper.updateNumberById` 一行外**一律不动;地址/下单(0003)、支付(0004)、订单管理(0005)相关代码与页面;`reference/`(只读)。
-- **怎么验证**:起 Redis(`docker start sky-redis`)+ 后端 jar(:8080)+ `PUT /admin/shop/1`(Bearer)初始化店铺状态;C 端 `npm --prefix project-sky-user-vue3 run dev`(:5173);用 preview 工具真浏览器端到端验 + 截图。
+- **怎么验证**:起 Redis(`docker start sky-redis`)+ 后端 jar(:8080)+ `PUT /admin/shop/1`(Bearer)初始化店铺状态;C 端 `npm --prefix project-sky-user-vue3 run dev`(:5173);用 preview 工具真浏览器端到端验 + 截图。类型门:`npm --prefix project-sky-user-vue3 run type-check`(或 `run build`)应 exit 0。
 
 ## 1. 现状(与本改动相关的技术起点)
 > 全局架构见 docs/Backend_scan/BACKEND_OVERVIEW.md;这里只写和 0002 相关的。
@@ -82,7 +82,10 @@
 - [x] **步骤6**:规格弹层 + 套餐含菜弹层 + 加/减/清空  [依赖: 1,5]  —— **TESTED (2026-07-22)**
       测试门:无口味菜直接加;**有口味菜未选规格点加 → `preview_network` 确认未发出 `cart/add` + 有提示**(负例);选完加成功;套餐可加可看含菜;CartDetailPopup 里 +/- **复用原 `dishFlavor`**;**数量硬断言**:连加 3 次 → number=3、合计=单价×3 → **刷新仍 3**(`preview_eval` 比对 + `preview_network` 看 `cart/list` 响应)。
       ✅ 实测:未选规格点"加入购物车"→ `preview_network` 无 `shoppingCart/add`(负例过);选微辣后加成功;**数量增到 3 → 刷新仍 ¥216(持久,证后端修复)**;+/- 复用原 dishFlavor "微辣";套餐含菜弹层显示 2 菜、套餐加购成功(→4/¥315)。
-- [ ] **步骤7**:登录门槛 + 落地路由(`/`→`/menu` + Home 逃生 + `/home` 两处)+ 端到端  [依赖: 5,6]  —— TODO
+- [x] **步骤7**:登录门槛 + 落地路由(`/`→`/menu` + Home 逃生 + `/home` 两处)+ 端到端  [依赖: 5,6]  —— **TESTED (2026-07-22)**
       测试门:未登录访问 `/menu` → 跳登录;登录落地 `/menu`;Home 有"进入点餐"入口且可去改密/登出;**登出后再访问 `/menu` → 拦截、无闪烁**;无 token 直打 `/user/shoppingCart/list` → 401;**第二浏览器/隐私窗口**登录同账号 → 购物车一致。端到端截图作交付证据。
+      ✅ 实测(独立 verifier subagent,STEP7 ALL PASS):A 未登录访问 `/menu`→最终 `/login?redirect=/menu`、无菜单 DOM、console 无错(同步守卫不挂载=无闪烁);B 注册新用户 `s7v_2268`(id=8)+ 裸登录均落地 `/menu`;C Home 见"进入点餐/验证 token/改密/登出"齐全、点击进 `/menu`;D 登出→`/login`、再访问 `/menu` 又被拦;E 裸 `fetch('/api/user/shoppingCart/list')`→**401**;F 加 dishId=67(¥72)→清客户端重登同账号→服务端仍 1 行/¥72(跨会话一致)、复原已清空。
+      **落点扩到 4 源文件**(超出原计划的 2 文件):除 `router/index.ts`(两处 `/home`)、`Home.vue`(逃生入口)外,登录后落地兜底还散在 `Login.vue`(`route.query.redirect` 默认值 `/home`→`/menu`)、`Register.vue`(注册成功 `router.push('/home')`→`/menu`),一并对齐 `/menu`。
+      **工具链固化(用户拍板)**:Gate G 暴露 `npm run build` 只有 `vite build`(esbuild 只转译不查类型),类型错误会被静默放过。→ 加 `vue-tsc@^2.1.10` devDep + `type-check` 脚本 + `build` 改为 `vue-tsc --noEmit && vite build`;`type-check`/`build` 均 exit 0(全项目零类型错误)。面试点见 progress / 待 Phase 4 决定是否补 ADR Addendum。
 
 > 说明:步骤 1(后端)与 2(前端脚手架)互不依赖;3~7 基本串行。契约已定死,本功能是纯前端对既有后端(+ 一处后端 bugfix),不涉及前后端并行。测试门刻意做成"可证伪的绝对断言 + 工具核对(curl / preview_eval / preview_network)",不留肉眼判定空间(见 ADR Addendum AD1)。

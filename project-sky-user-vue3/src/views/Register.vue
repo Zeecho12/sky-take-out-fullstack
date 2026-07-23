@@ -27,9 +27,9 @@ async function onSubmit() {
   try {
     const res = await registerApi(username.value, password.value)
     if (res.code === 1) {
-      // 契约:注册成功直接签发 JWT → 免再登录,直接进首页
+      // 契约:注册成功直接签发 JWT → 免再登录,直接进点餐主页
       userStore.setAuth(res.data)
-      router.push('/home')
+      router.push('/menu')
     } else {
       error.value = res.msg || '注册失败'
     }

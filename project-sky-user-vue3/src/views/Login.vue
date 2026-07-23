@@ -24,7 +24,7 @@ async function onSubmit() {
     const res = await loginApi(username.value, password.value)
     if (res.code === 1) {
       userStore.setAuth(res.data)
-      const redirect = (route.query.redirect as string) || '/home'
+      const redirect = (route.query.redirect as string) || '/menu'
       router.push(redirect)
     } else {
       error.value = res.msg || '登录失败'
