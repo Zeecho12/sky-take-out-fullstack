@@ -39,6 +39,13 @@ public interface OrderService {
     OrderVO details(Long id);
 
     /**
+     * 查询订单详情(用户端专属:先校验订单存在且归属当前登录用户)
+     * @param id
+     * @return
+     */
+    OrderVO getUserOrderDetail(Long id);
+
+    /**
      * 用户取消订单
      * @param id
      */
