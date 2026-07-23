@@ -67,3 +67,20 @@
 **坑 / 备忘**
 - verifier 造数据时 Git Bash 传中文 `remark` 字节坏掉致 submit 400 —— 是脚本编码问题非被测代码;curl 传中文 body 用 ASCII 或确保 UTF-8。
 - 复用了已有 `MessageConstant.ORDER_NOT_FOUND`("订单不存在");CAS 的 `WHERE ... pay_status=0` + `getByNumberAndUserId` 的 `user_id` 双重归属保护(取单即拦 + CAS 再拦)。
+
+---
+
+## 2026-07-23 · Phase 3 步骤2(后端去微信支付删干净)· TESTED
+
+**做了什么**
+- 派 subagent 实现步骤2(铁律 8):按序 3 处 refund 换 mock → 删 `weChatPayUtil` 字段+import → 删 `WeChatPayUtil.java`/`WeChatProperties.java` → 删 `application.yml`(L47–56 占位)+ `application-dev.yml`(L19–28 明文商户号/证书路径)的 `sky.wechat` 块 → 删根 pom + `sky-common/pom.xml` 的 `wechatpay-apache-httpclient` 依赖。3 处 refund 逐处枚举:`userCancelById`(`orderDB`,独立调用→1 句 mock log,`setPayStatus(Orders.REFUND)` 保留)、`rejection`(`ordersDB`,`String refund=...`+后继 log 两行→1 句)、`cancel`(`orderDB`,同 rejection)。周边状态流转/前置校验/`payStatus` 口径一字未动。
+- 主窗口:审 diff(5 改 2 删,+8/−318)、停旧 jar、`mvn clean package -DskipTests` EXIT=0、起新 jar(干净启动 19.8s)、派独立 verifier 跑②③、提交 commit。
+- 测试门全 PASS:①编译 EXIT=0 + jar 无 bean/config 报错启动(证 `WeChatProperties` 的 `@ConfigurationProperties` 解绑干净、`sky.wechat` 配置删除无残留引用);②退款 mock(取消订单 id=6 已支付单 → `code:1`;DB `status=6 已取消`、`cancel_time` 非空;jar 日志命中"模拟退款(mock)…1784795918630",走了 mock 分支无微信外呼);③grep 归零(`WeChatPayUtil`/`WeChatProperties`/`PayNotifyController`/`sky.wechat`/`weChatPayUtil`/`wechatpay-apache-httpclient`/`wechatpay` 在 `sky-take-out` 下全 0 命中)。
+
+**下一步**
+- 步骤3(前端):`api/order.ts` 补 `payment`;新增 `Order/Pay.vue`;`Order/Created.vue` 改造成成功页;路由 + `Order/Confirm.vue` 落点改支付页。测试门端到端 preview + preview_network,交 verifier。
+
+**坑 / 备忘**
+- **日志中文乱码**:jar 用 Windows JVM 默认字符集(GBK)写 stdout,`log.info("模拟退款…")` 的中文在日志文件里按 GBK 落字节,用 UTF-8 grep "模拟退款"抓不到(须按 `mock`+订单号 ASCII 抓)。**是全站 Windows 日志编码通病、非本次代码问题**,0004 不处理(要治得设 JVM `-Dfile.encoding=UTF-8` 或日志 encoding,记面试/运维点)。
+- `Orders.REFUND` 是订单**状态枚举**(全大写),与微信 `weChatPayUtil.refund`(方法)同词不同物,grep 归零时须甄别——已确认前者合法保留、不计违规。
+- `cancel` 里 `if (payStatus == 1)` 用字面量而非 `Orders.PAID` —— 既有写法,本步不动(口径统一留 0005)。

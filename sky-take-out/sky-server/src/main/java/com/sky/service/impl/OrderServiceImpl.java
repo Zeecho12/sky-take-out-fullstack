@@ -13,7 +13,6 @@ import com.sky.exception.ShoppingCartBusinessException;
 import com.sky.mapper.*;
 import com.sky.result.PageResult;
 import com.sky.service.OrderService;
-import com.sky.utils.WeChatPayUtil;
 import com.sky.vo.OrderStatisticsVO;
 import com.sky.vo.OrderSubmitVO;
 import com.sky.vo.OrderVO;
@@ -49,9 +48,6 @@ public class OrderServiceImpl implements OrderService {
 
     @Autowired
     private AddressBookMapper addressBookMapper;
-
-    @Autowired
-    private WeChatPayUtil weChatPayUtil;
 
     @Autowired
     private WebSocketServer webSocketServer;
@@ -244,13 +240,8 @@ public class OrderServiceImpl implements OrderService {
 
 //        订单处于待接单的状态下取消，需要进行退款
         if (orderDB.getStatus().equals(Orders.TO_BE_CONFIRMED)) {
-//            调用微信支付退款接口
-            weChatPayUtil.refund(
-                    orderDB.getNumber(),
-                    orderDB.getNumber(),
-                    orders.getAmount(),
-                    orders.getAmount()
-            );
+//            模拟退款(mock)，不再外呼微信支付
+            log.info("模拟退款(mock)，订单号：{}", orderDB.getNumber());
 
 //            支付状态修改为 退款
             orders.setPayStatus(Orders.REFUND);
@@ -357,14 +348,8 @@ public class OrderServiceImpl implements OrderService {
 //        支付状态
         Integer payStatus = ordersDB.getPayStatus();
         if (payStatus == Orders.PAID) {
-//            用户已支付，需要退款
-            String refund = weChatPayUtil.refund(
-                    ordersDB.getNumber(),
-                    ordersDB.getNumber(),
-                    ordersDB.getAmount(),
-                    ordersDB.getAmount()
-            );
-            log.info("申请退款：{}", refund);
+//            用户已支付，模拟退款(mock)，不再外呼微信支付
+            log.info("模拟退款(mock)，订单号：{}", ordersDB.getNumber());
         }
 
 //        拒单需要退款，根据订单id更新订单状态，拒单原因，取消时间
@@ -389,14 +374,8 @@ public class OrderServiceImpl implements OrderService {
 //        支付状态
         Integer payStatus = orderDB.getPayStatus();
         if (payStatus == 1) {
-//            用于已支付，需要退款
-            String refund = weChatPayUtil.refund(
-                    orderDB.getNumber(),
-                    orderDB.getNumber(),
-                    orderDB.getAmount(),
-                    orderDB.getAmount()
-            );
-            log.info("申请退款：{}", refund);
+//            用于已支付，模拟退款(mock)，不再外呼微信支付
+            log.info("模拟退款(mock)，订单号：{}", orderDB.getNumber());
         }
 
 //      管理端取消订单需要退款，根据订单id更新订单状态、取消原因、取消时间
