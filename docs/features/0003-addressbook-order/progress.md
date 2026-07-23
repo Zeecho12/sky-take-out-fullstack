@@ -139,3 +139,26 @@
 - 断言 list 状态用带 `Authorization: Bearer localStorage.sky_user_token` 的 `fetch('/api/user/addressBook/list')` 直读后端真相,低噪可靠。
 
 **下一步**:进 Phase 3 步骤5(结算页 + 下单 + 占位成功页 + 接线 0002"去结算")。
+
+---
+
+## 2026-07-23 · Phase 3 步骤5(结算下单收官)完成 —— 5 步全 TESTED
+
+**做了什么**
+- Tech Lead 确认(地址回传 Pinia store、送达时间只做"立即"、成功页 query 传参、餐具默认)后开工。派实现 subagent 填 `Confirm.vue`+`Created.vue` + 接线 `CartBar` + `List` 选择模式 + 新增 `stores/address.ts`(回 diff + type-check),主窗口审 diff + preview 端到端硬验。commit `d0fdbaa`(5 文件)。
+- 金额:`amount = cart.totalAmount + 6 + cart.totalCount`(打包费=件数);payload 定死 `deliveryStatus/tablewareStatus/payMethod = 1/1/1`,`estimatedDeliveryTime` = 本地格式化 now。
+- 地址回传:`useAddressStore().selected`;List `?mode=select` 时点卡片 setSelected + `router.back()`;Confirm 优先取 selected 否则 `getDefaultAddress()`。
+
+**端到端测试门(全绿,preview + XHR 录制,鮰鱼2斤×2 单价72)**
+- CartBar「去结算」→ `/order-confirm`(打烊/空车置灰保留)。
+- 结算页:默认地址(测试甲)+ 明细「鮰鱼2斤 x2 ¥144」与购物车一致 + 商品合计144/配送6/打包2/**合计152**。
+- 地址切换:选择模式选 ZhangSan(id=3)→ 卡更新;提交体 `{addressBookId:3, amount:152, deliveryStatus:1, estimatedDeliveryTime:"2026-07-23 00:21:32", packAmount:2, payMethod:1, tablewareNumber:1, tablewareStatus:1}`。
+- 提交 → `orderNumber 1784791292872` → `/order-created` 显订单号/¥152 → **`shoppingCart/list` 空**(任意地址成功=去百度端到端)。
+- 负例:空车 → `van-empty`「购物车是空的」、无去支付按钮;无地址(新账号 id=12 无默认)点去支付 → Toast「请选择收货地址」+ **0 次 order/submit**。
+- 双击:`submitting` 守卫 + 下单即清车(二次提交后端 SHOPPING_CART_IS_NULL 兜底);未自动化双击,守卫已审在位。
+
+**坑 / 备忘**
+- 端到端验证沿用步骤4 打法:`location.href` 到页(重载→守卫在 Pinia 激活下正常)+ 重装 XHR 录制器 + UI 点击(组件上下文)+ 带 token fetch 断言;跨账号负例靠改写 `localStorage.sky_user_token`/`sky_user_info` + reload 切账号(reload 重置 Pinia,`addressStore.selected` 不残留)。
+- 遗留测试数据:user8 订单若干(步骤1 + 本步 152 单)、地址 3 条(测试甲默认/ZhangSan/张三);新账号 `verify_pay_*`(id=12)有 1 购物车项、无地址、无订单。浏览器登录态当前停在 id=12(临时,可重登 s7v_2268)。
+
+**下一步**:0003 Phase 3 执行全部完成。进 Phase 4 验证收尾(合并 main 待 Tech Lead 拍板 + 复核 ADR + 更新 CLAUDE.md 快照/blueprint)。
