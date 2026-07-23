@@ -69,7 +69,7 @@ async function onPay() {
     if (res.code === 1) {
       await cart.refresh() // 下单后购物车已清空,重拉对齐
       router.push({
-        path: '/order-created',
+        path: '/order-pay', // 0004:下单成功先进支付页(键名不变,下游照读)
         query: {
           orderNumber: res.data.orderNumber,
           orderAmount: res.data.orderAmount

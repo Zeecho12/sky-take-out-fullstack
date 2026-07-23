@@ -84,3 +84,22 @@
 - **日志中文乱码**:jar 用 Windows JVM 默认字符集(GBK)写 stdout,`log.info("模拟退款…")` 的中文在日志文件里按 GBK 落字节,用 UTF-8 grep "模拟退款"抓不到(须按 `mock`+订单号 ASCII 抓)。**是全站 Windows 日志编码通病、非本次代码问题**,0004 不处理(要治得设 JVM `-Dfile.encoding=UTF-8` 或日志 encoding,记面试/运维点)。
 - `Orders.REFUND` 是订单**状态枚举**(全大写),与微信 `weChatPayUtil.refund`(方法)同词不同物,grep 归零时须甄别——已确认前者合法保留、不计违规。
 - `cancel` 里 `if (payStatus == 1)` 用字面量而非 `Orders.PAID` —— 既有写法,本步不动(口径统一留 0005)。
+
+---
+
+## 2026-07-23 · Phase 3 步骤3(前端支付页 + 成功页 + 接线)· TESTED —— Phase 3 收工
+
+**做了什么**
+- 派 subagent 实现步骤3(铁律 8):`types/business.ts` 增 `OrdersPaymentDTO{orderNumber,payMethod}`;`api/order.ts` 补 `payment(data)`→`PUT /user/order/payment`(`Result<null>`);新增 `views/Order/Pay.vue`(query 读 `orderNumber`/`orderAmount`、醒目金额、`van-radio-group` 单选"微信支付(模拟)"、"确认支付"带 `submitting` 防双击、`payment({orderNumber,payMethod:1})` → `res.code===1` push `/order-created` 透传 query / 否则 `showToast(res.msg)` 不跳);`views/Order/Created.vue` 原地改成支付成功页(标题"下单成功"、返回菜单→`/menu`、查看订单 `disabled` 标"0005 接管"、读 query orderNumber 备 0005);`router/index.ts` 加 `/order-pay`(非 public 受登录门槛);`views/Order/Confirm.vue` 下单成功落点 `/order-created`→`/order-pay`(query 键名 `orderNumber`/`orderAmount` 不变)。
+- 主窗口:审 diff(5 改 1 新增)、`type-check` EXIT=0、派独立 verifier 端到端(preview_network)、提交 commit。
+- 测试门全 PASS:①落点改造(去支付→`/order-pay`,金额 ¥11 与结算/query 一致)②确认支付 `PUT payment` `code:1`→`/order-created`"下单成功",DB `status=2/pay_status=1`(单号 1784820516284)③成功页(返回菜单跳 `/menu`、查看订单 disabled 含"0005"不跳、query 带 orderNumber)⑤负例(已支付单 `code:0`"该订单已支付"、URL 停 `/order-pay`、toast 不跳)⑥回归(`/menu`+`/order-confirm` 正常、`type-check` EXIT=0)。
+
+**关键确认(subagent 实读)**
+- `request.ts` 拦截器返回整个 `Result{code,data,msg}`(非只 data)→ payment 判 `res.code===1`(与 `submitOrder` 一致)。
+- 金额 query 键是 **`orderAmount`**(非 `amount`),Confirm→Pay→Created 全链一致;菜单路由 `/menu`;登录门槛 `meta.public` 缺省即受保护。
+- 成功页**原地复用 `Created.vue`**(文件名/路由 `/order-created` 不改,语义转为支付成功页),改动最小(Tech Lead 默认拍板)。
+
+**坑 / 备忘**
+- **环境扛不过进程重启(重要)**:`Start-Process` 起的 jar、Bash 后台 `npm run dev`、Docker Desktop 都会在 **Claude Code 进程退出/会话边界**时被带走(本次步骤3 端到端首轮就因后端全掉而 BLOCKED)。新窗口/会话恢复后**先核环境**(`java`/8080/6379/`docker ps`)再干活;掉了就:启 Docker Desktop → `docker start sky-redis` → 起 jar → `PUT /admin/shop/1`(Redis 重启店铺状态丢失)。
+- 端到端 verifier 用 `preview_start`(name `user-web`,已配 `.claude/launch.json`)起托管 vite + 浏览器,`preview_network` 抓请求/跳转;requestId 只回响应体、读不到请求体(用响应 code + DB + 负例交叉佐证 payment 契约)。
+- 消耗真实订单:步骤3 端到端下单+支付了单号 1784820516284(status=2/pay_status=1);步骤1 甲单 1784795918630 已在步骤2 被取消(status=6)。

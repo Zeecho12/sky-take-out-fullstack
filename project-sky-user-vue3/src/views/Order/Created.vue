@@ -4,7 +4,8 @@ import { useRoute, useRouter } from 'vue-router'
 const route = useRoute()
 const router = useRouter()
 
-// 由 Confirm 页下单成功后带过来展示(占位页,不做支付)
+// 支付成功后由 Pay 页带过来展示(键名与 Pay push 一致)。
+// orderNumber 保留:给 0005「查看订单」跳详情留钩子。
 const orderNumber = route.query.orderNumber as string | undefined
 const orderAmount = route.query.orderAmount as string | undefined
 
@@ -16,7 +17,7 @@ function goMenu() {
 <template>
   <div class="order-created">
     <van-icon name="checked" class="ok-icon" />
-    <div class="title">订单已创建</div>
+    <div class="title">下单成功</div>
 
     <div class="info">
       <div class="row">
@@ -29,9 +30,11 @@ function goMenu() {
       </div>
     </div>
 
-    <div class="tip">支付功能即将上线(0004)</div>
-
-    <van-button type="primary" round block class="back-btn" @click="goMenu">返回菜单</van-button>
+    <div class="actions">
+      <van-button type="primary" round block class="action-btn" @click="goMenu">返回菜单</van-button>
+      <!-- 查看订单:0005 接管,当前禁用占位,不跳转 -->
+      <van-button round block disabled class="action-btn">查看订单(0005 接管)</van-button>
+    </div>
   </div>
 </template>
 
@@ -55,6 +58,6 @@ function goMenu() {
 .k { color: #969799; }
 .v { color: #333; }
 .v.amt { color: #ee0a24; font-weight: 700; }
-.tip { color: #969799; font-size: 13px; margin: 20px 0 32px; }
-.back-btn { max-width: 320px; margin: 0 auto; }
+.actions { max-width: 320px; margin: 32px auto 0; }
+.action-btn + .action-btn { margin-top: 12px; }
 </style>

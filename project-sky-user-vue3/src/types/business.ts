@@ -113,3 +113,10 @@ export interface OrderSubmitVO {
   orderAmount: number
   orderTime: string
 }
+
+// 支付入参(OrdersPaymentDTO) —— 契约 PUT /user/order/payment(0004 mock 支付)。
+// 当前用户由后端 JWT 拦截器注入;payMethod 前端定死 1(微信支付,模拟)。
+export interface OrdersPaymentDTO {
+  orderNumber: string
+  payMethod: number
+}
