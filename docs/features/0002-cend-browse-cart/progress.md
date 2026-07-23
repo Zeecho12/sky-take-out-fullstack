@@ -25,3 +25,12 @@
   - **全局 button 金色主题渗进 Vant 按钮**:`styles.css` 的全局 `button` 规则让 Vant 主按钮显示金色而非 Vant 蓝。纯外观,暂不处理(UI 能跑就行)。
   - ProductImage 当前一律占位图(不接云、不发失败请求);`src` prop + `@error` 回退占位图,为将来 S3 留过渡位。
 - **关联**: 见本步 commit / ADR AD2
+
+### 步骤3 (2026-07-22) — 业务类型 + 5 个 API 模块
+- **改了什么**: 新增 `src/types/business.ts`(Category/DishFlavor/DishVO/Setmeal/DishItemVO/ShoppingCart/ShoppingCartDTO)+ `src/api/{shop,category,dish,setmeal,cart}.ts`(复用 request 层)。shop.ts 带 try/catch 兜底;setmeal.ts 对含菜明细做 `Map<id,Promise>` 轻缓存(失败剔除)。契约补注 dishFlavor 与 Redis 依赖。
+- **验证**(对应 Proposal 步骤3 测试门):对活后端(:8080)逐接口 curl(见 scratchpad/verify_step3.py):category/list、dish/list `code:1`;**`flavors[].value` 实测为 JSON 数组串**(如 `["不辣","微辣",...]`);`add(dishId,dishFlavor=首选项)` → `list` **原样回写** dishFlavor(number 1、amount 72.0),证实精确匹配契约;shop/status 有 Redis→200。
+- **发现 / 踩坑 / 临场决策**:
+  - **dish/list + setmeal/list 也依赖 Redis**(dish 手写 RedisTemplate 缓存、setmeal `@Cacheable`),Redis 未起时**直接 500 不降级**(jar 日志实证 `RedisConnectionFailureException`)。→ 比预期更早需要 Redis;已启动 Docker Desktop + `docker start sky-redis` + `PUT /admin/shop/1`。这也是 shop.ts 前端兜底价值的实证(后端读缓存不降级)。
+  - **seed 无套餐数据**(setmeal 表 0 行,但有 2 个 type=2 分类)→ setmeal 浏览接口正常但返回空;套餐 UI(步骤5/6)需经 admin API 建 demo 套餐(admin 建套餐会 `@CacheEvict` 清 setmealCache,直接 SQL 插入则被缓存的空列表挡住)。
+  - 全局 Druid 日志偶发 "discard long time none received connection" 是连接池回收空闲连接,非故障(MySQL 正常)。
+- **关联**: 见本步 commit / 契约补注(dishFlavor + Redis 依赖)

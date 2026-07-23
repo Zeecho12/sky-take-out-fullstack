@@ -7,8 +7,8 @@
 - 关联: Requirement → ./requirement.md | Progress → ./progress.md | ADR → ../../decisions/0002-cend-browse-cart.md | 契约 → ../../api-contract/用户端接口.md
 
 ## ⭐ 交接头(覆盖式,永远只写"现在")
-- **当前**:Phase 3 进行中。**步骤1、2 已 TESTED**。步骤2:Vant **全量引入**(见 ADR AD2)、占位图 `dummy.png`、`ProductImage` 已就位;dev server(:5173)真实 Vant 组件(button/stepper/cell)渲染正常、0001 登录页未受影响、无 console 报错。后端 jar 仍在 :8080。
-- **下一步**:步骤3 —— 业务 TS 类型 + 5 个 API 模块(shop 兜底 / setmeal 轻缓存)+ curl 复核契约(记录 dishFlavor 实际值)。
+- **当前**:Phase 3 进行中。**步骤1、2、3 已 TESTED**。步骤3:业务类型 + 5 个 API 模块就位,对活后端逐一验证(category/dish code:1、flavor value 是 JSON 数组串、dishFlavor 精确回写、shop/status 有 Redis 时 200)。环境:**Docker/Redis 已起 + shop 状态已初始化**;后端 :8080、前端 :5173 都在跑。
+- **下一步**:步骤4 购物车 store(已写,随步骤5联调验证)→ 步骤5 点餐主页布局(**里程碑A:菜单首渲染**;届时经 admin API 建一个 demo 套餐以测套餐 UI,因 seed 无套餐数据)。
 - **别碰**:后端**除 `ShoppingCartMapper.updateNumberById` 一行外**一律不动;地址/下单(0003)、支付(0004)、订单管理(0005)相关代码与页面;`reference/`(只读)。
 - **怎么验证**:起 Redis(`docker start sky-redis`)+ 后端 jar(:8080)+ `PUT /admin/shop/1`(Bearer)初始化店铺状态;C 端 `npm --prefix project-sky-user-vue3 run dev`(:5173);用 preview 工具真浏览器端到端验 + 截图。
 
@@ -70,8 +70,9 @@
 - [x] **步骤2**:引 Vant(**全量**,见 AD2)+ 复制占位图 + `ProductImage` + 冒烟  [依赖: 无]  —— **TESTED (2026-07-22)**
       测试门:`npm run dev` 起(:5173);**真实组件**(`van-stepper`/`van-cell`/`van-button`)样式正常(不止 van-button);占位图就位;**回测 0001**:登录页渲染正常、无 console 报错。
       ✅ 实测:临时在 Login 页渲染 Vant 真实组件 → `van-button--primary` 带 Vant 类 + 32px 高 + 背景色,stepper/cell 正常;0001 登录表单完好并存;`preview_console_logs` 无错误;验完已还原临时代码。
-- [ ] **步骤3**:业务 TS 类型 + 5 个 API 模块(shop 兜底 / setmeal 轻缓存)  [依赖: 2]  —— TODO
+- [x] **步骤3**:业务 TS 类型 + 5 个 API 模块(shop 兜底 / setmeal 轻缓存)  [依赖: 2]  —— **TESTED (2026-07-22)**
       测试门:curl 复核 8 接口 `code:1`,并**记录一条真实购物车行的 `dishFlavor` 实际值**写进契约注释;`shop.ts` 在 Redis 未初始化时**不抛错**(兜底返回"未知"),不阻塞 category/dish。
+      ✅ 实测:category/list、dish/list code:1;`flavors[].value` 确为 JSON 数组串;`add(dishFlavor=选项)` → `list` 原样回写(round-trip);shop/status 无 Redis→500(fallback 已在 shop.ts)/ 有 Redis→200;dishFlavor+Redis 约定已补进契约。setmeal/list code:1 但 seed 无套餐数据(count 0),setmeal UI 留步骤5/6 建 demo 套餐验。
 - [ ] **步骤4**:购物车 Pinia store(fetch/add/sub/clean + totalCount/totalAmount + 连续写去重)  [依赖: 1,2,3]  —— TODO
       测试门(`preview_eval` 断言):给已知单价 `dishId` 加 2 次 → `store.totalAmount === 单价×2` 且对应行 `number === 2`(依赖步骤1);连点 3 次数值不跳变、最终正确。
 - [ ] **步骤5**:点餐主页布局(状态兜底 + 分类栏 + 菜品/套餐列表 + 底部栏 + CartDetailPopup)  [依赖: 2,3,4]  —— TODO
