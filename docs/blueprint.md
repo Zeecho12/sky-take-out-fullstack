@@ -39,7 +39,7 @@
 |---|---|---|---|---|---|
 | 0002 | 商品浏览 + 购物车 | 店铺状态 / 分类 / 菜品(含口味规格)/ 套餐(含含菜)/ 购物车增删查清 + 点餐首页;引 Vant + 整站登录门槛 | 0001 | 是(仅 1 行 bugfix) | 已交付(合并 main `df53f0b`,2026-07-22) |
 | 0003 | 地址簿 + 下单 | 地址簿 CRUD(三级省市区)+ 结算页 + 备注;后端去百度配送校验 + `submitOrder` 补 `@Transactional` + 地址簿越权修复(Service 层) | 0002 | 是 | 已交付(合并 main `3365f69`,2026-07-23) |
-| 0004 | mock 支付 | 替微信支付 / 去 openid / `payment()` 内部同步置已支付 + 调 `paySuccess` / 退款 mock / 删 `PayNotifyController`;支付页 + 成功页 | 0003 | 是 | 规划中(Phase 2) |
+| 0004 | mock 支付 | 替微信支付(`payment()` 内部同步 + 原子 CAS 幂等)/ 去 openid / 删微信基建(类+配置+pom)+ 退款 mock;支付页 + 成功页 | 0003 | 是 | 已交付(合并 main `b08bf8e`,2026-07-23) |
 | 0005 | 订单管理 | 历史订单(tab 分页)/ 订单详情 / 催单 / 取消 / 再来一单 / 用户中心 | 0004 | 否 | 未开始 |
 
 > 状态取值:`未开始` / `规划中`(Phase 2) / `执行中`(Phase 3) / `已交付`(合并回 main、DoD 全绿)。
@@ -60,3 +60,4 @@
   (D1 内部同步 / D2 去 openid / D3 响应简化+订正文档漂移 / D4 删微信基建+refund 换 mock,边界只拆外呼 / D5 支付页+成功页替占位);
   Requirement + ADR-0004 五决策 + 契约校准(payment 段)+ Proposal(3 步)已产出。**双路评审(内审红队实读源码 + 外审 DeepSeek-v4-pro)已融合入 AD1**:
   D1 细化为 CAS 原子幂等(采纳外审 HIGH#2,用户选 A)、D4 边界订正为逐处枚举(内审防编译失败)。待 Tech Lead 复核 → Phase 3。
+- **2026-07-23**:**0004「mock 支付」交付并合并回 main**(merge `b08bf8e`,`--no-ff` 保留 Phase 3 三步粒度;DoD 全绿):后端 payment CAS 内部同步 mock(去 openid/微信 pay)+ 去微信基建删干净(类+配置+pom)+ 3 处 refund 换 mock;前端支付页 + 成功页 + 接线。执行期边界订正:`PayNotifyController` 删除由步骤2 提前到步骤1(paySuccess 唯一调用者,Tech Lead 拍板)。epic 推进焦点转向 **0005「订单管理」**(下一个开工的 feature;含 `userCancelById` IDOR + `rejection`/`cancel` 的 `payStatus=REFUND` 口径不一致两笔 backlog)。**C 端重建 epic 仅剩 0005**。

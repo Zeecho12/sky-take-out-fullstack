@@ -178,3 +178,12 @@
 - 二区 MUST-FIX/SHOULD-FIX(D4 逐处枚举、pom 依赖、测试门重挂、userMapper 清理、成功页透传、金额 NOTED、userCancelById IDOR 记 0005)一并落 requirement / proposal / 本 ADR。
 
 **评审留痕**:内审 = 会话内全新上下文红队 subagent(实读 `OrderServiceImpl` / `OrderMapper.xml` / `Orders` 常量 / `pom.xml` / `application*.yml` / 前端 `request.ts` / `Confirm.vue` / `Created.vue` / `router`);外审 = `~/.claude/tools/deepseek_review.py`(`deepseek-v4-pro`)。**异构双路敌对评审**再次印证:收敛处(D4 编译边界、测试门恒真)高置信;分歧处(HIGH#2 竞态是否阻断)靠**实读源码 + 项目上下文**判分量(外审只有文档会高估严重度,内审能读码 + 知 backlog 声明故更准);最终由 Tech Lead 就"范围选择"(要不要顺手上 CAS)拍板——决策留人、机制留笔记。
+
+### AD2 — 执行期边界订正:`PayNotifyController` 删除从步骤2 提前到步骤1(2026-07-23,Tech Lead 拍板)
+
+Phase 3 步骤1 开工后暴露一个规划期的**步骤边界疏漏**:proposal 把"删 `paySuccess`"放步骤1、把"删 `PayNotifyController`"放步骤2,但 `PayNotifyController.paySuccessNotify()`(L59)是 `paySuccess` 的**唯一调用者**。步骤1 删掉 `paySuccess` 后,`PayNotifyController` 悬空引用 → **步骤1 结束时项目不可编译**,而步骤1 的测试门恰恰需要构建 + 启动 jar 做 curl+DB 硬验 → 自相矛盾。
+
+- **根因**:本 ADR D1 的原逻辑本就是"**删 `PayNotifyController`(D4)→ `paySuccess` 无调用者 → 删 `paySuccess`**",即删 paySuccess **依赖**先删 PayNotifyController;proposal 把这条依赖链劈到两步违背了该顺序。
+- **处置(选 A · 提前删)**:把 `PayNotifyController.java` 删除**并入步骤1**(与删 `paySuccess` 同一 commit `75ae4bd`);其余微信清理(`WeChatPayUtil`/`WeChatProperties`/`sky.wechat` 配置/pom/3 处 refund)仍留步骤2。备选 B(步骤1 不删 paySuccess、推迟到步骤2)偏离 D1"步骤1 删 paySuccess";备选 C(临时桩注释掉调用)造一次性丢弃代码——均劣于 A。
+- **对测试门的影响**:步骤2 的"grep 归零"门包含 `PayNotifyController` → 0 命中,提前删后仍成立(只是命中在步骤1 就归零),门不受影响。
+- **教训**:拆步骤时,**删除某方法与删除其唯一调用者应在同一步**(否则中间态不可编译);"可编译"应作为每个后端步骤的隐含出口条件,规划切分时显式检查调用闭包的跨步依赖。

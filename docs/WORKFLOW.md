@@ -35,6 +35,8 @@
   `& 'D:\HSPJAVA\mysql-5.7.19-winx64\bin\mysql.exe' -uroot -p123456 --ssl-mode=DISABLED sky_take_out < docs\features\0001-cend-auth-jwt\0001-migration.sql`
 - **`SHOP_STATUS`**:重启 Redis / 清库后,`/user/shop/status` 会因 Redis 无该键拆箱 NPE→500;用 admin `PUT /admin/shop/1`(Bearer)重新初始化(勿裸 `redis-cli set`——与 `RedisTemplate` 序列化器不符)。
 - C 端 Vite 无需 admin 工程的 `--openssl-legacy-provider`。
+- **环境扛不过 Claude Code 进程重启 / 会话边界**(0004 踩过):`Start-Process` 起的后端 jar、后台 `npm run dev`、乃至 **Docker Desktop** 都会在 CLI 进程退出时被一起带走。**新窗口 / 会话恢复后先核环境再干活**:`Get-CimInstance Win32_Process -Filter "Name='java.exe'"`(看 sky-server jar 在不在)、端口 8080 / 6379 是否监听、`docker ps`(daemon 通不通)。掉了就重来:启 Docker Desktop(`& 'C:\Program Files\Docker\Docker\Docker Desktop.exe'`,轮询 `docker ps` 到通)→ `docker start sky-redis` → 起 jar → `PUT /admin/shop/1`(**Redis 容器重启后内存态清空,`SHOP_STATUS` 丢失需重新初始化**)。
+- **日志中文按 GBK 落字节**:jar 用 Windows JVM 默认字符集写 stdout,`log.info("中文…")` 在日志文件里 UTF-8 grep 抓不到(须按 ASCII 片段或订单号抓)。属 Windows 日志编码通病,要治设 JVM `-Dfile.encoding=UTF-8`。
 
 ## 冒烟基线
 `docs/smoke-tests.md`(全套 [A]~[L] + C 端 6.1~6.7)。
