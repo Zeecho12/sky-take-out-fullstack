@@ -80,3 +80,24 @@
 
 **下一步**
 - Phase 3 步骤2(后端退款口径统一 D2 + AD1 订正):`rejection`/`cancel` 补 `setPayStatus(REFUND)` + 三处已支付判断统一 `Orders.PAID.equals(payStatus)`。独立 commit,派 subagent 实现、verifier 跑退款口径测试门(含未支付不误退锁可达路径)。
+
+---
+
+## 2026-07-23 · Phase 3 步骤2 后端退款口径统一(D2 + AD1 订正)—— 完成 TESTED
+
+**做了什么(铁律 8)**
+- 派实现 subagent 改 1 文件 `OrderServiceImpl.java` 两个管理端方法:`rejection`/`cancel` 已支付判断改 `Orders.PAID.equals(payStatus)`(消 Integer `==` 引用比较陷阱、消 `cancel` 字面量 `1`)+ 块内补 `orders.setPayStatus(Orders.REFUND)`;`orders` 更新对象构建上移到判断前(对齐 `userCancelById` 惯例,让退款置位落判断块内)。`userCancelById` 不动;`cancel` 既有 `getPayStatus()` 无 null 检查不扩范围修(AD1 LOW)。编译 PASS(+16/-12)。
+- 主窗口审 diff(status/reason/time/update 全不变,仅新增退款状态位)→ 停旧 jar → `mvn -DskipTests package` 重建 → 起新 jar(PID 3188,:8080 200)→ 派 verifier。
+- 提交 code commit `a296f2e`(独立,仅 OrderServiceImpl.java)。
+
+**验证证据(verifier,curl+DB,4/4 PASS,全 DB 直接造单)**
+- 造单 id 9(user8/status2/pay1)、10(同)、11(同)、12(user8/status1/pay0),number T20260723001~004。
+- ①甲 `PUT /user/order/cancel/9`→code1,DB 9: status 2→6、pay_status 1→2(回归基准不破)。②admin `rejection {id:10}`→code1,DB 10: 2→6、pay 1→**2**(修复点,改前停 1)。③admin `cancel {id:11}`→code1,DB 11: 2→6、pay 1→**2**(修复点)。④甲 `cancel/12`(status1 未付)→code1,DB 12: 1→6、pay **0→0 保持**(不误退)。reason 字段落库正确。
+
+**坑 / 发现**
+- **④ 锁可达路径 = user cancel(status1)**,没走 rejection:rejection 有 status==2 前置,而 status2 必已支付,造不出"未支付+status2"→ 走 rejection 恒撞 ORDER_STATUS_ERROR、到不了退款分支=假绿(AD1 内审)。验证选对了路径。
+- **Git Bash 传中文 body 坏码**(与本 feature 开篇备忘一致):verifier 首轮 `rejectionReason:"库存不足"` 经 Git Bash 编码破坏 → 请求体 JSON 解析失败 400(未进业务),换 ASCII/文件承载 body 重发即 code1。测试环境编码问题非代码缺陷;400 未触达业务故订单状态未变,重发才生效。
+- `OrderMapper.update` 的动态 `<if test="payStatus!=null">` 保证:只在已支付分支 set payStatus,未支付单 update 不带 payStatus 列 → pay_status 保持 0(④ 得以成立)。
+
+**下一步**
+- Phase 3 步骤3(前端脚手架:`types/business.ts` 补 4 类型 + `api/order.ts` 补 5 函数[historyOrders 参数名 `pageNum`] + `router` 加 3 路由 + 3 占位组件),测试门 type-check exit0 + curl 硬验 historyOrders `?pageNum=1&pageSize=10` 返 `{total,records}`。后端两步已收尾,余下纯前端。
