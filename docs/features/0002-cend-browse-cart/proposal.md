@@ -7,8 +7,8 @@
 - 关联: Requirement → ./requirement.md | Progress → ./progress.md | ADR → ../../decisions/0002-cend-browse-cart.md | 契约 → ../../api-contract/用户端接口.md
 
 ## ⭐ 交接头(覆盖式,永远只写"现在")
-- **当前**:Phase 3 进行中。**步骤1(后端 bugfix `updateNumberById`)已 TESTED**(curl 断言:dishId=46 连加两次 → `number==2`);jar 已重建并在 :8080 运行。
-- **下一步**:步骤2 —— 引 Vant(按需)+ 复制占位图 + `ProductImage` + 冒烟(含回测 0001 登录/注册页)。
+- **当前**:Phase 3 进行中。**步骤1、2 已 TESTED**。步骤2:Vant **全量引入**(见 ADR AD2)、占位图 `dummy.png`、`ProductImage` 已就位;dev server(:5173)真实 Vant 组件(button/stepper/cell)渲染正常、0001 登录页未受影响、无 console 报错。后端 jar 仍在 :8080。
+- **下一步**:步骤3 —— 业务 TS 类型 + 5 个 API 模块(shop 兜底 / setmeal 轻缓存)+ curl 复核契约(记录 dishFlavor 实际值)。
 - **别碰**:后端**除 `ShoppingCartMapper.updateNumberById` 一行外**一律不动;地址/下单(0003)、支付(0004)、订单管理(0005)相关代码与页面;`reference/`(只读)。
 - **怎么验证**:起 Redis(`docker start sky-redis`)+ 后端 jar(:8080)+ `PUT /admin/shop/1`(Bearer)初始化店铺状态;C 端 `npm --prefix project-sky-user-vue3 run dev`(:5173);用 preview 工具真浏览器端到端验 + 截图。
 
@@ -48,8 +48,8 @@
 
 ## 3. 会动的关键文件(前端 `project-sky-user-vue3/` + 后端一行 bugfix)
 - **后端**:`sky-server/src/main/resources/mapper/ShoppingCartMapper.xml` —— 改 `updateNumberById`:`set amount = #{amount}` → `set number = #{number}`(**唯一后端改动**,步骤1)
-- `package.json` —— 增 `vant`、`unplugin-vue-components`(+ 视需要 `unplugin-auto-import`)
-- `vite.config.ts` —— 加 Components 插件(VantResolver)
+- `package.json` —— 增 `vant`(**全量引入**,见 ADR AD2;不再需要 unplugin / vite 插件)
+- `src/main.ts` —— 改:`import Vant from 'vant'` + `import 'vant/lib/index.css'` + `app.use(Vant)`
 - `src/assets/dummy.png` —— 新增(从 `reference/Resource/Dummy.png` 复制)
 - `src/api/shop.ts` / `category.ts` / `dish.ts` / `setmeal.ts` / `cart.ts` —— 新增(shop 带兜底、setmeal 带轻缓存)
 - `src/types/business.ts`(或就近内联)—— 新增业务类型
@@ -67,8 +67,9 @@
 - [x] **步骤1**:后端 bugfix `updateNumberById`(`set amount`→`set number`)+ 重建 jar  [依赖: 无]  —— **TESTED (2026-07-22)**
       测试门(curl 硬断言):停旧 jar → 改 XML → 重建 → 起;登录取 token → 对同一 `dishId` `cart/add` **两次** → `cart/list` 断言该行 `number == 2`(**修复前为 1**)→ `cart/clean` 复原。
       ✅ 实测:dishId=46 连加两次 → `cart/list` 该行 `number:2`(见 progress 步骤1)。
-- [ ] **步骤2**:引 Vant(按需)+ 复制占位图 + `ProductImage` + 冒烟  [依赖: 无]  —— TODO
-      测试门:`npm run dev` 起(:5173);**真实组件**(`van-sidebar`/`van-stepper`/`van-popup`)样式正常(不止 `van-button`);占位图显示;**回测 0001**:`/login`、`/register` 填表提交仍成功(不崩)。preview 截图。
+- [x] **步骤2**:引 Vant(**全量**,见 AD2)+ 复制占位图 + `ProductImage` + 冒烟  [依赖: 无]  —— **TESTED (2026-07-22)**
+      测试门:`npm run dev` 起(:5173);**真实组件**(`van-stepper`/`van-cell`/`van-button`)样式正常(不止 van-button);占位图就位;**回测 0001**:登录页渲染正常、无 console 报错。
+      ✅ 实测:临时在 Login 页渲染 Vant 真实组件 → `van-button--primary` 带 Vant 类 + 32px 高 + 背景色,stepper/cell 正常;0001 登录表单完好并存;`preview_console_logs` 无错误;验完已还原临时代码。
 - [ ] **步骤3**:业务 TS 类型 + 5 个 API 模块(shop 兜底 / setmeal 轻缓存)  [依赖: 2]  —— TODO
       测试门:curl 复核 8 接口 `code:1`,并**记录一条真实购物车行的 `dishFlavor` 实际值**写进契约注释;`shop.ts` 在 Redis 未初始化时**不抛错**(兜底返回"未知"),不阻塞 category/dish。
 - [ ] **步骤4**:购物车 Pinia store(fetch/add/sub/clean + totalCount/totalAmount + 连续写去重)  [依赖: 1,2,3]  —— TODO

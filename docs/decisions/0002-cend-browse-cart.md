@@ -138,3 +138,8 @@
 - **落地路由保留 Home 逃生** + `/menu`(不做纯重定向),消掉单向门。
 
 **评审留痕**:内审 = 会话内全新上下文红队 subagent;外审 = `.tools/deepseek_review.py`(deepseek-v4-pro)。这是"你如何验证自己的设计"的面试实证——异构双路敌对评审,收敛处高置信、分歧处补覆盖;`number` bug 是"UPDATE 写错列 → 静默 no-op(不报错、只是数量默默不涨)"的真实案例。
+
+### AD2 — Vant 改用全量引入(执行期,2026-07-22 步骤2)
+- 原 D1 括注"按需引入(tree-shaking)"。执行时:两路评审均预警按需引入的隐性代价——functional 组件(Toast/Dialog)样式不随 VantResolver 自动引入、与 Vite/tsconfig 耦合、样式易缺。
+- **决策**:改用**全量引入**(`import Vant from 'vant'` + `import 'vant/lib/index.css'` + `app.use(Vant)`)。理由:学习项目不在意 bundle 体积;全量引入**零样式配置、最稳**,省掉 `unplugin-vue-components` + Vite 插件。**D1"引入 Vant"结论不变**,仅"引入方式"从按需改全量。
+- **观察**:app 现有 `styles.css` 有全局 `button` 金色主题,会渗进 Vant 按钮(Vant 主按钮显示金色而非 Vant 蓝)。纯外观、学习项目可接受(UI 只求能跑);如需纯净 Vant 主题,后续给点餐页容器加作用域样式即可。面试点:**全局 CSS 与组件库样式的层叠/污染**。
