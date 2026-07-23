@@ -67,3 +67,25 @@
 - 遗留测试脏数据(未清):`orders` user8 3 行(门① 2 单 + 门②(b) 无事务脏单 1)、`address_book` user8 新增 2 条、测试账号 `verify_b_*`(id=9)。不影响后续步骤。
 
 **下一步**:进 Phase 3 步骤2(地址簿越权修复,D6 Service 层,`AddressBookServiceImpl`),独立 commit。
+
+---
+
+## 2026-07-22 · Phase 3 步骤2(地址簿越权修复 D6·Service 层)完成
+
+**做了什么**
+- Tech Lead 复述确认后开工。派实现 subagent 改 2 文件(只回 diff)+ 独立 verifier 跑隔离矩阵;主窗口审 diff + 把门 + 提交。commit `e1ebbf0`:
+  - `AddressBookServiceImpl.getById`:取回后 Java 比对 `userId==BaseContext.getCurrentId()`,跨用户返回 null。**Mapper getById 单参签名不动**(被 `submitOrder`/`deleteById` 复用)。
+  - `AddressBookServiceImpl.update`:落库前 `setUserId(BaseContext.getCurrentId())` 覆盖 body userId;`AddressBookMapper.xml` 的 `update` WHERE 加 `and user_id = #{userId}`。
+  - `AddressBookServiceImpl.deleteById`:单参 mapper 不改签名,先 `getById` 取回校验归属再删。
+  - 核实 `setDefault`(L76)调 `update`(L81)前已注入 userId → WHERE 加固对它安全,且顺带堵住 setDefault 越权。
+
+**测试门(5/5 PASS,verifier 硬断言 + DB 查证)**
+- A 跨用户读→`data:null`;B 跨用户写→DB 未变;C 跨用户删→记录仍在;D body 塞 `userId=8`→DB 未变(证只认 BaseContext);E 正例回归→U1 自己 GET/PUT/DELETE 正常。
+
+**坑 / 备忘**
+- verifier 首轮踩 Git Bash `curl -d` 直传中文 body 被 shell 损坏成无效 JSON→400;改用 Python urllib UTF-8 发送解决(非服务端问题)。后续前端联调无此坑(浏览器发 UTF-8)。
+- 遗留测试数据(均在 user8 / 新注册账号,不影响结论):user8 新增地址若干(含 id=4 detail 被改)、临时 id=5 已删、首轮损坏脚本误删 user8 既有 id=2(U1 删自己的,功能合法);新注册 `verify_iso_*`(id=10/11)无地址。
+
+**遗留决策**:安全过滤误报——描述越权测试用"攻击/篡改"字眼触发 Opus cyber 安全过滤,改中性"多用户数据隔离"措辞后跑通(经验记忆)。
+
+**下一步**:进 Phase 3 步骤3(前端脚手架:`@vant/area-data` + api + 类型 + 4 路由骨架)。

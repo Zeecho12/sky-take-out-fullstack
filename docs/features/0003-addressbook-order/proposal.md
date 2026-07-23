@@ -7,8 +7,8 @@
 - 关联: Requirement → ./requirement.md | Progress → ./progress.md | ADR → ../../decisions/0003-addressbook-order.md | 契约 → ../../api-contract/用户端接口.md
 
 ## ⭐ 交接头(覆盖式,永远只写"现在")
-- **当前**:Phase 3 执行中。**步骤1(后端 submitOrder 改造)已 TESTED 并 commit `b2e2389`** —— 去百度(删 checkOutOfRange + `@Value` + application.yml 两 key)、`@Transactional` 原子化、下单读地址归属(userId 只认 BaseContext)、`amount>0` 防呆;4 条测试门全绿(verifier subagent curl 硬断言 + DB 行数 + 注入回滚对照,②去 @Transactional 见脏单+购物车清空证非恒真)。规划期文档同前(Requirement/ADR `9070a46`、契约 `d440730`、Proposal `b13b1c9`、融合 `8eb21d8`、快照 `4e8d260`)。
-- **下一步**:进 Phase 3 **步骤2(地址簿越权修复,D6,Service 层)** —— `AddressBookServiceImpl` 的 `getById`/`update`/`deleteById` 加归属校验(userId 只认 BaseContext、不改 Mapper 签名),独立 commit。按铁律 1 先复述 + Tech Lead 确认,铁律 8 派 subagent。
+- **当前**:Phase 3 执行中。**两个后端步骤已 TESTED 并 commit** —— 步骤1 submitOrder 改造 `b2e2389`(去百度 + `@Transactional` 原子化 + 下单读地址归属 + `amount>0` 防呆,4 门全绿含注入回滚对照);步骤2 地址簿越权修复 `e1ebbf0`(`AddressBookServiceImpl` getById/update/deleteById 归属校验 + Mapper.xml update WHERE 带 user_id,userId 只认 BaseContext,5 门全绿含 body 伪造 userId 用例)。后端改造全部完成,契约行为已与实现对齐。
+- **下一步**:进 Phase 3 **步骤3(前端脚手架)** —— `@vant/area-data` + `api/address.ts` + `api/order.ts` + 业务类型 + 4 路由骨架(含登录门槛)。按铁律 1 先复述 + Tech Lead 确认,铁律 8 派 subagent;前端起 `npm --prefix project-sky-user-vue3 run dev`(:5173)。
 - **别碰**:支付(0004)/ 订单管理(0005)的代码与页面;`reference/`(只读);后端**除** `OrderServiceImpl.submitOrder`(去百度 + 事务)与 `AddressBookMapper`(越权修复)**之外**一律不动;0002 已交付代码**除 CartBar"去结算"接线**外不动。
 - **怎么验证**:`docker start sky-redis` → 后端 jar(:8080,**构建前先停旧 jar**)→ `PUT /admin/shop/1`(Bearer)初始化店铺 → 前端 `npm --prefix project-sky-user-vue3 run dev`(:5173)。测试账号 `s7v_2268`/`123456`(id=8)。类型门 `npm --prefix project-sky-user-vue3 run type-check` exit 0。MySQL 5.7 连库加 `--ssl-mode=DISABLED`。
 
@@ -86,7 +86,7 @@
       ② 原子性(**注入点修正**):在三写**全部之后(清购物车之后)**注入 `RuntimeException` → 断言 `orders` **无残留** 且 `shopping_cart` **仍在** → **撤注入重建**。注入点**必须在清购物车之后**,否则"购物车仍在"恒真、无法证伪(评审 AD1:清购物车是三写末步)。对照:去 `@Transactional` 应见脏订单 + 购物车已清。
       ③ 下单读地址归属:乙 token 提交 `order/submit`、`addressBookId` 填甲的 → **拒**、不建单。
       ④ amount 防呆:`amount<=0`(0/负数)提交 → **拒**(`OrderBusinessException`)、不建单。
-- [ ] **步骤2(后端)**:地址簿越权修复(D6,**Service 层**),独立 commit  [依赖: 无]  —— **TODO**
+- [x] **步骤2(后端)**:地址簿越权修复(D6,**Service 层**),独立 commit  [依赖: 无]  —— **TESTED**(commit `e1ebbf0`;5 门全绿,含 body 伪造 userId 用例)
       实现:`AddressBookServiceImpl` —— `getById` 取回比对 `userId==currentId` 不符返回空;`update`/`deleteById` 先 `setUserId(BaseContext.getCurrentId())`(delete 先取回校验)再落库;**不改 Mapper 签名**、**userId 只认 BaseContext 不认 body**。
       测试门(curl 硬验):前置 —— 甲 `POST /addressBook` 得 `id=X`,乙(另注册)**无 X**(先查断言)。乙 token:`GET /addressBook/X`(**空/拒**)、`PUT`(body `{id:X,...}` → **甲地址未变**)、`DELETE ?id=X`(**甲 list 仍含 X**);**再补**:乙 token `PUT` body `{id:X, userId:甲Id}`(伪造)→ **甲地址仍不变**(证只认 BaseContext)。逐一断言。
 - [ ] **步骤3(前端)**:脚手架 —— `@vant/area-data` + `api/address.ts` + `api/order.ts` + 业务类型 + 路由骨架(4 路由 + 登录门槛)  [依赖: 无]  —— **TODO**
