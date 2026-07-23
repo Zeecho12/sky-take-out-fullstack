@@ -73,6 +73,8 @@ export interface ShoppingCartDTO {
 // - sex 是 string("0"/"1");isDefault 是 number(0/1)
 // - 省市区六字段均 string(code 6 位,name 中文);由 van-area 选出后一并提交
 // id/userId 由后端管理,前端新增时不传,故可选。
+// isDefault 可选:后端读取(list/default)时恒返回;但前端新增/编辑 payload
+// 刻意不带该字段(设默认只走 setDefaultAddress),故声明为可选,避免构造 payload 报错。
 export interface AddressBook {
   id?: number
   userId?: number
@@ -87,7 +89,7 @@ export interface AddressBook {
   districtName: string
   detail: string
   label: string
-  isDefault: number
+  isDefault?: number
 }
 
 // 下单入参(OrdersSubmitDTO) —— 契约 POST /user/order/submit。
