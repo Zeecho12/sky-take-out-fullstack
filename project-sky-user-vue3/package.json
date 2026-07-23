@@ -11,6 +11,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@vant/area-data": "^2.1.0",
     "axios": "^1.7.9",
     "pinia": "^2.2.6",
     "vant": "^4.10.0",

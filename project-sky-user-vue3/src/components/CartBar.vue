@@ -1,17 +1,18 @@
 <script setup lang="ts">
+import { useRouter } from 'vue-router'
 import { useCartStore } from '@/stores/cart'
-import { showToast } from 'vant'
 
 const cart = useCartStore()
+const router = useRouter()
 const emit = defineEmits<{ open: [] }>()
 
 // shopClosed 仅在店铺“明确打烊(status===0)”时为 true;
 // 未知 / 加载失败(null 兜底)时上游传 false,不阻断结算(见 requirement AC + ADR AD1)。
 withDefaults(defineProps<{ shopClosed?: boolean }>(), { shopClosed: false })
 
-// 去结算:结算/下单属功能 0003,本功能占位提示(见 requirement Out of Scope)
+// 去结算(0003):跳结算页。打烊 / 购物车空的置灰由按钮 :disabled 兜住(见 template)。
 function checkout() {
-  showToast('结算 / 下单在功能 0003')
+  router.push('/order-confirm')
 }
 </script>
 
