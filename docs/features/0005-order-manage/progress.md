@@ -57,3 +57,26 @@
 - **共用面分析别止于 Mapper**:这次的 HIGH#1 就是"坚持不改 `getById` 签名"却漏了 `details()` Service 方法本身 user+admin 共用——共用点在 Service 层也会咬人。
 - **契约参数名要实读后端绑定方式**:无 `@RequestParam` 时靠参数名绑定,YAPI 导出的 `page` 与代码 `pageNum` 漂移 → contract-first 也救不了"契约本身抄错"。
 - Integer `==` 陷阱:`-128..127` 缓存内碰巧为真,出了缓存区就是 bug;比较包装类型一律 `.equals()`。
+
+---
+
+## 2026-07-23 · Phase 3 步骤1 后端归属越权修复(D1 + AD1 订正)—— 完成 TESTED
+
+**做了什么(铁律 8:读文件+写码派 subagent,主窗口只编排/审 diff/把测试门/提交)**
+- 读状态复述(铁律 1)→ Tech Lead 确认后动手。
+- 派**实现 subagent**改 3 文件(零决策,改动全在 ADR 锁定):`OrderService` 加 `getUserOrderDetail(Long id)`;`OrderServiceImpl` 新增该方法实现(getById→null/归属校验→装配 OrderVO)+ `userCancelById`/`reminder` 补归属 + `repetition` 先 getById 取单再校验 + `reminder` 加 status==2 守卫;`user/OrderController.details` 改调 `getUserOrderDetail`。**共用的 `details()`、`OrderMapper.getById` 签名均未动。** IDE 内置 Maven `mvn -pl sky-server -am compile` PASS。
+- 主窗口审 diff:50 行纯新增(details() 一行未删改)+ controller 单行替换。停旧 jar(PID 12396)→ `mvn -DskipTests package` 重建(77MB fat jar)→ 起新 jar(PID 28664,:8080 200)。
+- 派**独立 verifier subagent**跑测试门(中性"多用户数据隔离"措辞)。
+- 提交 code commit `353f772`(独立,只 3 后端文件)。
+
+**验证证据(verifier,curl+DB,8/8 PASS)**
+- 甲 `s7v_2268`/id=8、乙新注册 `iso_check_18468`/id=14、admin 员工 id=1。复用订单:X_paid=8(status2/pay1)、X_cancelable=7、非 status2 单=1(status6)。
+- ①本人可用:甲 detail/cancel(7→DB status6)/reminder(8,status2)/repetition 全 code:1。②详情隔离:乙 detail/8→code:0"订单不存在",data:null(无地址/电话/明细泄露)。③取消隔离:乙 cancel/8→拒,DB order8 status 仍 2。④催单隔离:乙 reminder/8→拒。⑤再来一单隔离:乙 repetition/8→拒,乙购物车前后 0 行。⑥催单状态守卫:甲对自己 order1(status6)reminder→code:0"订单状态错误"(归属过、状态守卫挡)。⑦管理端详情回归:admin `GET /admin/order/details/8?id=8`→code:1+完整详情(未被归属污染)。⑧历史订单隔离:甲 historyOrders?pageNum=1&pageSize=10→total7,records 全 userId:8。
+
+**坑 / 发现**
+- **归属校验放在状态守卫之前**(reminder):乙催甲单先撞归属→"订单不存在"(不泄露存在性);甲催自己非 status2 单归属过→撞"订单状态错误"。两条负例可区分,与测试门 ④⑥ 对齐。
+- **管理端 `GET /admin/order/details/{id}` 的 `id` 无 `@PathVariable`**(既有写法,本次未改):纯路径调用 id 绑定为 null→HTTP 500,须用 `?id=8`(query)才拿到详情。这是既有 quirk,非本次引入——⑦ 回归判据只认"不返回订单不存在"(证 details() 未被归属污染),已 PASS。→ 记面试/技术债,0005 不修(不在步骤1 范围)。
+- 环境:重建前先停旧 jar(否则端口占用);java 21 运行 jdk17 编译产物 OK。测试消耗真实数据(order7 被取消、甲购物车被 repetition 灌入)——学习项目可接受。
+
+**下一步**
+- Phase 3 步骤2(后端退款口径统一 D2 + AD1 订正):`rejection`/`cancel` 补 `setPayStatus(REFUND)` + 三处已支付判断统一 `Orders.PAID.equals(payStatus)`。独立 commit,派 subagent 实现、verifier 跑退款口径测试门(含未支付不误退锁可达路径)。
