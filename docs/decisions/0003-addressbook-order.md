@@ -152,6 +152,11 @@
 - **前端传金额 vs 服务端重算(price integrity)**:**永远不要信任客户端提交的金额**;真实电商在服务端按购物车 + 商品价重算。本项目为对齐 reference 选了信任前端,但能说清"为什么生产必须服务端重算"就是加分(对比 0002 购物车无篡改面)。
 - **客户端静态区划数据 vs 区域 API**:静态数据零延迟、离线可用,但更新滞后 + 增体积;高频变化数据才需要接口。
 
+### → divedeep 选题 backlog(深度,按需触发)
+- **✅ 已写(2026-07-23,含金量:高)**:**`submitOrder` 三写的 `@Transactional` 事务原子性**(Spring AOP 代理 / 传播行为 / 回滚规则 / self-invocation 失效)—— 见
+  `docs/divedeep/submitOrder 下单三写的 @Transactional 事务原子性精读:Spring AOP 代理、传播与回滚、self-invocation 失效.md`(落"声明式事务回滚规则"面试点)。
+- 「**归属校验防 IDOR**」(含金量:中):**暂不单开** divedeep —— D6 正文 + AD1 已讲透"Service 层归属校验、不改 Mapper 签名、userId 只认 BaseContext",且 0004 CAS 笔记 Q7 亦覆盖;属安全模式,非需精读的深链路。
+
 ---
 
 ## Addendum(执行期细化,追加式)
