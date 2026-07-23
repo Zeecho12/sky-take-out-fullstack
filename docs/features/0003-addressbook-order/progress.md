@@ -23,3 +23,22 @@
 **坑 / 备忘**
 - 后端 `checkOutOfRange` 的两处 live bug 是"外部依赖 + 死代码"双重问题,删除同时能讲清"外部调用不该进事务/下单主链"面试点。
 - 原子性测试门要"注入异常"才可证伪(光跑成功路径证明不了回滚),Phase 3 交 verifier subagent 跑并撤注入。
+
+---
+
+## 2026-07-22 · 双路评审融合(Phase 2 收尾)
+
+**做了什么**
+- 内审:会话内全新上下文红队 subagent,**实读**后端源码(`OrderServiceImpl`/`AddressBookMapper(.java/.xml)`/`AddressBookServiceImpl`/`sky.sql`/前端 `cart.ts`/`router`/`package.json`)。
+- 外审:`~/.claude/tools/deepseek_review.py`(`deepseek-v4-pro`,只喂四份规划文档)。**注**:外审脚本不在仓库 `.tools/`(那里只有 Maven),在用户目录 `~/.claude/tools/`,key 同目录 `deepseek.key`;用户指路后跑通。
+- 两路融合(详见 ADR AD1),按拍板修订 requirement/proposal/ADR/契约。
+
+**融合结论(净判定:修订前不可进 Phase 3)**
+- **收敛(高置信)**:① D6 **不是一行修法** —— 改 Mapper 签名会让 `submitOrder:80` 编译失败;`update` 现状不注入 userId,只改 WHERE 会静默失效或成假修复;与契约"userId 忽略"矛盾。→ 改 **Service 层归属 + 不改签名 + userId 只认 BaseContext**。② 越权测试门假绿 → 补前置断言 + body 伪造 userId 用例。
+- **分歧(内审源码纠正外审)**:外审"`@Transactional` 自调用失效"→ 内审证伪(接口代理外部调用,事务生效,D3 论述正确)。**教训:外审只有文档、内审能读码 → 机制真伪以内审为准**。
+- **内审独有**:原子性注入点须在清购物车之后(否则恒真);`deliveryStatus`/`tablewareStatus` NOT NULL 漏传 500;编辑吞默认;归因订正。
+- **外审独有**:`amount>0` 防呆(采纳);area-data 体积 / 重复提交(记 LOW)。
+
+**拍板(用户 2026-07-22)**:D6 Service 层归属 / 下单读地址一并校验(步骤1)/ 加 `amount>0`。
+
+**下一步**:Tech Lead 复核融合后计划 → 进 Phase 3 步骤1(每步派 subagent,铁律 8)。

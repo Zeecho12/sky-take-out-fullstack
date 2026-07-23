@@ -16,7 +16,7 @@
 - **reference 省市区选择 100% 客户端静态数据、无区域 API**:`pages/common/simple-address` + 打包的 `city-data/{province,city,area}.js`,3 列级联 picker。
 - **现有前端已 Vant 全量引入**(0002 AD2)→ `van-area` 现成可用,只缺区划数据源。
 - **后端 `submitOrder` 无 `@Transactional`**(`OrderServiceImpl.submitOrder`,连 `org.springframework.transaction.annotation.Transactional` 都没 import),三写(`insert orders` → `insertBatch order_detail` → `deleteByUserId shopping_cart`)**非原子**。
-- **百度校验 `checkOutOfRange`(`OrderServiceImpl` L562–618)本身已坏**:`JSON.parseObject("result")`(应 parse `userCoordinate`)会 NPE、`map.put("orgin", …)`(应 `origin`)拼错 Baidu 参数,且需真 `sky.baidu.ak` → **fresh 环境下 `submit` 根本跑不通**。
+- **百度校验 `checkOutOfRange`(`OrderServiceImpl` L562–618)在 fresh 环境根本跑不通**:`application.yml` 的 `sky.baidu.ak` 是假 AK(且 fresh 环境常无外网)→ **第一段店铺地理编码就 `status≠0`、抛"店铺地址解析失败",走不到后面**;此外该方法还有两处死 bug(`JSON.parseObject("result")` 应 parse `userCoordinate` 会 NPE、`"orgin"` 应 `origin`),但正常运行**先**挂在假 AK 上。(归因经内审实读订正:2026-07-22。)
 - **reference 下单口径**:**前端算 `amount` 发给后端、后端信任存库**(不重算);**配送费写死 ¥6**、`packAmount = 菜品总件数`;submit body **不带明细**(后端按服务端购物车 + `addressBookId` 派生 `order_detail`)。
 - **地址簿越权(IDOR)**:`AddressBookMapper` 的 `getById` / `update` / `deleteById` **只按 `id`、无 `user_id` 归属校验**;`submitOrder` 读地址也走这个 `getById`。
 - **上下游边界**:支付页 / 成功页属 0004;历史 / 详情 / 催单等属 0005。
@@ -29,9 +29,9 @@
 | D1 | 省市区数据来源 | **`van-area` + `@vant/area-data`**(客户端静态,无 API) |
 | D2 | 去百度配送校验 | **删干净**(删调用 + 删 `checkOutOfRange` + 清 `ak`/`shopAddress` 依赖) |
 | D3 | `submitOrder` 事务 | **方法级 `@Transactional`** 包三写;依赖默认 RuntimeException 回滚 |
-| D4 | 下单金额口径 | **信任前端 `amount`**(照 reference)+ ADR 记篡改风险;配送费 ¥6 / `packAmount`=件数 照搬 |
+| D4 | 下单金额口径 | **信任前端 `amount`**(照 reference)+ 记篡改风险 + 加 `amount>0` 防呆;配送费 ¥6 / `packAmount`=件数 照搬 |
 | D5 | 结算页衔接 | 上游接 0002 cart store + "去结算";下游落"订单已创建"占位页,0004 替换 |
-| D6 | 地址簿越权 | **0003 顺手修**(加 `user_id` 归属校验),独立 bugfix commit |
+| D6 | 地址簿越权 | **0003 顺手修**,**Service 层**归属校验(仿 `setDefault` 注入 userId,不改 Mapper 签名)+ 下单读地址一并校验;独立 commit |
 
 ---
 
@@ -90,6 +90,8 @@
 ### 决策
 选 **信任前端 `amount`**(照 reference),但**在 ADR / 契约里明确标注这是学习项目的行为对齐、生产不可接受**;服务端重算列为将来增强。配套口径也照 reference:**配送费写死 ¥6**、`packAmount = 菜品总件数`、`amount = Σ(单价×数量) + 6 + packAmount`;`estimatedDeliveryTime` / `deliveryStatus`(立即=1 / 选时间=0)照 reference;submit body **不带明细**(后端按服务端购物车派生)。
 
+**评审补(AD1 拍板)**:虽**不重算**,但在 `submitOrder` 加一条最基本的 **`amount > 0` 防呆**(≤0 抛 `OrderBusinessException`),挡负数 / 零金额脏订单。这**不是重算**(不碰金额口径),只是合法性兜底,成本一行;配一条负例 AC。
+
 > 对比 0002:购物车 `add` **无金额篡改面**(`ShoppingCartDTO` 只有 `{dishId,setmealId,dishFlavor}`,后端自填 amount)。下单 submit **有**篡改面(前端直接送 `amount`)——这个反差本身是很好的面试素材(见下)。
 
 ---
@@ -115,11 +117,19 @@
 ### 方案对比
 | 方案 | 优点 | 缺点 |
 |---|---|---|
-| **0003 顺手修(选)** | 堵住真实 authz 漏洞(BOLA / OWASP API #1);成本低(Mapper 查询加 `user_id` 条件);极好的面试素材;下单读地址也更安全 | 略微扩后端范围(blueprint 原写只改百度 + 事务) |
+| **0003 顺手修(选)** | 堵住真实 authz 漏洞(BOLA / OWASP API #1);极好的面试素材;下单读地址也更安全 | 扩后端范围(blueprint 原写只改百度 + 事务);**非一行修**(评审坐实,见下) |
 | 记 backlog 另开工单 | 保持 0003 后端最小 | 已知越权漏洞挂着;下次未必回来修 |
 
 ### 决策
-选 **0003 顺手修**,作**独立 bugfix commit**(类比 0002 的 `updateNumberById` 一行修法):给 `getById` / `update` / `deleteById` 的查询 / 更新条件加 `user_id = BaseContext.getCurrentId()` 归属校验,越权访问返回空 / 不生效而非泄露 / 篡改。理由:这是我们本来就要碰的下单主链上的真实安全缺陷,成本低、学习价值高。列入 Requirement AC(越权负例硬验)。
+选 **0003 顺手修**,独立 commit。但**双路评审(AD1)坐实这不是"一行修法",实现要点如下**(原类比 0002 `updateNumberById` 严重低估):
+
+- **归属校验放 Service 层,不改 Mapper 签名**。理由:`AddressBookMapper.getById(Long id)` 是**单参**,`OrderServiceImpl.submitOrder` 也调它 —— 若改签名加 `userId` 参数,`submitOrder` 的调用点**会编译失败**。故:
+  - **`getById`**:在 `AddressBookServiceImpl.getById` 取回后比对 `addressBook.getUserId().equals(BaseContext.getCurrentId())`,不符返回空。Mapper 不动。
+  - **`update` / `deleteById`**:**先 `setUserId(BaseContext.getCurrentId())`**(delete 则先按 id 取回校验归属再删),再落库。**关键**:userId **只认 `BaseContext`、绝不认请求体** —— 现状 `AddressBookServiceImpl.update` 根本不注入 userId(不像 `setDefault` 就注入了),若照搬"信任 body userId"则是**假修复**(攻击者带受害者 userId 即可篡改)。
+- **下单读地址一并校验(Q2 拍板,放步骤 1)**:`submitOrder` 校验 `addressBookId` 属于当前用户,否则拒(现状用户可拿别人 `addressBookId` 下单 —— 次要 IDOR)。此改动落 `OrderServiceImpl`(步骤 1),与地址簿 CRUD 归属(步骤 2,纯 `AddressBookServiceImpl`)**分属两步、互不耦合**。
+- **契约口径订正**:原"`userId` 后端忽略 / 前端不必传"对 `POST`(save 已注入)成立;但 `update` / `delete` 的**归属由后端按当前登录用户判定、不认 body 里的 userId** —— 契约补注已相应修正(评审发现的自相矛盾)。
+
+列入 Requirement AC:越权负例**硬验**,且**补一发"乙 token + body 里塞甲的 userId → 甲地址仍不变"**,锁死"只认 BaseContext"。
 
 ---
 
@@ -145,4 +155,30 @@
 ---
 
 ## Addendum(执行期细化,追加式)
-> 双路评审(内审:会话内全新上下文红队 subagent;外审:DeepSeek CLI)结论、执行期修订将追加于此。当前:待评审。
+
+### AD1 — 双路评审发现与处置(2026-07-22,内审:会话内全新上下文红队 subagent + 外审:DeepSeek-v4-pro)
+> 按 GOOD.md Phase 2 步骤5,规划稿交内审(会话内全新上下文敌对 subagent,**实读源码**)+ 外审(DeepSeek 异构模型,**只看四份规划文档**)双路敌对评审,融合后修订计划。原决策 D1–D6 结论不变;此处记录发现与处置,作为学习 / 面试资产。**净判定:两路一致 —— 修订前不可进 Phase 3**,问题几乎全集中在 D6 + 两条假绿测试门。
+
+**① 两路收敛(高置信,已改进计划):**
+- **D6 不是"一行修法"**(外审标 PLAUSIBLE、内审实读 CONFIRMED):
+  - 外审担心"Mapper 加 `user_id` 打死管理端";内审 grep **证伪管理端复用**(admin / 派送不碰 `AddressBookMapper`),却挖出更真的:`getById(Long id)` 单参,`submitOrder:80` 也调它 → **改签名后端不编译**;`update` 的 Service 层**从不注入 userId** → 只在 WHERE 加 `user_id` 会因 `userId=null` **编辑静默失效**,或退化成"信任 body"的**假修复**;且与契约"userId 忽略"**自相矛盾**。→ D6 改为 **Service 层归属校验 + 不改 Mapper 签名 + userId 只认 BaseContext**(见 D6 正文),契约口径订正。
+- **越权测试门可能假绿**(外审 + 内审):原用例没锁"甲有 X、乙没 X",也没测"body 伪造 userId"。→ AC / 测试门补前置断言 + `{id:X, userId:甲Id}` 伪造用例。
+
+**② 分歧(内审用源码纠正外审):**
+- 外审 [HIGH]「`@Transactional` **自调用**失效」→ 内审**证伪**:`submitOrder` 经 `OrderController → OrderService` 接口代理**外部调用**,非类内自调用,事务生效;业务异常均 `RuntimeException`,默认回滚成立,无需 `rollbackFor`。**D3 论述正确**。(外审的"勿把三写拆成 `this.` 调的 @Transactional 方法"作为实现护栏保留一句。)
+
+**③ 各自独有(补覆盖):**
+- **内审独有(实读 CONFIRMED)**:
+  - **原子性测试门假绿**:三写 建订单→建明细→**清购物车(末步)**;原注入点"建订单后抛"在清购物车**之前** → "购物车未被清空"**恒真**(有无事务都过),只有"orders 无残留"真正可证伪。→ **注入点挪到清购物车之后 / 三写全部之后**。
+  - **`deliveryStatus` / `tablewareStatus` 是 `NOT NULL` 列**,DTO 为可空 `Integer` → 前端漏传 → 显式插 NULL → submit **500**(NOT NULL 的 DEFAULT 只在列被省略时生效)。→ 前端定死默认(`deliveryStatus=1` / `tablewareStatus=1`)+ 契约标"必传非空"+ 步骤5 测试门。
+  - **编辑地址可能静默丢默认**(`update` 的 `<if isDefault!=null>`)→ 编辑页**不提交 isDefault**(设默认只走 `/default`),加 AC"编辑默认地址改详情后仍 `isDefault==1`"。
+  - **`checkOutOfRange` 归因订正**:真实先挂在假 AK(店铺地理编码 status≠0),走不到 L590 NPE。结论(删)不变,ADR 关键事实已订正。
+- **外审独有**:`amount` 无 `>0` 防呆(→ D4 加,拍板)、`@vant/area-data` 体积/懒加载(→ LOW 记档)、重复提交幂等(→ LOW 记档:购物车清空是弱防护,真幂等留将来)。
+
+**④ 拍板(用户,2026-07-22):**
+- D6 → **Service 层归属校验**(仿 `setDefault` 注入 userId,不改 Mapper 签名);
+- **下单读地址一并做归属校验**(放步骤 1);
+- **加 `amount > 0` 后端防呆**(D4)。
+- 其余机械修正(测试门注入点、NOT NULL 字段前端定死、编辑不提交 isDefault、越权补 body 伪造用例、归因订正、LOW 记档)一并落入 requirement / proposal。
+
+**评审留痕**:内审 = 会话内全新上下文红队 subagent(实读 `OrderServiceImpl` / `AddressBookMapper(.java/.xml)` / `AddressBookServiceImpl` / `sky.sql` / 前端 `cart.ts` / `router` / `package.json`);外审 = `~/.claude/tools/deepseek_review.py`(`deepseek-v4-pro`)。这是"你如何验证自己的设计"的面试实证 —— **异构双路敌对评审**:收敛处(D6、假绿门)高置信;分歧处(自调用)靠**实读源码**判真伪(外审只有文档,内审能读码,故内审更准);D6 是"看似一行 UPDATE 加条件、实则牵出编译依赖 + 层级 + 假修复 + 契约矛盾"的真实案例。
