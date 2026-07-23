@@ -217,6 +217,35 @@ public class OrderServiceImpl implements OrderService {
     }
 
     /**
+     * 查询订单详情(用户端专属:先校验订单存在且归属当前登录用户,再装配 OrderVO)
+     * 注意:与管理端共用的 details() 分开——管理端 JWT 的 sub 是员工 id,永远不等于订单 userId,
+     * 若把归属校验塞进共用的 details() 会打死管理端 GET /admin/order/details/{id}。
+     * @param id
+     * @return
+     */
+    @Override
+    public OrderVO getUserOrderDetail(Long id) {
+//        根据id查询订单
+        Orders orders = orderMapper.getById(id);
+
+//        校验订单存在且归属当前登录用户(userId 只认 BaseContext,不认请求参数);
+//        "非本人"与"不存在"统一按"订单不存在"拒,避免存在性泄露
+        if (orders == null || !BaseContext.getCurrentId().equals(orders.getUserId())) {
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
+        }
+
+//        查询该订单对应的菜品/套餐明细
+        List<OrderDetail> orderDetailList = orderDetailMapper.getByOrderId(id);
+
+//        将订单及其详情封装到OrderVo并返回
+        OrderVO orderVO = new OrderVO();
+        BeanUtils.copyProperties(orders, orderVO);
+        orderVO.setOrderDetailList(orderDetailList);
+
+        return orderVO;
+    }
+
+    /**
      * 用户取消订单
      * @param id
      */
@@ -227,6 +256,11 @@ public class OrderServiceImpl implements OrderService {
 
 //        校验订单是否存在
         if (orderDB == null) {
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
+        }
+
+//        校验订单归属当前登录用户(D1 归属加固):非本人按"订单不存在"拒,避免存在性泄露
+        if (!BaseContext.getCurrentId().equals(orderDB.getUserId())) {
             throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
         }
 
@@ -262,6 +296,12 @@ public class OrderServiceImpl implements OrderService {
     public void repetition(Long id) {
 //        查询当前用户id
         Long userId = BaseContext.getCurrentId();
+
+//        先取单校验存在 + 归属当前登录用户(D1 归属加固):现状直接取明细、无 userId 可比,故先 getById
+        Orders orderDB = orderMapper.getById(id);
+        if (orderDB == null || !userId.equals(orderDB.getUserId())) {
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
+        }
 
 //        根据订单id查询当前订单详情
         List<OrderDetail> orderDetailList = orderDetailMapper.getByOrderId(id);
@@ -345,16 +385,18 @@ public class OrderServiceImpl implements OrderService {
             throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
         }
 
-//        支付状态
-        Integer payStatus = ordersDB.getPayStatus();
-        if (payStatus == Orders.PAID) {
-//            用户已支付，模拟退款(mock)，不再外呼微信支付
-            log.info("模拟退款(mock)，订单号：{}", ordersDB.getNumber());
-        }
-
 //        拒单需要退款，根据订单id更新订单状态，拒单原因，取消时间
         Orders orders = new Orders();
         orders.setId(ordersDB.getId());
+
+//        已支付则模拟退款(mock，仅置状态位、无真实资金流)并把支付状态置为退款
+//        用 Orders.PAID.equals(payStatus) 而非 ==（Orders.PAID 是 Integer，== 是引用比较陷阱）
+        Integer payStatus = ordersDB.getPayStatus();
+        if (Orders.PAID.equals(payStatus)) {
+            log.info("模拟退款(mock)，订单号：{}", ordersDB.getNumber());
+            orders.setPayStatus(Orders.REFUND);
+        }
+
         orders.setStatus(Orders.CANCELLED);
         orders.setRejectionReason(ordersRejectionDTO.getRejectionReason());
         orders.setCancelTime(LocalDateTime.now());
@@ -371,16 +413,18 @@ public class OrderServiceImpl implements OrderService {
 //        根据id查询订单
         Orders orderDB = orderMapper.getById(ordersCancelDTO.getId());
 
-//        支付状态
-        Integer payStatus = orderDB.getPayStatus();
-        if (payStatus == 1) {
-//            用于已支付，模拟退款(mock)，不再外呼微信支付
-            log.info("模拟退款(mock)，订单号：{}", orderDB.getNumber());
-        }
-
 //      管理端取消订单需要退款，根据订单id更新订单状态、取消原因、取消时间
         Orders orders = new Orders();
         orders.setId(ordersCancelDTO.getId());
+
+//        已支付则模拟退款(mock，仅置状态位、无真实资金流)并把支付状态置为退款
+//        字面量 1 换成 Orders.PAID 常量，并用 .equals() 而非 ==（Integer 引用比较陷阱）
+        Integer payStatus = orderDB.getPayStatus();
+        if (Orders.PAID.equals(payStatus)) {
+            log.info("模拟退款(mock)，订单号：{}", orderDB.getNumber());
+            orders.setPayStatus(Orders.REFUND);
+        }
+
         orders.setStatus(Orders.CANCELLED);
         orders.setCancelReason(ordersCancelDTO.getCancelReason());
         orders.setCancelTime(LocalDateTime.now());
@@ -444,6 +488,16 @@ public class OrderServiceImpl implements OrderService {
         Orders orders = orderMapper.getById(id);
         if (orders == null) {
             throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
+        }
+
+//        校验订单归属当前登录用户(D1 归属加固):非本人按"订单不存在"拒
+        if (!BaseContext.getCurrentId().equals(orders.getUserId())) {
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
+        }
+
+//        状态守卫(AD1 Q3):仅待接单(status2)可催单;前端按钮只是 UI 限制,后端也必须挡
+        if (!Orders.TO_BE_CONFIRMED.equals(orders.getStatus())) {
+            throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
         }
 
 //        基于WebSocket实现催单

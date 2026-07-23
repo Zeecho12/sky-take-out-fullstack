@@ -120,3 +120,53 @@ export interface OrdersPaymentDTO {
   orderNumber: string
   payMethod: number
 }
+
+// 订单明细行(后端 OrderDetail entity;一道菜/套餐一行)
+export interface OrderDetailItem {
+  id: number
+  name: string
+  image: string
+  number: number // 数量
+  amount: number // 金额
+  dishFlavor: string | null
+  dishId: number | null
+  setmealId: number | null
+}
+
+// 历史订单列表项(OrderVO 列表子集;含明细供卡片菜品缩略)
+// status:1待付款 2待接单 3已接单 4派送中 5已完成 6已取消
+// payStatus:0未支付 1已支付 2退款
+export interface Order {
+  id: number
+  number: string // 订单号
+  status: number
+  payStatus: number
+  payMethod: number
+  amount: number // 实收金额
+  orderTime: string
+  remark: string | null
+  orderDetailList: OrderDetailItem[]
+}
+
+// 订单详情(OrderVO 全字段;详情页用)
+export interface OrderDetail extends Order {
+  consignee: string
+  phone: string
+  address: string
+  userName: string | null
+  addressBookId: number | null
+  cancelReason: string | null
+  rejectionReason: string | null
+  cancelTime: string | null
+  checkoutTime: string | null
+  estimatedDeliveryTime: string | null
+  deliveryTime: string | null
+  packAmount: number
+  tablewareNumber: number
+}
+
+// 分页结果(对齐 com.sky.result.PageResult:{ total: long, records: List<T> })
+export interface PageResult<T> {
+  total: number
+  records: T[]
+}

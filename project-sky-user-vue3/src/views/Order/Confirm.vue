@@ -72,7 +72,8 @@ async function onPay() {
         path: '/order-pay', // 0004:下单成功先进支付页(键名不变,下游照读)
         query: {
           orderNumber: res.data.orderNumber,
-          orderAmount: res.data.orderAmount
+          orderAmount: res.data.orderAmount,
+          orderId: res.data.id
         }
       })
     } else {

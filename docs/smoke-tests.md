@@ -148,3 +148,37 @@ curl -s -w " [%{http_code}]\n" http://localhost:8080/user/shop/status
 curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8080/user/shoppingCart/list   # 无 token
 ```
 期望:HTTP `401`(前端守卫是 UX 兜底,真门槛在后端 —— 与第 6 段 authn/authz 边界一脉相承)。
+
+### 8.【0005】C 端订单管理冒烟 —— 下单→支付→订单管理端到端 + 后端归属/退款
+> 契约见 `docs/api-contract/用户端接口.md`「订单管理约定(0005 校准补注)」。UI 行为在 **C 端 Web(:5173)真浏览器**跑,
+> 已于 0005 Phase 3 逐步 + Phase 4 端到端(A~G)验证,见 `docs/features/0005-order-manage/progress.md`。
+> 前置:MySQL / Redis / 后端 jar / C 端 dev 全起 + 店铺状态初始化。8.1~8.5 为 UI 操作;8.6~8.7 直打后端验后端修复。
+> ⚠️ 预览验证前先把视口设 mobile(否则 van-list 触底不触发)。全部于 2026-07-23 实测全绿。
+
+**8.1 端到端主链** —— 登录后:`/menu` 加购 → `/order-confirm` 选地址去支付 → `/order-pay` 确认支付 → `/order-created` 下单成功 →「查看订单」→ `/order-detail/{id}`(非 `/order-detail/undefined`),详情状态「待接单」。(证 orderId 沿 Confirm→Pay→Created 透传闭环。)
+
+**8.2 历史订单** —— `/order-list` 默认「全部」列出订单;切「待付款」tab 自动加载且请求带 `status=1`、切「已取消」带 `status=6`;>10 单时触底加载第 2 页(`pageNum=2`,不重复)。⚠️ 分页参数名是 **`pageNum`** 非 `page`。
+
+**8.3 详情动作** —— 详情页按状态出按钮:待接单(status2)见 取消/催单/再来一单;待付款(status1)见 取消/立即支付/再来一单;已取消(status6)仅再来一单。催单→toast;再来一单→合并加入购物车(不清空原有)→回菜单。
+
+**8.4 用户中心** —— `/menu` 顶栏「我的」→ `/user`:显示用户名 + 历史订单/地址管理/修改密码/退出登录 4 入口;退出登录清 token 回 `/login`;页面加载**无查用户信息请求**(纯本地导航壳)。
+
+**8.5 多用户数据隔离(UI 层)** —— 甲登录只在历史订单/详情看到自己的订单(后端按当前用户过滤 + 归属校验)。
+
+**8.6 后端订单归属(直打后端,负例)** —— 乙 token 对甲订单 id `X` 操作,均被按"订单不存在"拒:
+```
+UB=<乙的 Bearer token>   # 另注册一个用户
+curl -s "http://localhost:8080/user/order/orderDetail/X" -H "Authorization: Bearer $UB"   # 甲的订单 X
+curl -s -X PUT "http://localhost:8080/user/order/cancel/X" -H "Authorization: Bearer $UB"
+```
+期望:两者 `code:0` "订单不存在"(不泄露甲的地址/明细;不改甲订单状态)。catch:详情/取消/催单/再来一单四端点均已在 Service 层校验归属(`userId==BaseContext`)。
+
+**8.7 后端退款口径(直打后端 + DB)** —— 管理端取消/拒单**已支付**订单后 `pay_status` 应为 `2 退款`:
+```
+# 造已支付单(status2/pay1),admin token 调:
+curl -s -X PUT http://localhost:8080/admin/order/cancel \
+  -H "Authorization: Bearer <ADMIN>" -H "Content-Type: application/json" \
+  -d '{"id":<已支付单 id>,"cancelReason":"test"}'
+mysql -uroot -p123456 --ssl-mode=DISABLED -e "use sky_take_out; select status,pay_status from orders where id=<id>;"
+```
+期望:`code:1`;DB `status=6` 且 `pay_status=2`(改前管理端只 log 不置 REFUND,是 0005 修复点;三处已支付判断统一 `Orders.PAID.equals()`)。

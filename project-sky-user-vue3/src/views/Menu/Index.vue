@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { getShopStatus } from '@/api/shop'
 import { getCategoryList } from '@/api/category'
 import { getDishList } from '@/api/dish'
@@ -13,6 +14,11 @@ import SetmealDishPopup from '@/components/SetmealDishPopup.vue'
 import type { Category, DishVO, Setmeal } from '@/types/business'
 
 const cart = useCartStore()
+
+const router = useRouter()
+function goUser() {
+  router.push('/user')
+}
 
 const shopStatus = ref<number | null>(null)
 const categories = ref<Category[]>([])
@@ -84,7 +90,10 @@ onMounted(async () => {
   <div class="menu">
     <div class="topbar">
       <span class="shop">苍穹外卖</span>
-      <van-tag :type="isOpen ? 'success' : 'default'" size="medium">{{ shopText }}</van-tag>
+      <div class="topbar-right">
+        <van-tag :type="isOpen ? 'success' : 'default'" size="medium">{{ shopText }}</van-tag>
+        <span class="mine" @click="goUser"><van-icon name="user-o" />我的</span>
+      </div>
     </div>
 
     <div class="body">
@@ -150,6 +159,8 @@ onMounted(async () => {
   border-bottom: 1px solid #eee;
 }
 .shop { font-size: 18px; font-weight: 700; }
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+.mine { display: inline-flex; align-items: center; gap: 4px; font-size: 14px; color: #323233; cursor: pointer; }
 .body { display: flex; }
 .side { width: 96px; flex: none; }
 .list { flex: 1; padding: 8px; }

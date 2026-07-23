@@ -12,6 +12,9 @@ const router = useRouter()
 const orderNumber = route.query.orderNumber as string | undefined
 const orderAmount = route.query.orderAmount as string | undefined
 
+// 0005:订单 id 由 Confirm 页透传过来,继续透传给成功页(供「查看订单」跳详情)
+const orderId = route.query.orderId as string | undefined
+
 // 支付方式:mock 只有一项,默认选中(payMethod 定死 1)
 const payMethod = ref(1)
 const submitting = ref(false)
@@ -34,7 +37,8 @@ async function onConfirmPay() {
         path: '/order-created',
         query: {
           orderNumber,
-          orderAmount
+          orderAmount,
+          orderId
         }
       })
     } else {
