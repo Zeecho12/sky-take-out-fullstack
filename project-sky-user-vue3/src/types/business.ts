@@ -68,3 +68,46 @@ export interface ShoppingCartDTO {
   setmealId?: number
   dishFlavor?: string
 }
+
+// 地址簿(AddressBook entity)。字段口径对齐后端契约(0003):
+// - sex 是 string("0"/"1");isDefault 是 number(0/1)
+// - 省市区六字段均 string(code 6 位,name 中文);由 van-area 选出后一并提交
+// id/userId 由后端管理,前端新增时不传,故可选。
+export interface AddressBook {
+  id?: number
+  userId?: number
+  consignee: string
+  phone: string
+  sex: string
+  provinceCode: string
+  provinceName: string
+  cityCode: string
+  cityName: string
+  districtCode: string
+  districtName: string
+  detail: string
+  label: string
+  isDefault: number
+}
+
+// 下单入参(OrdersSubmitDTO) —— 契约 POST /user/order/submit。
+// 当前用户由后端 JWT 拦截器注入,前端不传 userId。
+export interface OrdersSubmitDTO {
+  addressBookId: number
+  amount: number
+  deliveryStatus: number
+  estimatedDeliveryTime: string
+  packAmount: number
+  payMethod: number
+  remark: string
+  tablewareNumber: number
+  tablewareStatus: number
+}
+
+// 下单返回(OrderSubmitVO)
+export interface OrderSubmitVO {
+  id: number
+  orderNumber: string
+  orderAmount: number
+  orderTime: string
+}

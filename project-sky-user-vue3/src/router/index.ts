@@ -8,7 +8,12 @@ const routes: RouteRecordRaw[] = [
   { path: '/register', name: 'register', component: () => import('@/views/Register.vue'), meta: { public: true } },
   { path: '/home', name: 'home', component: () => import('@/views/Home.vue') },
   { path: '/menu', name: 'menu', component: () => import('@/views/Menu/Index.vue') },
-  { path: '/change-password', name: 'change-password', component: () => import('@/views/ChangePassword.vue') }
+  { path: '/change-password', name: 'change-password', component: () => import('@/views/ChangePassword.vue') },
+  // 地址簿 + 下单(0003):均非 public,故受 beforeEach 登录门槛保护(需登录)
+  { path: '/address', name: 'address', component: () => import('@/views/Address/List.vue') },
+  { path: '/address/edit', name: 'address-edit', component: () => import('@/views/Address/Edit.vue') },
+  { path: '/order-confirm', name: 'order-confirm', component: () => import('@/views/Order/Confirm.vue') },
+  { path: '/order-created', name: 'order-created', component: () => import('@/views/Order/Created.vue') }
 ]
 
 const router = createRouter({
