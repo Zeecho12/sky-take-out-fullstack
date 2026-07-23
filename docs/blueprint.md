@@ -56,6 +56,7 @@
 - **2026-07-23**:**0003「地址簿 + 下单」交付并合并回 main**(merge `3365f69`,`--no-ff` 保留 Phase 3 五步粒度;
   DoD 全绿:后端去百度 + 事务原子性 + 下单读地址归属 + amount 防呆 + 地址簿越权修复,前端地址簿 CRUD +
   结算下单端到端)。epic 推进焦点转向 **0004「mock 支付」**(下一个开工的 feature)。
-- **2026-07-23**:**0004「mock 支付」立项 + Phase 2 规划**(分支 `feature/0004-mock-payment`):D1–D5 经 Tech Lead 拍板
+- **2026-07-23**:**0004「mock 支付」立项 + Phase 2 规划 + 双路评审融合**(分支 `feature/0004-mock-payment`):D1–D5 经 Tech Lead 拍板
   (D1 内部同步 / D2 去 openid / D3 响应简化+订正文档漂移 / D4 删微信基建+refund 换 mock,边界只拆外呼 / D5 支付页+成功页替占位);
-  Requirement + ADR-0004 五决策 + 契约校准(payment 段)+ Proposal(3 步)已产出。待双路评审融合 → Phase 3。
+  Requirement + ADR-0004 五决策 + 契约校准(payment 段)+ Proposal(3 步)已产出。**双路评审(内审红队实读源码 + 外审 DeepSeek-v4-pro)已融合入 AD1**:
+  D1 细化为 CAS 原子幂等(采纳外审 HIGH#2,用户选 A)、D4 边界订正为逐处枚举(内审防编译失败)。待 Tech Lead 复核 → Phase 3。

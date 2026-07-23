@@ -26,10 +26,10 @@
 ## 决策概览
 | 编号 | 决策点 | 结论 |
 |---|---|---|
-| D1 | mock 支付怎么做 | **内部同步**:`payment()` 校验(存在+归属+未支付)后直接调 `paySuccess`,不走任何回调 |
+| D1 | mock 支付怎么做 | **内部同步**:`payment()` 校验(存在+归属)+ **原子 CAS 置位**(补回删微信丢掉的幂等)+ 推送,不走任何回调;删 `paySuccess`(AD1) |
 | D2 | openid 依赖怎么解 | **随微信支付一并移除**:删 `payment()` 里 openid 读取;`UserMapper.getByOpenId`(登录残留)不动 |
 | D3 | payment 契约动不动 | **响应简化为"成功即可"**(删微信预支付 5 字段 / 删 `OrderPaymentVO`);订正文档↔代码历史不一致 |
-| D4 | 退款 mock + 去微信支付 | **删干净**(删 `PayNotifyController`/`WeChatPayUtil`/`WeChatProperties`/`sky.wechat` 配置);3 处 `refund` 换 mock log,**周边业务逻辑一字不改**(边界:只拆外呼那一行) |
+| D4 | 退款 mock + 去微信支付 | **删干净**(删 `PayNotifyController`/`WeChatPayUtil`/`WeChatProperties`/`sky.wechat` 配置 + pom 依赖);3 处 `refund` 换 mock log(**3 处、2 处各含后继 log 行**,AD1),**周边业务逻辑 / 前置校验一字不改** |
 | D5 | 成功页衔接 | 下单成功 → **新支付页** → `payment` → **成功页**(改造 0003 占位页);行为对齐 reference;"查看订单"禁用(0005);不做失败/取消分支 |
 
 ---
@@ -44,7 +44,13 @@
 | 保留微信 `pay()` 接假证书 | 改动小 | 永远跑不通(需真证书);留坏死代码,与"去微信"目标相悖 |
 
 ### 决策
-选 **内部同步**:`payment()` 先按 `getByNumberAndUserId(orderNumber, currentUserId)` 取单(**同时完成归属校验**,查不到即拒),再校验"未支付"(已支付则拒,弱防呆),然后调 `paySuccess(orderNumber)` 完成"待接单 + 已支付 + 来单提醒"。**核心理由**:blueprint 定的就是"payment() 内部同步置已支付并调 paySuccess";这是学习项目里"用最小代价把链路跑通"的正解,真实异步支付的机制作为面试对比讲清即可(见下)。**不加 `@Transactional`**:`paySuccess` 只有一次 `update` + WebSocket 推送(推送失败不应回滚已支付),无多写原子性诉求。
+选 **内部同步**:`payment()` 先按 `getByNumberAndUserId(orderNumber, currentUserId)` 取单(**同时完成存在 + 归属校验**,查不到即拒),再**用一次原子条件更新(CAS)完成置位**,最后对成功的更新推 WebSocket 来单提醒。**核心理由**:blueprint 定的就是"payment() 内部同步置已支付";这是学习项目里"用最小代价把链路跑通"的正解,真实异步支付的机制作为面试对比讲清即可(见下)。
+
+**评审补(AD1 拍板 · 采纳外审 HIGH#2 → CAS)**:原设计"先检查 `payStatus` 再调 `paySuccess`(无条件 `update`)"是 **check-then-act**,并发双击 / 并发取消存在 **TOCTOU 竞态**(重复来单提醒、甚至"既支付又取消")。且我们删微信支付时,恰好删掉了原来靠微信返回码 `ORDERPAID` 提供的那层幂等——**CAS 正好把它补回来**。故改为:
+- 新增原子方法 `OrderMapper.updateToPaidIfUnpaid`(命名 Phase 3 定):`UPDATE orders SET status=待接单(2), pay_status=已支付(1), checkout_time=now() WHERE number=#{orderNumber} AND user_id=#{userId} AND pay_status=未支付(0)`,返回**影响行数**。
+- `payment()`:取单校验存在 + 归属(null → 拒"订单不存在/无权限")→ 调 CAS → **影响行数 0 → 拒 `OrderBusinessException`"该订单已支付"**(真原子幂等,非弱防呆);**=1 → 推 WebSocket 来单提醒**。
+- **`paySuccess(String)` 随之删除**:其原逻辑(无条件 `update` + 推送)被 payment 的"CAS 更新 + 推送"取代;删 `PayNotifyController` 后它已无其它调用者,推送逻辑并入 payment。
+- **仍不加 `@Transactional`**:原子性由**单条 CAS SQL 自身**保证(`WHERE pay_status=0` 是数据库层的 compare-and-set),WebSocket 推送失败不应回滚已支付,无多写事务诉求。
 
 ---
 
@@ -87,9 +93,16 @@
 | C 完全不碰 refund/cancel | 0004 后端最小 | `WeChatPayUtil` 删不掉 → 退回 B |
 
 ### 决策
-选 **A**,并把**边界写死**:0004 对 `userCancelById`/`rejection`/`cancel` **只做一件事——把 `weChatPayUtil.refund(...)` 这一行外部调用换成 mock(`log.info("模拟退款(mock)...")`)**;这三处**周边的状态流转、退款状态口径一律不动**。特别地:现状 `rejection`/`cancel` **不**置 `payStatus=REFUND`、只有 `userCancelById` 置——这个**既有不一致是 0005 的活,0004 明确不修**(避免 0004 悄悄扩成订单管理)。删除清单:`controller/notify/PayNotifyController.java`、`utils/WeChatPayUtil.java`、`properties/WeChatProperties.java`、`application.yml`/`application-dev.yml` 的 `sky.wechat.*` 块、`OrderServiceImpl` 的 `weChatPayUtil` 字段 + import。
+选 **A**,并把**边界写死**:0004 对 `userCancelById`/`rejection`/`cancel` **只拆掉对微信的外呼**,**周边的状态流转、退款状态口径、前置校验一律不动**。特别地:现状 `rejection`/`cancel` **不**置 `payStatus=REFUND`、只有 `userCancelById` 置——这个**既有不一致是 0005 的活,0004 明确不修**(避免 0004 悄悄扩成订单管理)。
 
-> 用户拍板(2026-07-23):同意 A,接受 0004 越界改 cancel/rejection 的这 3 行(仅拆外呼,不动语义)。
+**评审补(AD1 · 内审 CONFIRMED)——"只换一行"字面不成立,须逐处枚举**:三处 refund 调用**形态不一致**(`OrderServiceImpl` 实读),照"只换一行 / 周边一字不改"逐字执行会**编译失败**:
+- **`userCancelById`(L287–292)**:`weChatPayUtil.refund(...)` 无返回值赋值、无后续引用 → **换 1 条语句**为 `log.info("模拟退款(mock),订单号:{}", orderDB.getNumber());`。✓
+- **`rejection`(L400–406)**:`String refund = weChatPayUtil.refund(...)` **有赋值**,紧接 L406 `log.info("申请退款：{}", refund)` **用到该变量** → 须**删赋值 + 删/改后续 log**(每处 **2 条语句**),合并成一句 `log.info("模拟退款(mock),订单号:{}", ordersDB.getNumber());`。
+- **`cancel`(L432–438)**:同构,同上处理。
+
+即"改 3 处"而非"改 3 行";其中 2 处各含依赖 `refund` 变量的后继 log 行。删除清单:`controller/notify/PayNotifyController.java`、`utils/WeChatPayUtil.java`、`properties/WeChatProperties.java`、`application.yml`/`application-dev.yml` 的 `sky.wechat.*` 块、`OrderServiceImpl` 的 `weChatPayUtil` 字段 + import;**并删 pom 的微信支付依赖**(`sky-take-out/pom.xml` + `sky-common/pom.xml` 的 `wechatpay-apache-httpclient`,删类后成孤儿,AD1 内审补)。
+
+> 用户拍板(2026-07-23):同意 A,接受 0004 越界改 cancel/rejection(仅拆外呼,不动语义 / 前置校验)。
 
 ---
 
@@ -120,16 +133,48 @@
 - **放弃 / 代价**:支付变成"点一下就已支付"的 mock(无真实资金流 / 无异步回调 / 无验签);退款只 log 不落真实退款;成功页无真实送达时间(静态文案)。
 - **后续义务 / 遗留**:
   - 真实第三方支付集成(北美栈如 Stripe / PayPal:PaymentIntent + webhook + 幂等 + 验签)→ epic 外 backlog。
-  - 支付幂等强化(去重键 / 状态机)、支付超时倒计时业务 → 记档,0005 或将来。
+  - 支付幂等:0004 已用**数据库层 CAS**(`WHERE pay_status=0`)做**单节点原子幂等**(AD1 采纳);分布式去重键 / 完整支付状态机 / 支付超时倒计时业务 → 记档,0005 或将来。
   - `rejection`/`cancel` 的 `payStatus=REFUND` 口径不一致 → **0005** 处置。
+  - **`userCancelById` 越权(AD1 外审 #4 观察)**:该方法用 `orderMapper.getById(id)`(**仅按 id、无 `user_id` 归属**)→ 用户可拿别人订单 id 取消(潜在 IDOR)。0004 **不修**(D4 边界:只拆外呼);记 **0005**「用户订单管理」一并修(仿 0003 D6 归属修法)。
+  - **支付页金额可篡改(AD1 外审 #3,NOTED)**:支付页金额来自路由 query,用户可改 URL 改显示金额,**仅展示、无安全影响**(后端不信任前端金额;下单金额已在 submit 落库)。生产应从后端订单详情取金额展示;学习项目保持最低可用。
   - `UserMapper.getByOpenId` 等微信登录残留 → 认证域另议。
 
 ---
 
 ## 💡 面试要点(广度卡片)
 - **同步 vs 异步支付回调**:真实第三方支付是**异步**——前端下单拿 prepay 参数唤起支付,支付结果由支付平台**异步 webhook / notify** 回调商户后端(因为钱在支付平台侧,结果它说了算;要抗重复投递 / 网络重试)。本项目 mock 成**同步**(payment 内部直接置已支付)是学习简化;能讲清"为什么真实必须异步 + 回调要幂等 + 要验签防伪造"就是加分。
-- **支付幂等 / 回调重放**:支付平台的 notify 会**重复投递**,商户必须幂等(按订单状态 / 去重键,处理过就直接回 SUCCESS)。本项目用 `payStatus` 状态检查做**弱幂等**(已支付则拒);真幂等键留将来。
+- **支付幂等 / 回调重放**:支付平台的 notify 会**重复投递**,商户必须幂等(按订单状态 / 去重键,处理过就直接回 SUCCESS)。本项目 payment 用**数据库层 CAS**(见下卡)做原子幂等,替代原本靠微信 `ORDERPAID` 返回码提供的那层幂等;分布式去重键留将来。
+- **CAS / 原子状态迁移(check-then-act 竞态)**:"先查 `payStatus==0`,再 `update` 置已支付"是典型 **check-then-act**,并发下两个请求可同时通过检查 → 双重置位 / 重复副作用(重复来单提醒),甚至与并发"取消"打架("既支付又取消")。正解是把**检查与更新压成一条原子 SQL**:`UPDATE ... SET pay_status=1 WHERE ... AND pay_status=0`,按**影响行数**判成败(=1 我赢、=0 已被别人改)——这就是数据库层的 **compare-and-set / 乐观锁**思路。0004 恰因删微信丢了 `ORDERPAID` 幂等,顺势用 CAS 补回(评审 AD1 采纳);能说清"为什么 check-then-act 有竞态 + CAS 怎么解 + 与 `SELECT ... FOR UPDATE`(悲观锁)/ 版本号乐观锁的取舍"是加分。
 - **去除外部强依赖 → 可测试性 / 可运行性**:把支付(微信证书)、配送(百度 AK,0003)这类外部 API 从主链移除 / mock 化,fresh 环境才能端到端跑通、才好测。这是"依赖注入 + 可替换实现"思想的体现(mock 支付 ≈ 面试常说的 test double)。
 - **敏感配置不进代码库**:`application-dev.yml` 里明文 `mchid` / 私钥文件路径 / apiV3Key 是**反面教材**;生产应走环境变量 / 密钥管理(Vault / AWS Secrets Manager),代码库只留占位。0004 删掉它顺带消除这个隐患。
 - **订单状态机**:待付款(1)→ 待接单(2)(payStatus 未支付 0 → 已支付 1),支付是状态机的一次合法迁移;非法迁移(如对已支付订单再支付)要挡。能画状态机 + 说清每次迁移的守卫条件是加分。
 - **契约与实现漂移**:YAPI 文档说返回 `estimatedDeliveryTime`、代码却返回微信 5 字段——**文档不是真相源、代码才是**。契约优先要求"契约定死后实现对齐",本例是"契约事后校准对齐代码 + mock"的反向订正,提醒 contract-first 的纪律价值。
+
+---
+
+## Addendum(执行期细化,追加式)
+
+### AD1 — 双路评审发现与处置(2026-07-23,内审:会话内全新上下文红队 subagent + 外审:DeepSeek-v4-pro)
+> 按 GOOD.md Phase 2 步骤5,规划稿交内审(会话内全新上下文敌对 subagent,**实读源码**)+ 外审(DeepSeek 异构模型,**只看规划文档**)双路敌对评审,融合后修订计划。原决策 D1–D5 结论**方向不变**;D1 实现细化为 CAS(采纳外审 HIGH#2)、D4 边界描述订正(采纳内审 CONFIRMED)。此处记录发现与处置,作为学习 / 面试资产。**净判定:两路一致——修订后可进 Phase 3**(内审:底子扎实、1 项必修;外审:2 HIGH,其中 1 项被内审源码核对降级)。
+
+**① 内审实读核对通过(高置信,规划无误):** `getByNumberAndUserId` 确按 `number + user_id` 双条件过滤(归属成立)· `paySuccess`/CAS 用的 `BaseContext` 在 mock 同步请求线程内有值 · 删 `OrderPaymentVO` 引用闭包恰好 3 文件、无管理端/无 test · `WeChatProperties`/`sky.wechat` 删除闭包成立、无其它 `@Value` 注入点 · 前端接缝 + `request.ts` 返回 `Result{code,data,msg}`、`code===1` 判定一致。
+
+**② 分歧(内审用源码降级外审):**
+- 外审 [HIGH#2]「payment check-then-act 竞态」→ 内审证实**竞态真实存在**、但指出规划已把"真幂等"声明为 backlog、非阻断。**净处置:用户拍板采纳(选 A)**——上轻量 **CAS**(数据库层 compare-and-set),把删微信丢掉的 `ORDERPAID` 幂等补回。D1 由"check `payStatus` 后调无条件 `update` 的 `paySuccess`"改为"取单校验归属 + 原子 CAS(`WHERE pay_status=0`)按影响行数判成败 + 推送;删 `paySuccess`"。理由见 D1 评审补 + 面试卡「CAS / 原子状态迁移」。
+
+**③ 内审独有(实读 CONFIRMED,已改进计划):**
+- **D4「只换一行」字面不成立(唯一 MUST-FIX)**:`rejection`(L400/L406)、`cancel`(L432/L438)是 `String refund = weChatPayUtil.refund(...)` + 后续 `log.info(..., refund)`,只换 refund 那行会 `String=void` 或 `refund` 悬空 → **编译失败**。→ D4 改为**逐处枚举**:`userCancelById` 换 1 句;`rejection`/`cancel` 各删赋值 + 后继 log(2 句)。"3 行"更正为"3 处、2 处含后继 log"。
+- **pom 微信支付依赖残留(SHOULD-FIX)**:`wechatpay-apache-httpclient`(`sky-take-out/pom.xml` + `sky-common/pom.xml`)删类后成孤儿、grep 门抓不到 → 删除清单补两处 pom `<dependency>`,让"删干净"名副其实。
+- **步骤2 测试门「退款无外呼」删类后近恒真(不可证伪)**→ 主证据改挂 **grep 归零 + 日志见"模拟退款" + 订单已取消(DB 查)**,"无外呼"降为辅助(同 0003"注入点致恒真"教训)。
+- **payment 重写后 `userMapper` 字段 + `JSONObject` import 悬空(仅告警)**→ 步骤1 顺手删。
+
+**④ 外审独有(补覆盖 / 记档):**
+- [HIGH#1] **支付页→成功页 `orderNumber` 透传缺失** → proposal 步骤3 + D5 写明:成功后 query 透传 `orderNumber`(+`amount`),给 0005「查看订单」留钩子。
+- [MED#3] 支付页金额 query 可篡改 → 记 NOTED(仅展示、无安全影响,见后续义务)。
+- [MED#4] `userCancelById` 用 `getById(id)` 无归属校验(潜在 IDOR)→ 记 **0005** backlog(见后续义务),0004 不越界修。
+
+**⑤ 拍板(用户,2026-07-23):**
+- 外审 HIGH#2 → **采纳 CAS(方案 A)**(D1 细化)。
+- 二区 MUST-FIX/SHOULD-FIX(D4 逐处枚举、pom 依赖、测试门重挂、userMapper 清理、成功页透传、金额 NOTED、userCancelById IDOR 记 0005)一并落 requirement / proposal / 本 ADR。
+
+**评审留痕**:内审 = 会话内全新上下文红队 subagent(实读 `OrderServiceImpl` / `OrderMapper.xml` / `Orders` 常量 / `pom.xml` / `application*.yml` / 前端 `request.ts` / `Confirm.vue` / `Created.vue` / `router`);外审 = `~/.claude/tools/deepseek_review.py`(`deepseek-v4-pro`)。**异构双路敌对评审**再次印证:收敛处(D4 编译边界、测试门恒真)高置信;分歧处(HIGH#2 竞态是否阻断)靠**实读源码 + 项目上下文**判分量(外审只有文档会高估严重度,内审能读码 + 知 backlog 声明故更准);最终由 Tech Lead 就"范围选择"(要不要顺手上 CAS)拍板——决策留人、机制留笔记。
