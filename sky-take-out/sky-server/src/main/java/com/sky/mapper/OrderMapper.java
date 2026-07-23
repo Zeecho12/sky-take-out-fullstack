@@ -28,6 +28,13 @@ public interface OrderMapper {
     Orders getByNumberAndUserId(@Param("orderNumber") String orderNumber, @Param("userId") Long userId);
 
     /**
+     * 原子 CAS 置已支付:仅当订单存在、归属该用户、且当前未支付(pay_status=0)时,
+     * 一条 SQL 置 status=待接单(2)/pay_status=已支付(1)/checkout_time=now()。
+     * @return 影响行数(1=本次置位成功;0=不存在/非本人/已支付)
+     */
+    int updateToPaidIfUnpaid(@Param("orderNumber") String orderNumber, @Param("userId") Long userId);
+
+    /**
      * 修改订单信息
      * @param orders
      */

@@ -44,6 +44,14 @@
         where id=#{id};
     </update>
 
+    <!--    原子 CAS 置已支付:status=2(待接单) / pay_status=1(已支付) / checkout_time=now();
+            仅当 number 匹配、user_id 归属、且 pay_status=0(未支付) 时才置位,按影响行数判成败-->
+    <update id="updateToPaidIfUnpaid">
+        update orders
+        set status = 2, pay_status = 1, checkout_time = now()
+        where number = #{orderNumber} and user_id = #{userId} and pay_status = 0
+    </update>
+
     <!--    根据订单号和用户id查询订单-->
     <select id="getByNumberAndUserId" resultType="com.sky.entity.Orders">
         select *

@@ -7,8 +7,8 @@
 - 关联: Requirement → ./requirement.md | Progress → ./progress.md | ADR → ../../decisions/0004-mock-payment.md | 契约 → ../../api-contract/用户端接口.md
 
 ## ⭐ 交接头(覆盖式,永远只写"现在")
-- **当前**:**Phase 2 规划完成 + 双路评审已融合**。D1–D5 经 Tech Lead 拍板(2026-07-23);**双路评审(内审红队实读源码 + 外审 DeepSeek-v4-pro)已跑完并融合入 ADR AD1**——D1 细化为 **CAS 原子幂等**(采纳外审 HIGH#2,用户选 A)、D4 边界订正为**逐处枚举**(内审 CONFIRMED,防编译失败)、+ pom 依赖删除 / 测试门重挂 / userMapper 清理 / 成功页 orderNumber 透传 / 金额 NOTED / userCancelById IDOR 记 0005。**尚未进入 Phase 3,未写任何业务代码。**
-- **下一步**:**Tech Lead 复核融合稿** → 进 Phase 3(按实施清单 3 步,一步一 subagent;主窗口只编排 / 审 diff / 把测试门 / 提交)。
+- **当前**:**Phase 3 步骤1(后端 payment CAS 重写)已 TESTED**(2026-07-23,commit 待提交)。payment 改内部同步 mock:`BaseContext` 取 userId → `getByNumberAndUserId` 取单(null 抛 `ORDER_NOT_FOUND`,存在+归属校验)→ 原子 CAS `OrderMapper.updateToPaidIfUnpaid`(`WHERE number AND user_id AND pay_status=0`,按影响行数判成败:0 抛"该订单已支付"、1 推 WebSocket 来单提醒)→ `payment` 改 `void`、`OrderController` 返回 `Result.success()`;删 `paySuccess`/`OrderPaymentVO`/`userMapper` 字段/`JSONObject`+VO import,去 openid/微信 `pay`。**边界订正(Tech Lead 拍板 2026-07-23)**:`PayNotifyController` 删除**由步骤2 提前到步骤1**——它是 `paySuccess` 唯一调用者,与删 `paySuccess` 属同一依赖链(ADR D1 原逻辑),不提前则步骤1 结束不可编译、跑不了测试门。构建 `mvn clean package` EXIT=0;diff 已审(5 改 2 删)。测试门 4 条(curl+DB 硬验,独立 verifier)**全 PASS**:①正例 `status=2/pay_status=1/checkout_time` 非空 ②去 openid(id=8 openid NULL 支付成功)③重复支付原子拒(`code:0`"该订单已支付"、状态不变)④多用户数据隔离(乙 token 打甲单 `code:0`"订单不存在"、甲单不变)。
+- **下一步**:**提交步骤1 commit** → 进 **步骤2(后端去微信删干净)**:删 `WeChatPayUtil`/`WeChatProperties`/`sky.wechat` 配置(application.yml + application-dev.yml)+ 两处 pom `wechatpay-apache-httpclient` 依赖 + `OrderServiceImpl` 的 `weChatPayUtil` 字段 + import;3 处 refund 换 mock(逐处枚举:`userCancelById` 换 1 句;`rejection`/`cancel` 各删 `String refund=...` 赋值 + 后继 log)。`PayNotifyController` 已在步骤1 删,步骤2 不再涉及。测试门:编译+启动通过 / grep 归零 / 退款 mock 日志 + 订单已取消(DB)。
 - **别碰**:0005(订单管理:历史 / 详情 / 催单 / 取消 / 再来一单 / 用户中心)的功能实现;`reference/`(只读);后端**除** `OrderServiceImpl`(payment 重写 + 3 处 refund 换 mock)、支付相关待删文件、`application*.yml` 的 `sky.wechat` 块**之外**一律不动;0002/0003 已交付代码**除 `Order/Confirm.vue` 下单落点接线 + `Order/Created.vue` 改造成功页**外不动。
 - **怎么验证**:`docker start sky-redis` → 后端 jar(:8080,**构建前先停旧 jar**)→ `PUT /admin/shop/1`(Bearer)初始化店铺 → 前端 `npm --prefix project-sky-user-vue3 run dev`(:5173)。测试账号 `s7v_2268`/`123456`(id=8,openid 为 NULL)。类型门 `npm --prefix project-sky-user-vue3 run type-check` exit 0。MySQL 5.7 连库加 `--ssl-mode=DISABLED`。
 
@@ -67,7 +67,7 @@
 - `sky-server/.../mapper/OrderMapper.java` + `sky-server/src/main/resources/mapper/OrderMapper.xml` —— **新增原子方法** `updateToPaidIfUnpaid`(条件 `WHERE ... AND pay_status=0` 的 CAS UPDATE,返回影响行数;命名 Phase 3 定)。【步骤1】
 - `sky-server/.../controller/user/OrderController.java` —— `payment` 返回 `Result.success()`(去 `Result<OrderPaymentVO>` / 去 `throws Exception`)+ 删 import。【步骤1】
 - `sky-pojo/.../vo/OrderPaymentVO.java` —— **删**(grep 确认仅支付链路引用)。【步骤1】
-- `sky-server/.../controller/notify/PayNotifyController.java` —— **删**。【步骤2】
+- `sky-server/.../controller/notify/PayNotifyController.java` —— **删**。【步骤1】(执行期从步骤2 提前:它是 `paySuccess` 唯一调用者,与删 `paySuccess` 同一依赖链,不提前则步骤1 不可编译)
 - `sky-common/.../utils/WeChatPayUtil.java` —— **删**。【步骤2】
 - `sky-common/.../properties/WeChatProperties.java` —— **删**。【步骤2】
 - `sky-server/src/main/resources/application.yml` —— 删 `sky.wechat` 映射块(L47–56)。【步骤2】
@@ -87,7 +87,8 @@
 > 状态标记:TODO / IN_PROGRESS(~) / CODE_DONE / TESTED。
 > 前置(联调步骤都需):Redis 起 + 后端 jar 跑 + `PUT /admin/shop/1`(Bearer)初始化。**后端步骤改前先停旧 jar、改后重建**。冗长验证(端到端网络日志 / DB 断言 / 外呼监测)交**独立 verifier subagent**跑,回浓缩结论(铁律 8)。**Phase 3 每步派 subagent 实现(读文件 + 写码),主窗口只编排 / 审 diff / 把测试门 / 提交。**
 
-- [ ] **步骤1(后端)**:payment mock 重写 —— 去 openid(D2)+ 去微信 `pay`(D1)+ 校验(存在+归属)+ **原子 CAS 置位**(D1/AD1)+ 删 `paySuccess` + 简化返回 / 删 `OrderPaymentVO`(D3)  [依赖: 无]
+- [x] **步骤1(后端)· TESTED(2026-07-23)**:payment mock 重写 —— 去 openid(D2)+ 去微信 `pay`(D1)+ 校验(存在+归属)+ **原子 CAS 置位**(D1/AD1)+ 删 `paySuccess` + 简化返回 / 删 `OrderPaymentVO`(D3)  [依赖: 无]
+      **执行订正**:删 `PayNotifyController.java` 由步骤2 **提前到本步**(Tech Lead 拍板)——它是 `paySuccess` 唯一调用者,不删则本步不可编译;其余微信清理(`WeChatPayUtil`/`WeChatProperties`/`sky.wechat` 配置/pom/3 处 refund)仍留步骤2,步骤2 grep 归零门不受影响。实测:造甲订单号 `1784795918630`(user_id=8)→ 4 门全 PASS(见交接头)。
       实现:`OrderMapper` 新增 `updateToPaidIfUnpaid`(条件 CAS UPDATE,见 §2);`OrderServiceImpl.payment` 改为"取单校验存在+归属 → CAS → 影响行数 0 拒/1 推送"(见 §2);**删 `paySuccess`(接口 + 实现)**、`userMapper` 字段、`JSONObject` import、payment 里 openid/`weChatPayUtil.pay`;`OrderService.payment`→`void` 去 `throws`;`OrderController.payment`→`Result.success()`;删 `OrderPaymentVO`(**先 grep 全仓引用**,AD1 内审实证仅 3 文件 + 类本身)。**注意**:`weChatPayUtil` 字段此步暂留(3 处 refund 还在用),步骤2 再删。
       测试门(curl + DB 硬验,交 verifier):① 正例:登录(`s7v_2268`,openid NULL)→ 下单得 `orderNumber`(DB `status=1/pay_status=0`)→ `PUT /order/payment {orderNumber,payMethod:1}` 断言 `code:1`;DB 该单 **`status=2 / pay_status=1 / checkout_time` 非空**。② 去 openid:同上账号成功即证(改前 null openid 必失败)。③ **重复支付(原子幂等)**:对已支付单再打 → **拒**"该订单已支付"、状态不变、**不重复推来单提醒**(CAS 影响行数 0)。④ 归属:乙 token 打甲 `orderNumber` → **拒 / 查无此单**(getByNumberAndUserId 返 null)、甲单不变。
 - [ ] **步骤2(后端)**:去微信支付删干净(D4)—— 删 `PayNotifyController`/`WeChatPayUtil`/`WeChatProperties`/`sky.wechat` 配置 + pom 依赖 + 3 处 refund 换 mock  [依赖: 1]

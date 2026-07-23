@@ -48,3 +48,22 @@
 **坑 / 备忘**
 - CAS 是本功能的核心面试点(check-then-act 竞态 → 数据库层 compare-and-set;与 `SELECT...FOR UPDATE` 悲观锁 / 版本号乐观锁对比)。删微信 = 丢了 `ORDERPAID` 那层幂等,CAS 正好补回 —— 这个"删一个外部依赖顺带要自己补回它隐含的保证"的故事很值钱。
 - 外审只有文档会**高估**严重度(HIGH#2),内审能读码 + 知 backlog 声明故判得准 —— 异构双路的价值就在这:分歧处靠实读定分量。
+
+---
+
+## 2026-07-23 · Phase 3 步骤1(后端 payment CAS 重写)· TESTED
+
+**做了什么**
+- 派 subagent 实现步骤1(铁律 8,读文件+写码):`OrderMapper` 新增原子 `updateToPaidIfUnpaid`(`UPDATE orders SET status=2,pay_status=1,checkout_time=now() WHERE number=? AND user_id=? AND pay_status=0`,返回影响行数)+ 对应 XML;`OrderServiceImpl.payment()` 重写为"`BaseContext` 取 userId → `getByNumberAndUserId` 取单(null 抛 `MessageConstant.ORDER_NOT_FOUND`)→ CAS → 影响行数 0 抛"该订单已支付"、1 推 WebSocket 来单提醒"(推送段照搬原 `paySuccess`,仅 `orders.getId()`→`orderDB.getId()`);删 `paySuccess`(接口+实现)、`userMapper` 字段、`JSONObject`+`OrderPaymentVO` import,去 openid/`weChatPayUtil.pay`;`OrderService.payment`→`void` 去 throws;`OrderController.payment`→`Result.success()`;删 `OrderPaymentVO.java`(grep 闭包=3 引用文件+自身,无管理端/test)。`weChatPayUtil` 字段本步保留(3 处 refund 步骤2 才动)。
+- 主窗口:审 diff(5 改 2 删)、构建 `mvn clean package -DskipTests` EXIT=0、起 jar(:8080)+ admin `PUT /admin/shop/1` 初始化、派独立 verifier 跑测试门、提交 commit。
+- 测试门 4 条(curl+DB 硬验)**全 PASS**:①正例 `code:1` + DB `status=2/pay_status=1/checkout_time` 非空(甲订单号 `1784795918630`,user_id=8);②去 openid(`SELECT openid FROM user WHERE id=8` = NULL,仍支付成功);③重复支付原子拒(`code:0`"该订单已支付",状态未二次修改,结构上到不了推送分支=不重复推送);④多用户数据隔离(注册乙 `verify_iso_26773` id=13,乙 token 打甲单 `code:0`"订单不存在",甲单不变)。
+
+**关键决策(执行期)**
+- **`PayNotifyController` 删除从步骤2 提前到步骤1**(Tech Lead 拍板 2026-07-23):subagent 发现它第 59 行仍调 `orderService.paySuccess`,而 paySuccess 本步已删 → 不删 PayNotifyController 则步骤1 结束不可编译、跑不了自己的测试门。它是 paySuccess 唯一调用者,与删 paySuccess 同一依赖链(ADR D1 原逻辑"删 PayNotifyController → paySuccess 无调用者 → 删 paySuccess"),proposal 把二者劈到两步是边界疏漏。其余微信清理仍留步骤2,步骤2 grep 归零门不受影响(PayNotifyController 已归零)。
+
+**下一步**
+- 步骤2(后端去微信删干净):删 `WeChatPayUtil`/`WeChatProperties`/`sky.wechat` 配置 + 两处 pom `wechatpay-apache-httpclient` + `weChatPayUtil` 字段/import;3 处 refund 逐处枚举换 mock。测试门:编译+启动 / grep 归零 / 退款 mock 日志+订单已取消。
+
+**坑 / 备忘**
+- verifier 造数据时 Git Bash 传中文 `remark` 字节坏掉致 submit 400 —— 是脚本编码问题非被测代码;curl 传中文 body 用 ASCII 或确保 UTF-8。
+- 复用了已有 `MessageConstant.ORDER_NOT_FOUND`("订单不存在");CAS 的 `WHERE ... pay_status=0` + `getByNumberAndUserId` 的 `user_id` 双重归属保护(取单即拦 + CAS 再拦)。
