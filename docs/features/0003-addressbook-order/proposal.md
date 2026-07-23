@@ -7,8 +7,8 @@
 - 关联: Requirement → ./requirement.md | Progress → ./progress.md | ADR → ../../decisions/0003-addressbook-order.md | 契约 → ../../api-contract/用户端接口.md
 
 ## ⭐ 交接头(覆盖式,永远只写"现在")
-- **当前**:Phase 2 规划**基本完成**。Requirement + ADR-0003 六决策(`9070a46`)、契约校准(`d440730`)、Proposal + progress(`b13b1c9`)已 commit;**双路评审(内审红队实读源码 + 外审 DeepSeek-v4-pro)已跑完并融合**,发现与处置写入 ADR AD1,计划已按融合修订(D6 改 Service 层归属 + 下单读地址归属 + `amount>0` 防呆 + 两条假绿测试门修正 + 必传字段 / 编辑不吞默认 / 若干 LOW 记档)。
-- **下一步**:Tech Lead 复核融合后计划 → 进 Phase 3 **步骤1(后端 submitOrder 改造:去百度 + `@Transactional` + 下单读地址归属 + `amount>0`)**。Phase 3 每步派 subagent(铁律 8)。
+- **当前**:Phase 3 执行中。**步骤1(后端 submitOrder 改造)已 TESTED 并 commit `b2e2389`** —— 去百度(删 checkOutOfRange + `@Value` + application.yml 两 key)、`@Transactional` 原子化、下单读地址归属(userId 只认 BaseContext)、`amount>0` 防呆;4 条测试门全绿(verifier subagent curl 硬断言 + DB 行数 + 注入回滚对照,②去 @Transactional 见脏单+购物车清空证非恒真)。规划期文档同前(Requirement/ADR `9070a46`、契约 `d440730`、Proposal `b13b1c9`、融合 `8eb21d8`、快照 `4e8d260`)。
+- **下一步**:进 Phase 3 **步骤2(地址簿越权修复,D6,Service 层)** —— `AddressBookServiceImpl` 的 `getById`/`update`/`deleteById` 加归属校验(userId 只认 BaseContext、不改 Mapper 签名),独立 commit。按铁律 1 先复述 + Tech Lead 确认,铁律 8 派 subagent。
 - **别碰**:支付(0004)/ 订单管理(0005)的代码与页面;`reference/`(只读);后端**除** `OrderServiceImpl.submitOrder`(去百度 + 事务)与 `AddressBookMapper`(越权修复)**之外**一律不动;0002 已交付代码**除 CartBar"去结算"接线**外不动。
 - **怎么验证**:`docker start sky-redis` → 后端 jar(:8080,**构建前先停旧 jar**)→ `PUT /admin/shop/1`(Bearer)初始化店铺 → 前端 `npm --prefix project-sky-user-vue3 run dev`(:5173)。测试账号 `s7v_2268`/`123456`(id=8)。类型门 `npm --prefix project-sky-user-vue3 run type-check` exit 0。MySQL 5.7 连库加 `--ssl-mode=DISABLED`。
 
@@ -80,7 +80,7 @@
 > 状态标记:TODO / IN_PROGRESS(~) / CODE_DONE / TESTED。
 > 前置(联调步骤都需):Redis 起 + 后端 jar 跑 + `PUT /admin/shop/1`(Bearer)初始化。**后端步骤改前先停旧 jar、改后重建**。冗长验证(注入回滚断言 / 端到端网络日志)交**独立 verifier subagent**跑,回浓缩结论(铁律 8)。
 
-- [ ] **步骤1(后端)**:submitOrder 改造 —— 去百度(D2)+ `@Transactional`(D3)+ 下单读地址归属(D6 下单侧)+ `amount>0` 防呆(D4)  [依赖: 无]  —— **TODO**
+- [x] **步骤1(后端)**:submitOrder 改造 —— 去百度(D2)+ `@Transactional`(D3)+ 下单读地址归属(D6 下单侧)+ `amount>0` 防呆(D4)  [依赖: 无]  —— **TESTED**(commit `b2e2389`;4 门全绿,含②对照去 @Transactional 证非恒真)
       测试门(curl 硬断言 + 注入回滚断言,交 verifier):
       ① 去百度:登录 → `cart/add`(dishId)→ `POST /addressBook` 建地址 → `order/submit` 断言 `code:1` + `orderNumber`;**换任意/远距离地址仍 `code:1`**(改前假 AK 会 500)。
       ② 原子性(**注入点修正**):在三写**全部之后(清购物车之后)**注入 `RuntimeException` → 断言 `orders` **无残留** 且 `shopping_cart` **仍在** → **撤注入重建**。注入点**必须在清购物车之后**,否则"购物车仍在"恒真、无法证伪(评审 AD1:清购物车是三写末步)。对照:去 `@Transactional` 应见脏订单 + 购物车已清。

@@ -42,3 +42,28 @@
 **拍板(用户 2026-07-22)**:D6 Service 层归属 / 下单读地址一并校验(步骤1)/ 加 `amount>0`。
 
 **下一步**:Tech Lead 复核融合后计划 → 进 Phase 3 步骤1(每步派 subagent,铁律 8)。
+
+---
+
+## 2026-07-22 · Phase 3 步骤1(后端 submitOrder 改造)完成
+
+**做了什么**
+- Tech Lead 复述确认后开工。按铁律 8:派 1 个实现 subagent 改代码(不构建/不运行/不提交,只回 diff)、派 1 个独立 verifier subagent 跑测试门(构建+起 jar+curl+注入回滚,回浓缩结论);主窗口只做编排 / 审 diff / 把测试门 / 提交 / 环境调试。
+- 改 2 文件 `OrderServiceImpl.java` + `application.yml`,commit `b2e2389`:
+  - **D2 去百度**:删 `checkOutOfRange` 方法 + `submitOrder` 内调用 + `@Value` 的 `ak`/`shopAddress` 字段 + 3 个 unused import(`JSONArray`/`HttpClientUtil`/`Value`);`application.yml` 删 `sky.baidu.ak` / `sky.shop.address`。全库 grep 确认无悬挂引用。
+  - **D3 原子化**:`submitOrder` 加 `@Transactional`(未拆 `this.` 子方法、无 `rollbackFor`)。
+  - **D6 下单侧**:`addressBook == null || !currentId.equals(addressBook.getUserId())` → 拒 `ADDRESS_BOOK_IS_NULL`;`currentId` 只来自 `BaseContext`。
+  - **D4 防呆**:`amount == null || amount.compareTo(BigDecimal.ZERO) <= 0` → `OrderBusinessException`。
+
+**测试门(4/4 PASS,verifier 硬断言)**
+- ① 去百度:深圳 + 新疆远地址 submit 均 `code:1`(改前假 AK 会 500)。
+- ② 原子性:清购物车(末步)后注入 `throw` → `orders` 无残留 + `shopping_cart` 仍在;**对照**去 `@Transactional` → 脏单落库 + 购物车已清(证测试非恒真)。
+- ③ 下单读地址归属:乙(id=9)用甲(id=8)地址 submit → `ADDRESS_BOOK_IS_NULL`、乙无订单。
+- ④ amount 防呆:`amount=0` / `-1` → `订单金额非法`、不建单。
+
+**坑 / 备忘**
+- 日期格式无坑:`OrdersSubmitDTO.estimatedDeliveryTime` 用字段级 `@JsonFormat("yyyy-MM-dd HH:mm:ss")`。
+- 项目自带 `apache-maven-3.9.9` + JDK17;`mvn clean package -DskipTests` 可构建。
+- 遗留测试脏数据(未清):`orders` user8 3 行(门① 2 单 + 门②(b) 无事务脏单 1)、`address_book` user8 新增 2 条、测试账号 `verify_b_*`(id=9)。不影响后续步骤。
+
+**下一步**:进 Phase 3 步骤2(地址簿越权修复,D6 Service 层,`AddressBookServiceImpl`),独立 commit。
