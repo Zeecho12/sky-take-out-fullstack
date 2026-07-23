@@ -101,3 +101,24 @@
 
 **下一步**
 - Phase 3 步骤3(前端脚手架:`types/business.ts` 补 4 类型 + `api/order.ts` 补 5 函数[historyOrders 参数名 `pageNum`] + `router` 加 3 路由 + 3 占位组件),测试门 type-check exit0 + curl 硬验 historyOrders `?pageNum=1&pageSize=10` 返 `{total,records}`。后端两步已收尾,余下纯前端。
+
+---
+
+## 2026-07-23 · Phase 3 步骤3 前端脚手架(类型+api+路由+占位)—— 完成 TESTED
+
+**做了什么(铁律 8)**
+- 派实现 subagent:`types/business.ts` 末尾补 `OrderDetailItem`/`Order`/`OrderDetail extends Order`/`PageResult<T>`(字段对齐后端 `OrderDetail`/`Orders`/`OrderVO`/`PageResult`);`api/order.ts` type-only import 扩容 + 补 5 函数(historyOrders GET `params:{pageNum,pageSize,status}`、orderDetail/reminder GET+path、repetition POST+path、cancel PUT+path,沿用 `request.xxx<unknown,Result<T>>`);`router` 加 3 路由(懒加载、不写 meta.public 受登录门槛)+ 新建 3 占位 .vue 空壳。`npm run type-check` exit0 一次过。
+- 主窗口审 diff(纯新增 107 行,风格与既有一致)→ 提交 code commit `8b5d584`。
+- 运行时门分两块:curl 契约交 verifier;preview 浏览器门主窗口做(原生 preview 工具,占位页快照极小、不冗长)。
+
+**验证证据**
+- **curl(verifier)**:historyOrders `?pageNum=1&pageSize=10`→code1,`data` 顶层键 = `total`(11)+`records`(数组),字段名正确;orderDetail/8→code1,全字段+`orderDetailList`(与类型对齐);reminder/repetition/cancel 均连通返 Result。
+- **preview(主窗口)**:登录注入(fetch `/api/user/user/login` 拿 token 写 `sky_user_token`/`sky_user_info` 两 key,绕过 Vant 表单填充问题)→ `/user`、`/order-list`、`/order-detail/8` 三路由**均解析到各自占位页文案**(登录态下不被重定向,证登录门槛+懒加载都对);`/menu` 回归完整渲染(营业中+分类+菜品+价格);error 级 console 为空。
+
+**坑 / 发现**
+- **反证 `page`(错误参数名)返 HTTP 500 而非契约/AD1 写的 400**:verifier 实测缺 `pageNum` 时后端抛 500(疑似 `pageNum` 缺失→PageHelper NPE 兜底,而非 `MissingServletRequestParameterException` 400)。不影响结论(前端用 `pageNum` 已验证 code1+{total,records});契约 line64 / ADR AD1 HIGH#2 的"400"表述与实测有偏差 —— **待定:是否校准契约措辞为 400/500**(非本步 DoD,记一笔)。
+- **preview 登录用 UI 表单点击没发出 login POST**(网络日志只见 GET /login):Vant `van-field` 的 preview_fill/click 组合没触发提交。改用 preview_eval 直接 fetch 登录 + 写两个 localStorage key(`stores/user.ts` 初始化即从 `sky_user_token`/`sky_user_info` 读)→ reload 即登录态。**这是后续前端步骤验证登录门槛页的通用捷径**(已写进交接头)。
+- verifier 又消耗了订单 8(cancel 8:status2→6 + repetition/8 灌购物车)——step4 无限滚动需 >10 单,大概率要 verifier 造单。
+
+**下一步**
+- Phase 3 步骤4(历史订单页 List.vue,D3):van-tabs 3 tab + van-list 无限滚动(AD1 复位/单请求护栏)+ 卡片按状态出按钮 + 点卡片跳详情。交 verifier 跑 preview_network 测试门。
