@@ -143,3 +143,12 @@
 - 原 D1 括注"按需引入(tree-shaking)"。执行时:两路评审均预警按需引入的隐性代价——functional 组件(Toast/Dialog)样式不随 VantResolver 自动引入、与 Vite/tsconfig 耦合、样式易缺。
 - **决策**:改用**全量引入**(`import Vant from 'vant'` + `import 'vant/lib/index.css'` + `app.use(Vant)`)。理由:学习项目不在意 bundle 体积;全量引入**零样式配置、最稳**,省掉 `unplugin-vue-components` + Vite 插件。**D1"引入 Vant"结论不变**,仅"引入方式"从按需改全量。
 - **观察**:app 现有 `styles.css` 有全局 `button` 金色主题,会渗进 Vant 按钮(Vant 主按钮显示金色而非 Vant 蓝)。纯外观、学习项目可接受(UI 只求能跑);如需纯净 Vant 主题,后续给点餐页容器加作用域样式即可。面试点:**全局 CSS 与组件库样式的层叠/污染**。
+
+### AD3 — 类型检查固化进 build(执行期,2026-07-22 步骤7 Gate G)
+- **问题**:`project-sky-user-vue3` 的 `npm run build` 原本只有 `vite build`。Vite 用 **esbuild** 转译 TS——esbuild 为速度只做"逐文件剥掉类型注解",**不做跨文件类型检查**;因此类型错误(传错 prop 类型、用了不存在的字段等)会被**静默放过进产物**。步骤7 验收(Gate G)实测暴露:`npm run build` 通过 ≠ 类型正确。
+- **决策**(用户 2026-07-22 拍板):把类型检查**固化进项目**——加 `vue-tsc@^2.1.10` 到 devDependencies(`typescript` 已有 `^5.6.3`),新增 `"type-check": "vue-tsc --noEmit"` 脚本,并把 `"build"` 改为 `"vue-tsc --noEmit && vite build"`(build 先跑类型检查,有类型错误即 fail)。全项目实测 `type-check` / `build` 均 exit 0、零类型错误。
+- **理由 / trade-off**:build 略慢(多一遍全量类型检查)换取"**类型错误不进产物**"的正确性门,学习项目值得。这正是 create-vue 官方脚手架把 `type-check`(vue-tsc)与 `build-only`(vite build)拆成两个脚本、再用 `npm-run-all` 并行的原因。本项目选**串行 `&&`** 而非引 `npm-run-all`:零新增运行时/工具依赖、最简;代价是两步串行(非并行)略慢——学习项目量级可忽略。
+- **面试要点**:
+  - ① esbuild / SWC 这类"转译器"为何普遍**不做类型检查**:它们逐文件转译(单文件剥类型注解),而类型检查需要**全项目类型信息**(跨文件解析、类型推导),tsc 做这件事,速度差数量级——所以主流做法是"转译交 esbuild、类型检查交 tsc"。
+  - ② 前端构建普遍"**转译与类型检查解耦**"的工程权衡:dev 时要**快速反馈**(esbuild 秒级热更,不卡类型检查);CI / build 时要**正确性门**(tsc 全量把关不让类型错误进产物)。两个目标用两条链路分别满足。
+  - ③ `vue-tsc` = `tsc` + Vue SFC(`.vue`)类型支持,能查**模板里**的类型(如给组件传错 prop),普通 `tsc` 看不懂 `.vue` 做不到这点。

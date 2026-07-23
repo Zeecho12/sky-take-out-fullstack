@@ -27,10 +27,10 @@
 
 ## 三、当前进度
 
-- **Phase**:功能 0001「C 端认证改造」**已交付并合并回 `main`(merge `b02590b`,DoD 全绿)**:后端全站统一 Spring Security + 单套 JWT(`/admin/**`=ADMIN、`/user/**`=USER、401/403、BCrypt);admin 前端认证头迁 `Authorization: Bearer`;新建 C 端 Web `project-sky-user-vue3`(Vue3+Vite+TS+Pinia)全链路端到端跑通;`docs/smoke-tests.md` 全绿。
-- **进行中**:大工程「C 端完整重建(含 mock 支付)」立项 —— 照 `reference/` 微信小程序把 C 端 Web 端到端重建,拆 **0002~0005 四个 feature 串行推进**(路线图见 `docs/blueprint.md`)。跨功能决策已拍板:UI=**Vant**、**整站登录门槛**、后端**改造复用**、认证复用 0001。当前在 **Phase 2 规划 0002「商品浏览 + 购物车」**。
-- **下一步**:写 0002 Requirement + ADR(Vant / 登录门槛)→ 校准 `docs/api-contract/` → 拆 Proposal → 内审 + DeepSeek 双路评审 → 进 Phase 3。0003(地址簿+下单)/0004(mock 支付)/0005(订单管理)依次跟进(见 `docs/blueprint.md`)。
-- **git**:当前在 `main`;`feature/cend-auth-jwt` 分支已合并(未删)。构建前先停后端 jar;本机 MySQL 5.7 客户端连库需 `--ssl-mode=DISABLED`(详见 `docs/WORKFLOW.md`)。冒烟基线 `docs/smoke-tests.md`。
+- **Phase**:功能 0002「C 端重建①:商品浏览 + 购物车」**已交付并合并回 `main`(merge `df53f0b`,DoD 全绿)**:C 端 Web 引 Vant(全量)+ 占位图;点餐主页(分类栏 + 菜品/套餐列表 + 规格/含菜弹层 + 底部栏 + 购物车明细);购物车 Pinia store(服务端为准);整站登录门槛 + 落地 `/menu` + Home 逃生;后端唯一 bugfix `ShoppingCartMapper.updateNumberById`(amount→number);`vue-tsc` 类型检查固化进 build 门;requirement 11 条 AC 全绿。(0001 认证 merge `b02590b` 已交付。)
+- **进行中**:大工程「C 端完整重建(含 mock 支付)」推进中 —— 0002 已完;跨功能决策(UI=**Vant**、**整站登录门槛**、后端**改造复用**、认证复用 0001)均已落地。**下一块 0003「地址簿 + 下单」**(路线图见 `docs/blueprint.md`)。
+- **下一步**:立项 0003「地址簿 + 下单」——Phase 2 写 Requirement + ADR(如需)→ 校准 `docs/api-contract/`(地址/下单)→ 拆 Proposal → 内审 + DeepSeek 双路评审 → 进 Phase 3(铁律 8:每步派 subagent)。0004(mock 支付)/0005(订单管理)依次跟进。
+- **git**:当前在 `main`(**领先 `origin/main`,未推送**);`feature/0002-cend-browse-cart`(及 0001 的 `feature/cend-auth-jwt`)已合并未删。起环境:`docker start sky-redis` → 后端 jar(:8080)→ admin `PUT /admin/shop/1` 初始化店铺 → C 端 `npm --prefix project-sky-user-vue3 run dev`(:5173);dish/setmeal/shop 依赖 Redis。构建前先停 jar;MySQL 5.7 连库需 `--ssl-mode=DISABLED`(详见 `docs/WORKFLOW.md`)。冒烟基线 `docs/smoke-tests.md`。
 
 > 本节是**当前快照**,只写"现在":**覆盖式更新**(改写这几行,不往下追加历史),
 > 永远保持这个长度。完成了什么、里程碑历史,看 `git log` 和各功能的 `progress.md`,
