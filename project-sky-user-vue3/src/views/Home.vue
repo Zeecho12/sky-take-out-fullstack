@@ -41,7 +41,10 @@ async function onLogout() {
       <span>👤 {{ userStore.user?.username }}(id: {{ userStore.user?.id }})</span>
     </div>
     <h2>苍穹外卖 · 顾客端</h2>
-    <p class="link">已登录。下面可以验证 token、改密或登出。</p>
+    <p class="link">已登录。可以进入点餐,或验证 token、改密、登出。</p>
+
+    <!-- 逃生入口:登录后可从这里进入点餐主页(默认落地页已改为 /menu,此处为可回退入口) -->
+    <van-button type="primary" block @click="router.push('/menu')">进入点餐</van-button>
 
     <button :disabled="probing" @click="probeProtected">
       {{ probing ? '请求中…' : '验证 token(拉取地址簿)' }}
