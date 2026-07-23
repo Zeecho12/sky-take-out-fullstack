@@ -122,3 +122,26 @@
 
 **下一步**
 - Phase 3 步骤4(历史订单页 List.vue,D3):van-tabs 3 tab + van-list 无限滚动(AD1 复位/单请求护栏)+ 卡片按状态出按钮 + 点卡片跳详情。交 verifier 跑 preview_network 测试门。
+
+---
+
+## 2026-07-23 · Phase 3 步骤4 历史订单页 List.vue(D3)—— 完成 TESTED(含一处 van-list 缺陷修复)
+
+**做了什么(铁律 8)**
+- 派实现 subagent 把占位 `List.vue` 覆盖为完整实现(van-tabs 3 tab + van-list 无限滚动 + 卡片按状态出按钮 + 去支付/催单/再来一单合并动作 + 点卡片跳详情 + 切 tab 竞态守卫)。type-check exit0。
+- 主窗口审(读文件确认逻辑)→ 重启 dev server(preview_list 曾空)→ 派 verifier 跑 preview 门。
+- **verifier 抓到 gate① FAIL(真 bug)** → 主窗口定修法 → 派 subagent 改一处 `watch(activeTab)` → 主窗口 preview 重验通过 → 提交 `7c961f9`(初版+修复合一)。
+
+**验证证据(preview,mobile 视口)**
+- ② 无限滚动 PASS:全部 tab 首屏**只 1 次** `historyOrders?pageNum=1`(AD1 首拉不双发 ✓),触底 `pageNum=2` 累加、无重复 id、`finished` 后停。
+- ③ 按钮按状态 PASS:status1=去支付+再来一单 / status2=催单+再来一单 / status6=仅再来一单。
+- ④ 点卡片 PASS:非按钮区点击→`/order-detail/{该单id}`(占位页可见)。
+- ① tab 过滤:修复后重验 PASS——从全部切待付款→**无需滚动即自动加载** 3 条全 status1、请求恰 1 次 `...&status=1`;切已取消→10 条 status6、`...&status=6`;切回全部→无 status、10 条混合。每次切 tab 恰 1 次请求。
+
+**坑 / 发现(高价值)**
+- **van-list 切 tab 白屏缺陷(推翻 AD1 一处假设)**:AD1 护栏原写"切 tab 只复位 `finished=false`、首拉只靠 van-list 自动 @load"。实测**不成立**:Vant van-list 的 `@load` 只在 `finished` 发生 `true→false` **跳变**(或 scroll/mount)时重查;从"未加载完(`finished` 恒 false、数据>1页)"的 tab 切走时复位 `finished=false` **无跳变** → 不重触发 → 新 tab 白屏,要手动滚一下才出。对照实验坐实(从已 `finished=true` 的 3 单 tab 切走则正常,差别只在 finished 是否跳变)。**修法**:切 tab 复位后**先置 `loading=true` 再手动调一次 `onLoad()`**——van-list 在 loading 期间不并发触发,故切 tab 恰 1 次请求(既治白屏、又守住 AD1"勿双发");初始挂载不加手动调用,仍纯靠 van-list 挂载自动首拉。**教训:AD1"只靠自动 @load"对"首屏挂载"成立,但对"切 tab 复位"不成立——两个场景 van-list 触发条件不同,不能一概而论。**
+- **预览环境 `window.innerHeight=0`**:Vite preview 初始视口高 0 → van-list 可见性检测永不触发 @load、列表全空(假 FAIL)。**verifier/验证前必须先 `preview_resize` mobile(375×812)**。已写进交接头,后续前端验证通用。
+- verifier 造单补齐:甲(id=8)现有 16 单(status1×3=id13/14/15、status2×2=id16/17、其余 status6),供步骤5 直接用。
+
+**下一步**
+- Phase 3 步骤5(订单详情页 Detail.vue + 动作 + 成功页接线,D4):orderDetail 全字段 + 取消/立即支付/催单/再来一单;Created 查看订单去 disabled + orderId 兜底;Confirm/Pay 补透传 orderId。复用 List.vue 动作写法。
