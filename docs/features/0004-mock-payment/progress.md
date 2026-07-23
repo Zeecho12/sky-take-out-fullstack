@@ -103,3 +103,16 @@
 - **环境扛不过进程重启(重要)**:`Start-Process` 起的 jar、Bash 后台 `npm run dev`、Docker Desktop 都会在 **Claude Code 进程退出/会话边界**时被带走(本次步骤3 端到端首轮就因后端全掉而 BLOCKED)。新窗口/会话恢复后**先核环境**(`java`/8080/6379/`docker ps`)再干活;掉了就:启 Docker Desktop → `docker start sky-redis` → 起 jar → `PUT /admin/shop/1`(Redis 重启店铺状态丢失)。
 - 端到端 verifier 用 `preview_start`(name `user-web`,已配 `.claude/launch.json`)起托管 vite + 浏览器,`preview_network` 抓请求/跳转;requestId 只回响应体、读不到请求体(用响应 code + DB + 负例交叉佐证 payment 契约)。
 - 消耗真实订单:步骤3 端到端下单+支付了单号 1784820516284(status=2/pay_status=1);步骤1 甲单 1784795918630 已在步骤2 被取消(status=6)。
+
+---
+
+## 2026-07-23 · Phase 4(验证收尾)· 0004 DONE
+
+**做了什么**
+- 合并 `feature/0004-mock-payment` → `main`:`--no-ff`(merge `b08bf8e`),保留 Phase 3 三步 commit 粒度(铁律 2);惯例与 0003(`3365f69`)一致。合并前确认 feature 是 main(`c8c42e2`)线性后代、工作树干净。
+- Phase 4 收尾单 commit `cea9571`(在 main,仿 0003 c8c42e2):CLAUDE.md「当前进度」覆盖式更新(0004 DONE、epic 仅剩 0005)+ blueprint 0004 → 已交付 + 时间线 + ADR-0004 **AD2**(执行期边界订正:PayNotifyController 提前删,教训=删方法与删其唯一调用者应同一步保证中间态可编译)+ WORKFLOW 补两条 gotcha(环境扛不过进程重启、日志 GBK)。
+- 派生文档 `BACKEND_OVERVIEW`:按铁律 7「里程碑再生」+ 0003 先例(未逐次再生)**本次不再生**,留 C 端重建 epic 收口(仅剩 0005)统一再生。divedeep(CAS 面试点)按需另写,未做。
+
+**DoD 核对(铁律 4)**:代码 ✅(合并 main)/ 测试 ✅(后端 curl+DB+编译启动+grep 归零、前端 type-check+端到端全绿)/ requirement ✅ / proposal ✅(交接头收 DONE、3 步 TESTED)/ progress ✅ / ADR ✅(D1–D5 + AD1 + AD2)/ 契约 ✅(规划期已校准 payment 段)。→ **0004 DONE**。
+
+**下一步**:0005「订单管理」立项 + Phase 2。背 backlog:`userCancelById` IDOR、`rejection`/`cancel` 的 `payStatus=REFUND` 口径不一致。
