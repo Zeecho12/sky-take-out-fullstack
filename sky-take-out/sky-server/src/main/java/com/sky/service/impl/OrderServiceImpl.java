@@ -385,16 +385,18 @@ public class OrderServiceImpl implements OrderService {
             throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
         }
 
-//        支付状态
-        Integer payStatus = ordersDB.getPayStatus();
-        if (payStatus == Orders.PAID) {
-//            用户已支付，模拟退款(mock)，不再外呼微信支付
-            log.info("模拟退款(mock)，订单号：{}", ordersDB.getNumber());
-        }
-
 //        拒单需要退款，根据订单id更新订单状态，拒单原因，取消时间
         Orders orders = new Orders();
         orders.setId(ordersDB.getId());
+
+//        已支付则模拟退款(mock，仅置状态位、无真实资金流)并把支付状态置为退款
+//        用 Orders.PAID.equals(payStatus) 而非 ==（Orders.PAID 是 Integer，== 是引用比较陷阱）
+        Integer payStatus = ordersDB.getPayStatus();
+        if (Orders.PAID.equals(payStatus)) {
+            log.info("模拟退款(mock)，订单号：{}", ordersDB.getNumber());
+            orders.setPayStatus(Orders.REFUND);
+        }
+
         orders.setStatus(Orders.CANCELLED);
         orders.setRejectionReason(ordersRejectionDTO.getRejectionReason());
         orders.setCancelTime(LocalDateTime.now());
@@ -411,16 +413,18 @@ public class OrderServiceImpl implements OrderService {
 //        根据id查询订单
         Orders orderDB = orderMapper.getById(ordersCancelDTO.getId());
 
-//        支付状态
-        Integer payStatus = orderDB.getPayStatus();
-        if (payStatus == 1) {
-//            用于已支付，模拟退款(mock)，不再外呼微信支付
-            log.info("模拟退款(mock)，订单号：{}", orderDB.getNumber());
-        }
-
 //      管理端取消订单需要退款，根据订单id更新订单状态、取消原因、取消时间
         Orders orders = new Orders();
         orders.setId(ordersCancelDTO.getId());
+
+//        已支付则模拟退款(mock，仅置状态位、无真实资金流)并把支付状态置为退款
+//        字面量 1 换成 Orders.PAID 常量，并用 .equals() 而非 ==（Integer 引用比较陷阱）
+        Integer payStatus = orderDB.getPayStatus();
+        if (Orders.PAID.equals(payStatus)) {
+            log.info("模拟退款(mock)，订单号：{}", orderDB.getNumber());
+            orders.setPayStatus(Orders.REFUND);
+        }
+
         orders.setStatus(Orders.CANCELLED);
         orders.setCancelReason(ordersCancelDTO.getCancelReason());
         orders.setCancelTime(LocalDateTime.now());
