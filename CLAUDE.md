@@ -51,7 +51,8 @@
    别碰什么 / 怎么验证)+ 追加一条 `progress.md` 现场笔记。
 6. **决策留痕(广度)、机制留笔记(深度)**:带设计决策的改动写 ADR(`docs/decisions/NNNN-*.md`,
    含方案对比、理由、trade-off、面试要点);值得吃透的机制用 `divedeep` 写源码精读笔记
-   (`docs/divedeep/`)。
+   (`docs/divedeep/`)。**每功能 ADR「面试要点」里按 高/中/低 标出 divedeep 候选(评链路不评
+   decision),Phase 4 主动问我对中/高哪几条触发 divedeep(高默认建议写、低不写)。**
 7. **派生文档不手改**:`docs/BACKEND_OVERVIEW.md` 等能从代码再生的文档,里程碑再生,
    不逐次手动维护;接口文档尽量用 Swagger 注解自动生成(改注解即改文档)。
 8. **外包劳动、自留决策 —— Phase 3 执行硬铁律**:需要和我探讨的决策留主窗口。
