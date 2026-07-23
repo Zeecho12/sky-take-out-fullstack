@@ -196,7 +196,7 @@ reference `my` 页展示头像/昵称/性别/电话,但**数据取自 Vuex store
 
 **① HIGH 必修阻断(内审 CONFIRMED,均已订正计划):**
 - **[HIGH#1] 归属校验放共用的 `details()` 会打死管理端订单详情**:`orderService.details()` 被用户端 + 管理端 `GET /admin/order/details/{id}`(`admin/OrderController:61`)共用;塞归属校验后管理端(sub=员工 id ≠ 订单 userId)恒抛"订单不存在"。→ 改为**新增 user-only Service 方法** `getUserOrderDetail(id)`,`details()` 留给管理端不动;补管理端详情回归门。(详见 D1 评审补。)**教训:共用面分析要延伸到 Service 层,不能止于 Mapper。**
-- **[HIGH#2] `historyOrders` 参数名后端是 `pageNum` 不是 `page`**:`user/OrderController:65` `page(int pageNum,int pageSize,Integer status)` 无 `@RequestParam`、靠参数名绑定(Spring Boot 2.7.3 默认 `-parameters`)→ 绑定键 `pageNum`;契约/前端写 `page` → `MissingServletRequestParameterException` 400(还不走 `GlobalExceptionHandler`),历史订单首屏 + 每次切 tab 全废。→ **契约改 `pageNum`、前端 `params:{pageNum,pageSize,status}`、step3 curl 门用 `?pageNum=1` 硬验**。属"contract-first 下契约本身(YAPI 导出)写错了参数名"。
+- **[HIGH#2] `historyOrders` 参数名后端是 `pageNum` 不是 `page`**:`user/OrderController:65` `page(int pageNum,int pageSize,Integer status)` 无 `@RequestParam`、靠参数名绑定(Spring Boot 2.7.3 默认 `-parameters`)→ 绑定键 `pageNum`;契约/前端写 `page` → 请求失败、非 `Result`,历史订单首屏 + 每次切 tab 全废。→ **契约改 `pageNum`、前端 `params:{pageNum,pageSize,status}`、step3 curl 门用 `?pageNum=1` 硬验**。属"contract-first 下契约本身(YAPI 导出)写错了参数名"。**Phase 4 校准**:原判"用 `page` 报 `MissingServletRequestParameterException` 400"与实测不符——verifier 实测返 **HTTP 500**(疑似 `pageNum` 缺失后 `PageHelper.startPage(null,…)` NPE 被兜底成 500),非 400。结论不变(必须用 `pageNum`),仅错误码事实订正(契约同步改)。
 
 **② 内审独有 CONFIRMED(实读,已改进计划):**
 - **[MED] `payStatus == Orders.PAID` 是装箱引用比较地雷** → 三处统一 `Orders.PAID.equals(payStatus)`(含 `rejection` 既有隐患)。(详见 D2 评审补。)
@@ -220,3 +220,20 @@ reference `my` 页展示头像/昵称/性别/电话,但**数据取自 Vuex store
 **⑥ 拍板(用户,2026-07-23):** Q1 再来一单=合并加入(不清空)/ Q2 历史订单=3 tab 对齐 reference / Q3 催单=加后端 status==2 守卫。两项 HIGH 必修(details 共用、pageNum)+ 内审 MED(.equals / 未支付负例改路径 / van-list 复位)+ 收敛(orderId 护栏)+ 外审记档(退款假一致注释 / 分页硬断言门 / JWT 局限)一并落 requirement / proposal / 本 ADR / 契约。
 
 **评审留痕**:内审 = 会话内全新上下文红队 subagent(实读 `OrderServiceImpl` / 两个 `OrderController` / `OrderMapper`+XML / `Orders` / `MessageConstant` / `JwtAuthenticationFilter` / `OrderVO` / 前端 `order.ts`/`request.ts`/`router`/`stores`/`Confirm`/`Pay`/`Created`/`Menu`/pom);外审 = `~/.claude/tools/deepseek_review.py`(`deepseek-v4-pro`)。**异构双路敌对评审**再次印证:2 个 HIGH 必修全靠内审实读源码(共用面、参数名绑定这类"文档看不出、只能读码"的坑),外审补足设计/UX/安全面(数据丢失、进行中 tab、催单守卫、退款假一致);收敛处(orderId)高置信;最终由 Tech Lead 就 3 个"范围/行为选择"拍板——决策留人、机制留笔记。
+
+### AD2 — Phase 4 复核与收尾(2026-07-23)
+> Phase 3 六步全部 TESTED 后的收尾复核(GOOD.md Phase 4)。本节记决策落地一致性、执行期订正、divedeep backlog 收口、契约事实校准。
+
+**① 决策落地一致性(D1–D5 复核,均与实现一致):**
+- **D1** 订单归属越权 4 处全修:`getUserOrderDetail`(user-only,`details()` 未污染,管理端 `GET /admin/order/details/{id}` 回归通过)+ `userCancelById`/`reminder`/`repetition` Service 层归属校验 + `reminder` `status==2` 守卫。`getById` 签名未动。verifier 8/8。**按 AD1 HIGH#1 订正落地无偏差。**
+- **D2** 退款口径三处统一:`rejection`/`cancel` 补 `setPayStatus(REFUND)`,三处已支付判断统一 `Orders.PAID.equals(payStatus)`(消 Integer `==` 陷阱 + `cancel` 字面量 1),`userCancelById` 不动。verifier 4/4(含未支付不误退锁可达路径)。**按 AD1 MED(.equals)订正落地。**
+- **D3** 历史订单 3 tab + van-list 无限滚动:落地;AD1"只靠自动 @load"护栏在**切 tab 场景被实测推翻**(van-list 仅在 `finished` true→false 跳变时重触发),执行期订正为"切 tab 复位后置 `loading=true` 再手动调一次 `onLoad`",恰 1 请求、兼顾"勿双发"(见 progress step4)。
+- **D4** 三页三路由 + Menu「我的」入口 + 成功页 orderId 接线:落地;orderId 每跳写 URL query(Confirm→Pay→Created)+ Created 缺 orderId 兜底退化 `/order-list`(端到端 verifier 7/7)。
+- **D5** 用户中心纯导航壳:落地;`/user` 加载零后端请求(verifier 实测 `performance` resource 无 `/api` 调用),不新增端点。
+- **端到端冒烟**:0002→0005 主链一次跑通(A~G 全 PASS,新下单 id=18:menu→cart→confirm→submit→pay→created→查看订单→detail→催单→历史订单[pageNum]→用户中心)。
+
+**② divedeep backlog 收口(Tech Lead 拍板,2026-07-23):** 本 ADR 面试要点判定"本功能无高含金量必单开链路"——1 条**中**候选(订单越权修复全链路 / BOLA 在 Service 层差异化鉴权)+ 1 条**低**(历史订单分页,已被"员工分页"divedeep 覆盖)。**Tech Lead 决定:不为本功能写 divedeep**(中候选并入既有鉴权/越权主题即可,与 0003 D6 同模式两实例作对照素材)。backlog 关闭。
+
+**③ 契约事实校准:** `historyOrders` 用错误参数名 `page` 的报错码,原判 400(`MissingServletRequestParameterException`)与实测不符——Phase 4 verifier 实测 **HTTP 500**(疑似缺 `pageNum` → `PageHelper.startPage(null,…)` NPE 兜底)。结论不变(前端必须用 `pageNum`),已同步订正契约 + AD1 HIGH#2 表述。
+
+**④ 执行期教训沉淀:** AD1"van-list 只靠自动 @load 首拉"的护栏**对"首屏挂载"成立、对"切 tab 复位"不成立**(两场景 van-list 触发条件不同)——被独立 verifier 抓到(运动员≠裁判的价值)。再次说明:规划期写的前端组件行为假设需在执行期用真浏览器证伪,不能只凭文档下定论。

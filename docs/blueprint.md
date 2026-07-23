@@ -40,7 +40,7 @@
 | 0002 | 商品浏览 + 购物车 | 店铺状态 / 分类 / 菜品(含口味规格)/ 套餐(含含菜)/ 购物车增删查清 + 点餐首页;引 Vant + 整站登录门槛 | 0001 | 是(仅 1 行 bugfix) | 已交付(合并 main `df53f0b`,2026-07-22) |
 | 0003 | 地址簿 + 下单 | 地址簿 CRUD(三级省市区)+ 结算页 + 备注;后端去百度配送校验 + `submitOrder` 补 `@Transactional` + 地址簿越权修复(Service 层) | 0002 | 是 | 已交付(合并 main `3365f69`,2026-07-23) |
 | 0004 | mock 支付 | 替微信支付(`payment()` 内部同步 + 原子 CAS 幂等)/ 去 openid / 删微信基建(类+配置+pom)+ 退款 mock;支付页 + 成功页 | 0003 | 是 | 已交付(合并 main `b08bf8e`,2026-07-23) |
-| 0005 | 订单管理 | 历史订单(3 tab + 无限滚动)/ 详情 / 催单 / 再来一单 / 取消 / 用户中心;后端修 4 处订单越权(IDOR)+ 统一退款口径 | 0004 | **是**(4 处归属校验 + 退款口径,越界补管理端 rejection/cancel) | 规划中(Phase 2 完成待执行) |
+| 0005 | 订单管理 | 历史订单(3 tab + 无限滚动)/ 详情 / 催单 / 再来一单 / 取消 / 用户中心;后端修 4 处订单越权(IDOR)+ 统一退款口径 | 0004 | **是**(4 处归属校验 + 退款口径,越界补管理端 rejection/cancel) | 执行中(Phase 3 六步全 TESTED + Phase 4 冒烟/复核完成;`feature/0005-order-manage` 已推远端,**待合并 main**) |
 
 > 状态取值:`未开始` / `规划中`(Phase 2) / `执行中`(Phase 3) / `已交付`(合并回 main、DoD 全绿)。
 
@@ -62,3 +62,4 @@
   D1 细化为 CAS 原子幂等(采纳外审 HIGH#2,用户选 A)、D4 边界订正为逐处枚举(内审防编译失败)。待 Tech Lead 复核 → Phase 3。
 - **2026-07-23**:**0004「mock 支付」交付并合并回 main**(merge `b08bf8e`,`--no-ff` 保留 Phase 3 三步粒度;DoD 全绿):后端 payment CAS 内部同步 mock(去 openid/微信 pay)+ 去微信基建删干净(类+配置+pom)+ 3 处 refund 换 mock;前端支付页 + 成功页 + 接线。执行期边界订正:`PayNotifyController` 删除由步骤2 提前到步骤1(paySuccess 唯一调用者,Tech Lead 拍板)。epic 推进焦点转向 **0005「订单管理」**(下一个开工的 feature;含 `userCancelById` IDOR + `rejection`/`cancel` 的 `payStatus=REFUND` 口径不一致两笔 backlog)。**C 端重建 epic 仅剩 0005**。
 - **2026-07-23**:**0005「订单管理」立项 + Phase 2 规划 + 双路评审融合 + Tech Lead 复核通过**(分支 `feature/0005-order-manage`,规划提交 `947ca28`):Requirement + ADR-0005 五决策(D1 订单越权 4 处全修 Service 层 / D2 退款口径三处统一置 REFUND、越界补管理端 / D3 历史订单 3 tab+van-list / D4 三页三路由+Menu「我的」入口 / D5 用户中心纯导航壳)+ 契约校准 + Proposal(6 步)已定。**双路评审(内审实读 + 外审 DeepSeek-v4-pro)融合入 AD1**:2 HIGH 必修订正(`details()` 与管理端共用 → 归属改走新增 user-only `getUserOrderDetail`;`historyOrders` 参数名 `pageNum` 非 `page`)+ Q1 再来一单合并不清空 / Q2 保持 3 tab / Q3 催单加 `status==2` 守卫。**实读发现越权是一整片 4 处(非 blueprint 原记的 1 笔)、后端确会改(订正本表原"否")**。待进 Phase 3。**0005 = C 端重建 epic 收官功能。**
+- **2026-07-23**:**0005「订单管理」Phase 3 全 6 步完成 TESTED + Phase 4 非破坏性收尾完成**(分支 `feature/0005-order-manage`,6 个 code commit `353f772`/`a296f2e`/`8b5d584`/`7c961f9`/`91f0ef5`/`a5e4aa0`):后端归属越权 4 处修 + 催单守卫(verifier 8/8)、退款口径三处统一 REFUND+`.equals()`(4/4);前端脚手架 + 历史订单页(van-list 切 tab 缺陷执行期修复)+ 详情页&成功页 orderId 透传接线(端到端 7/7)+ 用户中心&Menu 入口(5/5)。Phase 4:0002→0005 端到端冒烟 A~G 全 PASS(新单 id=18)、ADR-0005 AD2 复核(D1–D5 落地一致 + divedeep backlog 收口=不写 + 契约 `page` 报错码 400→500 校准)、smoke-tests.md 补 section 8。**分支已推远端 origin,待合并回 main(合并后本 epic 0002–0005 全部交付、C 端完整重建收官)。**
