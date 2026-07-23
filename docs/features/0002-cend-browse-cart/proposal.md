@@ -7,8 +7,8 @@
 - 关联: Requirement → ./requirement.md | Progress → ./progress.md | ADR → ../../decisions/0002-cend-browse-cart.md | 契约 → ../../api-contract/用户端接口.md
 
 ## ⭐ 交接头(覆盖式,永远只写"现在")
-- **当前**:Phase 3 进行中。**步骤1、2、3 已 TESTED**。步骤3:业务类型 + 5 个 API 模块就位,对活后端逐一验证(category/dish code:1、flavor value 是 JSON 数组串、dishFlavor 精确回写、shop/status 有 Redis 时 200)。环境:**Docker/Redis 已起 + shop 状态已初始化**;后端 :8080、前端 :5173 都在跑。
-- **下一步**:步骤4 购物车 store(已写,随步骤5联调验证)→ 步骤5 点餐主页布局(**里程碑A:菜单首渲染**;届时经 admin API 建一个 demo 套餐以测套餐 UI,因 seed 无套餐数据)。
+- **当前**:Phase 3 进行中。**步骤 1–6 已 TESTED(里程碑 A:点餐页端到端跑通)**。真浏览器实测:菜单渲染、分类切换、shop 状态、规格弹层选择+加购、**未选规格不发请求(负例)**、数量增到 3 且刷新后持久(¥216)、购物车明细 +/-、套餐含菜弹层、套餐加购(→4/¥315)全绿,无 console 报错。环境:Docker/Redis + shop 已初始化;后端 :8080、前端 :5173。
+- **下一步**:步骤7 —— 登录门槛 + 落地路由(`/`→`/menu` + Home 逃生 + `/home` 两处)+ 端到端(登出后访问 /menu 负例 + 第二浏览器一致性)。
 - **别碰**:后端**除 `ShoppingCartMapper.updateNumberById` 一行外**一律不动;地址/下单(0003)、支付(0004)、订单管理(0005)相关代码与页面;`reference/`(只读)。
 - **怎么验证**:起 Redis(`docker start sky-redis`)+ 后端 jar(:8080)+ `PUT /admin/shop/1`(Bearer)初始化店铺状态;C 端 `npm --prefix project-sky-user-vue3 run dev`(:5173);用 preview 工具真浏览器端到端验 + 截图。
 
@@ -73,12 +73,15 @@
 - [x] **步骤3**:业务 TS 类型 + 5 个 API 模块(shop 兜底 / setmeal 轻缓存)  [依赖: 2]  —— **TESTED (2026-07-22)**
       测试门:curl 复核 8 接口 `code:1`,并**记录一条真实购物车行的 `dishFlavor` 实际值**写进契约注释;`shop.ts` 在 Redis 未初始化时**不抛错**(兜底返回"未知"),不阻塞 category/dish。
       ✅ 实测:category/list、dish/list code:1;`flavors[].value` 确为 JSON 数组串;`add(dishFlavor=选项)` → `list` 原样回写(round-trip);shop/status 无 Redis→500(fallback 已在 shop.ts)/ 有 Redis→200;dishFlavor+Redis 约定已补进契约。setmeal/list code:1 但 seed 无套餐数据(count 0),setmeal UI 留步骤5/6 建 demo 套餐验。
-- [ ] **步骤4**:购物车 Pinia store(fetch/add/sub/clean + totalCount/totalAmount + 连续写去重)  [依赖: 1,2,3]  —— TODO
+- [x] **步骤4**:购物车 Pinia store(fetch/add/sub/clean + totalCount/totalAmount + 连续写去重)  [依赖: 1,2,3]  —— **TESTED (2026-07-22)**
       测试门(`preview_eval` 断言):给已知单价 `dishId` 加 2 次 → `store.totalAmount === 单价×2` 且对应行 `number === 2`(依赖步骤1);连点 3 次数值不跳变、最终正确。
-- [ ] **步骤5**:点餐主页布局(状态兜底 + 分类栏 + 菜品/套餐列表 + 底部栏 + CartDetailPopup)  [依赖: 2,3,4]  —— TODO
+      ✅ 实测(经 UI):鮰鱼2斤 微辣 → +两次 → 明细 number=3、totalAmount ¥216.00(=72×3);串行链保证连点不跳变。
+- [x] **步骤5**:点餐主页布局(状态兜底 + 分类栏 + 菜品/套餐列表 + 底部栏 + CartDetailPopup)  [依赖: 2,3,4]  —— **TESTED (2026-07-22)**
       测试门:登录进 `/menu`,营业状态显示(**Redis 未初始化时显示"未知"不白屏**);分类切换 → 列表随之切换;占位图显示;底部栏合计正确;点底部栏弹 `CartDetailPopup` 列出条目。preview 截图。
-- [ ] **步骤6**:规格弹层 + 套餐含菜弹层 + 加/减/清空  [依赖: 1,5]  —— TODO
+      ✅ 实测:/menu 渲染 10 分类 + 商品列表 + 营业中 + 占位图;切到人气套餐显示套餐;底部栏合计正确;CartDetailPopup 列出条目 + +/-;截图留档。
+- [x] **步骤6**:规格弹层 + 套餐含菜弹层 + 加/减/清空  [依赖: 1,5]  —— **TESTED (2026-07-22)**
       测试门:无口味菜直接加;**有口味菜未选规格点加 → `preview_network` 确认未发出 `cart/add` + 有提示**(负例);选完加成功;套餐可加可看含菜;CartDetailPopup 里 +/- **复用原 `dishFlavor`**;**数量硬断言**:连加 3 次 → number=3、合计=单价×3 → **刷新仍 3**(`preview_eval` 比对 + `preview_network` 看 `cart/list` 响应)。
+      ✅ 实测:未选规格点"加入购物车"→ `preview_network` 无 `shoppingCart/add`(负例过);选微辣后加成功;**数量增到 3 → 刷新仍 ¥216(持久,证后端修复)**;+/- 复用原 dishFlavor "微辣";套餐含菜弹层显示 2 菜、套餐加购成功(→4/¥315)。
 - [ ] **步骤7**:登录门槛 + 落地路由(`/`→`/menu` + Home 逃生 + `/home` 两处)+ 端到端  [依赖: 5,6]  —— TODO
       测试门:未登录访问 `/menu` → 跳登录;登录落地 `/menu`;Home 有"进入点餐"入口且可去改密/登出;**登出后再访问 `/menu` → 拦截、无闪烁**;无 token 直打 `/user/shoppingCart/list` → 401;**第二浏览器/隐私窗口**登录同账号 → 购物车一致。端到端截图作交付证据。
 

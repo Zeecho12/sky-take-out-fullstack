@@ -34,3 +34,17 @@
   - **seed 无套餐数据**(setmeal 表 0 行,但有 2 个 type=2 分类)→ setmeal 浏览接口正常但返回空;套餐 UI(步骤5/6)需经 admin API 建 demo 套餐(admin 建套餐会 `@CacheEvict` 清 setmealCache,直接 SQL 插入则被缓存的空列表挡住)。
   - 全局 Druid 日志偶发 "discard long time none received connection" 是连接池回收空闲连接,非故障(MySQL 正常)。
 - **关联**: 见本步 commit / 契约补注(dishFlavor + Redis 依赖)
+
+### 步骤4-6 (2026-07-22) — 购物车 store + 点餐主页 + 弹层交互(里程碑 A)
+- **改了什么**: `stores/cart.ts`(服务端为准 + enqueue 串行化防竞态)、`views/Menu/Index.vue`(状态兜底 + van-sidebar 分类 + 菜品/套餐列表 + 占位图)、`components/{CartBar,CartDetailPopup,FlavorPopup,SetmealDishPopup}.vue`、`router` 加 `/menu`(受守卫保护)。
+- **验证**(对应 Proposal 步骤4-6 测试门,真浏览器 preview 端到端):
+  - 菜单渲染:10 分类 + 商品列表 + "营业中" + 占位图;分类切换 OK。
+  - **负例**:有口味菜未选规格点"加入购物车"→ `preview_network` **无 `shoppingCart/add`** + Toast 提示。
+  - **数量硬断言**:鮰鱼2斤 微辣加购 → 明细 +两次 → `number=3`、合计 `¥216.00`(=72×3);**刷新后仍 ¥216**(store 从服务端重拉,证后端 number 修复持久化)。
+  - +/- 复用该行原始 `dishFlavor`("微辣");购物车明细清空 OK。
+  - 套餐:切人气套餐 → 显示套餐 → 含菜弹层列 2 菜 → 套餐加购 → 4 件 / ¥315.00。
+- **发现 / 踩坑 / 临场决策**:
+  - **seed 无套餐数据** → 经 SQL 插入 1 个 demo 套餐"江湖双鱼套餐"(category 13,status 1)+ 2 条 setmeal_dish,并 `redis -n 10 DEL setmealCache::13` 清缓存(否则被之前缓存的空列表挡住)。此 demo 数据留库供后续演示。
+  - Vant `van-popup` 隐藏后仍在 DOM,多个 popup 有多个 `.van-overlay`;关闭要点可见的那个(否则 overlay 拦截点击)——验证时踩到一次。
+  - 全局 `button` 金色主题渗进 Vant 主按钮(见 AD2),外观可接受。
+- **关联**: 见本步 commit / ADR AD1(number 持久化)、AD2(Vant 全量 + 样式渗透)、D4(串行化)
