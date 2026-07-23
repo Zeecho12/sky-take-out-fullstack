@@ -165,3 +165,24 @@
 
 **下一步**
 - Phase 3 步骤6(收官):`User/Center.vue` 纯导航壳(store username + van-cell-group:历史订单/地址/改密/退出)+ `Menu/Index.vue` 顶栏加「我的」入口。测试门 preview:Menu「我的」→/user、4 入口跳对、退出清 token 回 /login、加载无查用户信息请求、0002-0004 回归。之后进 Phase 4 收尾。
+
+---
+
+## 2026-07-23 · Phase 3 步骤6 用户中心 + Menu 入口(D5/D4)—— 完成 TESTED(Phase 3 收官)
+
+**做了什么(铁律 8)**
+- 派实现 subagent 改 2 文件:`User/Center.vue`(占位→纯导航壳:头像占位 + store username + van-cell-group 4 项[历史订单/地址/改密/退出],退出=`userStore.logout()`+跳 /login,无任何后端调用);`Menu/Index.vue` 顶栏右侧加「我的」入口→/user(tag 与「我的」归入 `.topbar-right` 组,既有店铺/菜单/购物车逻辑一行未动)。type-check exit0。
+- 主窗口审 Menu diff(仅 3 处新增,既有未动)→ 派 verifier 跑 preview mobile。
+- 提交 code commit `a5e4aa0`(2 文件)。
+
+**验证证据(verifier,preview mobile,5/5 PASS)**
+- ①Menu「我的」→ `/user`。②/user 显示用户名 `s7v_2268`(本地 store 水合)。③/user 加载 `performance` resource 过滤 `/api/`+`/user/` 为**空**(纯导航壳零后端请求,D5 达成)。④4 入口:历史订单→/order-list、地址→/address、改密→/change-password、退出→token 清为 null + →/login。⑤/menu 回归:店名+营业中+10 分类+商品非空,加入口未破坏。
+
+**坑 / 发现**
+- verifier 备注:`preview_click` 对 Vue 绑定元素(span.mine / van-cell)不触发导航,改 `dispatchEvent(new MouseEvent('click',{bubbles:true}))` 即正常——**工具与 Vue 事件的兼容问题,非应用缺陷**(handler 绑定正确)。后续前端 preview 点击类验证留意。
+
+**里程碑**
+- **0005 Phase 3 全 6 步 TESTED,功能实现收官**。订单生命周期下半段闭环(历史订单/详情/取消/支付/催单/再来一单合并/用户中心+入口)。C 端完整重建 epic(0002-0005)功能全部落地。
+
+**下一步**
+- Phase 4 验证收尾:端到端冒烟 → 合并回 main → 复核 ADR-0005 + 收口 divedeep backlog → 契约 `page` 报错码 400/500 措辞校准 → 再生派生文档 → 更新 blueprint + 快照。
