@@ -7,8 +7,8 @@
 - 关联: Requirement → ./requirement.md | Progress → ./progress.md | ADR → ../../decisions/0002-cend-browse-cart.md | 契约 → ../../api-contract/用户端接口.md
 
 ## ⭐ 交接头(覆盖式,永远只写"现在")
-- **当前**:Phase 2 完成 —— Requirement 已基线、ADR-0002 已采纳(含 D4 + 双路评审 Addendum)、双路评审已融合、契约校准无改动、本 Proposal 已按评审修订。**已建分支 `feature/0002-cend-browse-cart`**,代码未动。
-- **下一步**:执行 Phase 3 步骤1(后端 bugfix `updateNumberById`),再逐步推进。
+- **当前**:Phase 3 进行中。**步骤1(后端 bugfix `updateNumberById`)已 TESTED**(curl 断言:dishId=46 连加两次 → `number==2`);jar 已重建并在 :8080 运行。
+- **下一步**:步骤2 —— 引 Vant(按需)+ 复制占位图 + `ProductImage` + 冒烟(含回测 0001 登录/注册页)。
 - **别碰**:后端**除 `ShoppingCartMapper.updateNumberById` 一行外**一律不动;地址/下单(0003)、支付(0004)、订单管理(0005)相关代码与页面;`reference/`(只读)。
 - **怎么验证**:起 Redis(`docker start sky-redis`)+ 后端 jar(:8080)+ `PUT /admin/shop/1`(Bearer)初始化店铺状态;C 端 `npm --prefix project-sky-user-vue3 run dev`(:5173);用 preview 工具真浏览器端到端验 + 截图。
 
@@ -64,8 +64,9 @@
 > 状态标记:TODO / IN_PROGRESS(~) / CODE_DONE / TESTED
 > 前置(每个联调步骤都需):Redis 起 + 后端 jar 跑 + `PUT /admin/shop/1`(Bearer)初始化店铺状态。
 
-- [ ] **步骤1**:后端 bugfix `updateNumberById`(`set amount`→`set number`)+ 重建 jar  [依赖: 无]  —— TODO
+- [x] **步骤1**:后端 bugfix `updateNumberById`(`set amount`→`set number`)+ 重建 jar  [依赖: 无]  —— **TESTED (2026-07-22)**
       测试门(curl 硬断言):停旧 jar → 改 XML → 重建 → 起;登录取 token → 对同一 `dishId` `cart/add` **两次** → `cart/list` 断言该行 `number == 2`(**修复前为 1**)→ `cart/clean` 复原。
+      ✅ 实测:dishId=46 连加两次 → `cart/list` 该行 `number:2`(见 progress 步骤1)。
 - [ ] **步骤2**:引 Vant(按需)+ 复制占位图 + `ProductImage` + 冒烟  [依赖: 无]  —— TODO
       测试门:`npm run dev` 起(:5173);**真实组件**(`van-sidebar`/`van-stepper`/`van-popup`)样式正常(不止 `van-button`);占位图显示;**回测 0001**:`/login`、`/register` 填表提交仍成功(不崩)。preview 截图。
 - [ ] **步骤3**:业务 TS 类型 + 5 个 API 模块(shop 兜底 / setmeal 轻缓存)  [依赖: 2]  —— TODO
