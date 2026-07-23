@@ -114,3 +114,28 @@
 - 登录页输入框无 name/class,用 placeholder 选择器(`请输入用户名`/`请输入密码`)驱动。
 
 **下一步**:进 Phase 3 步骤4(地址簿列表页 + 新增/编辑页,`van-area` 三级 + 表单校验)。
+
+---
+
+## 2026-07-23 · Phase 3 步骤4(地址簿页面)完成
+
+**做了什么**
+- Tech Lead 确认(性别 1/0、标签 1/2/3、旧数据回显容错、选择模式留步骤5)后开工。派实现 subagent 填 `List.vue`+`Edit.vue`(自跑 type-check),主窗口审 diff + preview 硬验。commit `f19d218`(3 文件:两页 + business.ts isDefault 改可选)。
+- List:卡片(收货人/手机/`fullAddress`/标签/默认徽标)+ 设默认(reload)+ 删除(confirm dialog)+ 卡片/编辑跳转带 id + 新增。
+- Edit:`?id=` 区分新增/编辑;`van-area`(点 readonly 字段弹 popup,confirm 取 `selectedOptions` 写六字段 code+name);校验门(收货人非空 + `/^1\d{10}$/`,失败 showToast+return 在任何请求前);提交 `payload={...form}` 天然不含 isDefault;编辑预填 + `areaCode` 回显。
+
+**测试门(全绿,preview + 页内 XHR 录制器硬验)**
+- 因 `preview_network` 全量 dump 过大(216K,触发 铁律8 冗长),改在页面挂 XHR 录制器只记 addressBook/order 请求的 method/url/body,精确低噪。
+- 新增:`POST /api/user/addressBook` body 六字段带 Name(北京市/北京市/东城区)+ **无 isDefault** → list 出现(id=6)。
+- 设默认排他:设 id6→仅 id6 默认;再设 id1→仅 id1 默认、id6 归 0。
+- **编辑不吞默认(核心)**:编辑默认 id1 只改详情 → `PUT /addressBook` body **无 isDefault**、编辑后 id1 仍 `isDefault==1`、detail 为新值。
+- 删除 id6:`DELETE ?id=6` → list 不再含。
+- 负例:空收货人 / 手机 `123` → **0 请求** + Toast(「请输入收货人」/「请输入正确的手机号」)。
+- 附加:van-area 回显真实 code(440305)命中 area-data → 「广东省 深圳市 南山区」正确。
+
+**坑 / 备忘(preview 驱动 SPA 的关键教训)**
+- 路由守卫 `beforeEach` 调 Pinia store 查登录态 → **从 preview_eval 外部 `router.push` 会因 `getActivePinia()` 无激活实例而抛错、导航中止**。故 SPA 编程式跳转走不通;必须用真实 UI 点击(组件上下文,Pinia 激活)或 `location.href` 整页重载(重载时 app 初始化、守卫正常)。
+- XHR 录制器在整页 reload 后丢失 → 每次 `location.href` 跳转后需重装;SPA 内跳转(如保存后 `router.push`)不重载、录制器存活。
+- 断言 list 状态用带 `Authorization: Bearer localStorage.sky_user_token` 的 `fetch('/api/user/addressBook/list')` 直读后端真相,低噪可靠。
+
+**下一步**:进 Phase 3 步骤5(结算页 + 下单 + 占位成功页 + 接线 0002"去结算")。

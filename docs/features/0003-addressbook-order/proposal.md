@@ -8,7 +8,7 @@
 
 ## ⭐ 交接头(覆盖式,永远只写"现在")
 - **当前**:Phase 3 执行中,**前 3 步已 TESTED 并 commit**。后端:步骤1 submitOrder 改造 `b2e2389`(去百度 + `@Transactional` + 下单读地址归属 + `amount>0`,4 门全绿含注入回滚对照);步骤2 地址簿越权 `e1ebbf0`(Service 层归属 + Mapper.xml update WHERE 带 user_id,5 门全绿含 body 伪造 userId)。前端:步骤3 脚手架 `28958d3`(`@vant/area-data` + `api/address.ts`(7 函数)+ `api/order.ts` + 3 业务类型 + 4 路由 + 4 占位页;type-check 0 + /menu 回归 + 4 路由占位解析)。**注**:路由门槛约定是「默认全需登录、`meta.public` 才放行」,新路由不加 meta 即受保护。
-- **下一步**:进 Phase 3 **步骤4(地址簿页面)** —— 填 `views/Address/List.vue`(列表:设默认/删除/进编辑)+ `Edit.vue`(新增-编辑同页,`van-area` 三级 + 表单校验;**编辑不提交 isDefault**)。依赖步骤3(api/类型/路由已就位)。按铁律 1 先复述 + Tech Lead 确认,铁律 8 派 subagent;冗长浏览器验证(`preview_network` 硬验)交 verifier 或主窗口 preview 工具核。
+- **下一步**:进 Phase 3 **步骤5(结算页 + 下单 + 占位成功页 + 接线 0002"去结算")** —— 填 `views/Order/Confirm.vue`(地址卡 + 购物车明细复用 cart store + 金额=合计+打包+配送¥6 + 备注/餐具/送达时间 + 提交 `submitOrder`,`deliveryStatus/tablewareStatus/payMethod` 定死 1/1/1)+ `Created.vue`(显订单号)+ CartBar"去结算"接线到 `/order-confirm` + 地址选择回传(Pinia/query 二选一,步骤5 定)。依赖步骤 1/3/4 + 0002 cart store。按铁律 1 先复述 + Tech Lead 确认,铁律 8 派 subagent;端到端 preview 硬验(含下单成功清购物车、负例未选地址不发请求)。
 - **别碰**:支付(0004)/ 订单管理(0005)的代码与页面;`reference/`(只读);后端**除** `OrderServiceImpl.submitOrder`(去百度 + 事务)与 `AddressBookMapper`(越权修复)**之外**一律不动;0002 已交付代码**除 CartBar"去结算"接线**外不动。
 - **怎么验证**:`docker start sky-redis` → 后端 jar(:8080,**构建前先停旧 jar**)→ `PUT /admin/shop/1`(Bearer)初始化店铺 → 前端 `npm --prefix project-sky-user-vue3 run dev`(:5173)。测试账号 `s7v_2268`/`123456`(id=8)。类型门 `npm --prefix project-sky-user-vue3 run type-check` exit 0。MySQL 5.7 连库加 `--ssl-mode=DISABLED`。
 
@@ -91,7 +91,7 @@
       测试门(curl 硬验):前置 —— 甲 `POST /addressBook` 得 `id=X`,乙(另注册)**无 X**(先查断言)。乙 token:`GET /addressBook/X`(**空/拒**)、`PUT`(body `{id:X,...}` → **甲地址未变**)、`DELETE ?id=X`(**甲 list 仍含 X**);**再补**:乙 token `PUT` body `{id:X, userId:甲Id}`(伪造)→ **甲地址仍不变**(证只认 BaseContext)。逐一断言。
 - [x] **步骤3(前端)**:脚手架 —— `@vant/area-data` + `api/address.ts` + `api/order.ts` + 业务类型 + 路由骨架(4 路由 + 登录门槛)  [依赖: 无]  —— **TESTED**(commit `28958d3`;type-check 0 + /menu 回归 + 4 路由占位页解析)
       测试门:`type-check` exit 0;curl 复核 7 个 addressBook 接口 + `order/submit`(用步骤1后端)`code:1`;`@vant/area-data` 能 import、`areaList` 结构正确(**记一个省/市/区样例写进 api 注释**);`dev` 起无 console 报错、**回测 0002 `/menu` 正常**。
-- [ ] **步骤4(前端)**:地址簿页面 —— 列表(设默认/删除/进编辑)+ 新增-编辑页(`van-area` 三级 + 表单校验;**编辑不提交 isDefault**)  [依赖: 3]  —— **TODO**
+- [x] **步骤4(前端)**:地址簿页面 —— 列表(设默认/删除/进编辑)+ 新增-编辑页(`van-area` 三级 + 表单校验;**编辑不提交 isDefault**)  [依赖: 3]  —— **TESTED**(commit `f19d218`;preview+XHR 录制硬验,含编辑不吞默认 PUT 无 isDefault + 负例 0 请求)
       测试门(preview + `preview_network` 硬验):新增填全字段保存 → `list` 出现且**省市区 Name 正确**;**设默认 A 再设 B → `list` 仅 B `isDefault==1`、A 归 0**(硬断言);**编辑默认地址 A 只改详情 → A 仍 `isDefault==1`**(硬断言,证不吞默认);删除 → `list` 无该 id;编辑预填(`GET /{id}`)→ 改详情 → `list` 为新值;**(负例)手机号非 11 位/收货人空 → `preview_network` 确认不发 add 请求 + 提示**。
       注:`van-area` 回显靠 code;新建地址由 `@vant/area-data` 写入自洽,若命中旧种子数据 code 对不上则退化为空选择(容错、不崩)。
 - [ ] **步骤5(前端)**:结算页 + 下单 + 占位成功页 + 接线 0002"去结算"  [依赖: 1,3,4]  —— **TODO**
