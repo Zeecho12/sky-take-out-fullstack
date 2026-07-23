@@ -7,8 +7,8 @@
 - 关联: Requirement → ./requirement.md | Progress → ./progress.md | ADR → ../../decisions/0002-cend-browse-cart.md | 契约 → ../../api-contract/用户端接口.md
 
 ## ⭐ 交接头(覆盖式,永远只写"现在")
-- **当前**:**Phase 3 全部完成 —— 步骤 1–7 全 TESTED**(里程碑 A 点餐页端到端 + 步骤7 登录门槛/落地路由)。步骤7 独立 verifier 端到端 STEP7 ALL PASS(A 未登录拦截无闪烁 / B 登录·注册落地 `/menu` / C Home 逃生入口 / D 登出再拦 / E 无 token→401 / F 服务端权威跨会话一致);`npm run build`(已固化 `vue-tsc --noEmit` 类型检查门)exit 0、零类型错误。环境:Docker/Redis + shop 已初始化;后端 :8080、前端 :5173。
-- **下一步**:0002 验收(冒烟基线 `docs/smoke-tests.md` C 端相关项)→ **合并回 main(一功能一次合并;合并前与 Tech Lead 确认)** → Phase 4 收尾(复核 ADR-0002 是否补 D2/类型检查 Addendum、覆盖式更新 `CLAUDE.md` 当前进度、按需再生派生文档)。
+- **当前**:**Phase 3 全部完成(步骤 1–7 全 TESTED)+ 0002 验收通过(requirement 11 条 AC 全绿)**。步骤7 STEP7 ALL PASS(未登录拦截无闪烁/登录·注册落地 `/menu`/Home 逃生/登出再拦/无 token→401/服务端权威跨会话一致);验收阶段补掉唯一未测 AC——打烊时「去结算」置灰+提示(`CartBar` 加 `shopClosed` prop,`Menu/Index` 传 `shopStatus===0`),verifier 打烊复验 PASS + 营业态无回归;`npm run type-check`/`build`(已固化 `vue-tsc --noEmit` 门)exit 0。环境:Docker/Redis + shop 已初始化(营业);后端 :8080、前端 :5173。
+- **下一步**:**合并回 main(一功能一次合并;已达 DoD,待 Tech Lead 拍板)** → Phase 4 收尾(复核 ADR-0002 是否补 AD3 类型检查 Addendum、覆盖式更新 `CLAUDE.md` 当前进度 + `blueprint.md` 里程碑、按需再生派生文档、核对 `docs/smoke-tests.md` 是否补 0002 项)。
 - **别碰**:后端**除 `ShoppingCartMapper.updateNumberById` 一行外**一律不动;地址/下单(0003)、支付(0004)、订单管理(0005)相关代码与页面;`reference/`(只读)。
 - **怎么验证**:起 Redis(`docker start sky-redis`)+ 后端 jar(:8080)+ `PUT /admin/shop/1`(Bearer)初始化店铺状态;C 端 `npm --prefix project-sky-user-vue3 run dev`(:5173);用 preview 工具真浏览器端到端验 + 截图。类型门:`npm --prefix project-sky-user-vue3 run type-check`(或 `run build`)应 exit 0。
 

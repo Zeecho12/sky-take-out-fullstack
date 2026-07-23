@@ -62,3 +62,12 @@
   - 登录门槛的"无闪烁"本质:Vue Router `beforeEach` 返回重定向对象是**导航前同步拦截**,目标组件根本不 mount,故不存在"先看到 /menu 再跳走"的闪烁(区别于 mount 后在 `onMounted` 里 replace 的做法)。
   - verifier 注册的 `s7v_2268`(id=8)留库供后续步骤复用,购物车已清空无脏数据。
 - **关联**: 见本步 commit / ADR D2(登录门槛)、AD3(候选:类型检查固化)/ 里程碑 B(登录门槛 + 落地路由端到端)
+
+### 0002 验收 (2026-07-22) — 打烊「去结算」置灰缺口修复
+- **怎么发现的**:Phase 3 全 TESTED 后做 0002 验收,对 requirement.md 11 条 AC 逐条核对,发现步骤 1–7 的测试都在**营业中(status=1)**跑,唯独第 51 行「打烊时去结算置灰 + 提示店铺打烊」这条 AC **从未被显式验证**。派 verifier 切 `PUT /admin/shop/0` 打烊后实测:去结算按钮 `disabled=false`、点击仍弹「0003 占位」——**该 AC 压根没实现**(非偶发,源码定位见下)。
+- **根因**:`CartBar.vue` 去结算按钮 `:disabled="!cart.totalCount"` 只管购物车空否、不看店铺状态;`Menu/Index.vue` 算了 `isOpen`(`shopStatus===1`)却只喂顶部标签,没下传给 `CartBar`。
+- **改了什么**:`Menu/Index.vue` L131 传 `:shop-closed="shopStatus === 0"` 给 `CartBar`;`CartBar.vue` 加 `withDefaults(defineProps<{shopClosed?:boolean}>(),{shopClosed:false})`,按钮 `:disabled="!cart.totalCount || shopClosed"`,`v-if="shopClosed"` 显示灰字常驻文案「店铺打烊,暂停结算」(禁用的 van-button 不触发 click,故用常驻文案而非 Toast)。
+- **临场决策(谓词选型)**:必须用 `shopStatus === 0` 而非 `!isOpen`。因为 `shopStatus` 三态 `1|0|null`,`isOpen = (shopStatus===1)` 会把 `null`(未知/加载失败兜底)也判成"非营业"→ 若用 `!isOpen` 会在**状态未知时误置灰、误拦结算**,违反 AC「未知不阻断浏览/操作」的兜底精神。`shopStatus === 0` 对 `null` 求值为 `false`,只在**明确打烊**时才拦——这是 null 三态布尔化的经典坑。
+- **验证**:`npm run type-check` exit 0;verifier 复验打烊复验 PASS——打烊态按钮 `van-button--disabled`(opacity 0.5 / not-allowed)+ 见「店铺打烊,暂停结算」+ 点击无反应 + 加购仍可用(¥72→¥90);营业态回归:按钮恢复可点、无打烊文案、弹 0003 占位;未知态由 `shopStatus===0` 谓词 by construction 保证不置灰。店铺已恢复营业、购物车已清。
+- **教训**:「测试门都在 happy path(营业)跑」会漏掉状态相关的负例;验收阶段对着 AC 逐条核、专门补此前没碰过的分支(打烊),正是它的价值。此坑印证 Phase 3 测试门要覆盖状态机的每个分支,不能只测默认态。
+- **关联**: 见本步 commit / requirement AC 第 51 行 / ADR D2(登录门槛,同属"整站状态门")、AD1(shop/status null 兜底)

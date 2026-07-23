@@ -128,7 +128,7 @@ onMounted(async () => {
       </div>
     </div>
 
-    <CartBar @open="cartDetailShow = true" />
+    <CartBar :shop-closed="shopStatus === 0" @open="cartDetailShow = true" />
     <CartDetailPopup v-model:show="cartDetailShow" />
     <FlavorPopup v-model:show="flavorShow" :dish="flavorDish" @confirm="onFlavorConfirm" />
     <SetmealDishPopup
