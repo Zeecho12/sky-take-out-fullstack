@@ -27,10 +27,10 @@
 
 ## 三、当前进度
 
-- **Phase**:功能 0003「C 端重建②:地址簿 + 下单」**Phase 2(规划)完成**,在分支 `feature/0003-addressbook-order`(4 commit:立项 `9070a46` / 契约校准 `d440730` / Proposal `b13b1c9` / 双路评审融合 `8eb21d8`)。Requirement + ADR-0003 六决策 + 契约校准 + Proposal(5 步实施清单)已定;双路评审(内审红队实读源码 + 外审 DeepSeek-v4-pro)已融合(ADR AD1:D6 越权修复由"Mapper 一行"纠正为 Service 层归属;修掉两条假绿测试门)。(0002「浏览+购物车」merge `df53f0b`、0001 认证 merge `b02590b` 均已交付。)
-- **进行中**:epic「C 端完整重建」推进中 —— 0002 已交付,**0003 规划完成、待进 Phase 3**;跨功能决策(Vant / 整站登录门槛 / 后端改造复用 / 认证复用 0001)已落地。0003 后端改三处:去百度配送校验 + `submitOrder` 补 `@Transactional`(含下单读地址归属 + `amount>0`)+ 地址簿越权修复(Service 层)。
-- **下一步**:进 0003 **Phase 3 步骤 1(后端 `submitOrder` 改造)**——按铁律 1 先复述 + 我确认,铁律 8 每步派 subagent。5 步:1/2 后端(submit 改造、越权修复)、3 前端脚手架(`@vant/area-data`+api+类型+路由)、4 地址簿页、5 结算下单 + 占位成功页。0004(mock 支付)/0005(订单管理)依次跟进。
-- **git**:当前在 `feature/0003-addressbook-order`(4 个文档 commit,未合并);`main` **领先 `origin/main`,未推送**;0002/0001 分支已合并未删。起环境:`docker start sky-redis` → 后端 jar(:8080)→ admin `PUT /admin/shop/1` 初始化店铺 → C 端 `npm --prefix project-sky-user-vue3 run dev`(:5173);C 端测试账号 `s7v_2268`/`123456`(id=8);dish/setmeal/shop 依赖 Redis。构建前先停 jar;MySQL 5.7 连库需 `--ssl-mode=DISABLED`(详见 `docs/WORKFLOW.md`)。冒烟基线 `docs/smoke-tests.md`。
+- **Phase**:功能 0003「C 端重建②:地址簿 + 下单」**全部交付并已合并 `main`**(merge `3365f69`,`--no-ff` 保留 15 commit 粒度)。Phase 3 五步:后端 submitOrder 改造(`b2e2389`:去百度 + `@Transactional` 原子化 + 下单读地址归属 + `amount>0` 防呆)+ 地址簿越权修复(`e1ebbf0`:D6 Service 层 IDOR);前端脚手架(`28958d3`)+ 地址簿列表/新增-编辑(`f19d218`)+ 结算下单收官(`d0fdbaa`:结算页 + 下单 + 占位成功页 + CartBar 接线)。全部 AC 硬验通过(含越权、下单原子性注入回滚、编辑不吞默认、去百度端到端),ADR D1–D6 落地。(0002 merge `df53f0b`、0001 merge `b02590b` 均已交付。)
+- **进行中**:epic「C 端完整重建」推进中 —— **0001 / 0002 / 0003 已交付**;下一块 **0004(mock 支付)未开工**。跨功能决策(Vant / 整站登录门槛 / 后端改造复用 / 认证复用 0001)已落地;0003 已把下单成功落到「订单已创建」占位页,留给 0004 用支付页替换。
+- **下一步**:立项 **0004「mock 支付」**——`PUT /user/order/payment` + 支付页替换 0003 占位成功页 + 去 openid/微信支付 + mock 支付流程。按 5 阶段走(Phase 0 起环境 → Phase 2 规划 Requirement/ADR/契约 → Phase 3 执行,铁律 1 复述 / 铁律 8 派 subagent)。0005(订单管理)随后。
+- **git**:0003 已合并 `main`(merge `3365f69`);`feature/0003-addressbook-order` 已合并**未删**(仿 0001/0002);`main` **领先 `origin/main`,未推送**。起环境:`docker start sky-redis` → 后端 jar(:8080,构建前先停旧 jar)→ admin `PUT /admin/shop/1` 初始化店铺 → C 端 `npm --prefix project-sky-user-vue3 run dev`(:5173);C 端测试账号 `s7v_2268`/`123456`(id=8);dish/setmeal/shop 依赖 Redis;MySQL 5.7 连库需 `--ssl-mode=DISABLED`(详见 `docs/WORKFLOW.md`)。冒烟基线 `docs/smoke-tests.md`。
 
 > 本节是**当前快照**,只写"现在":**覆盖式更新**(改写这几行,不往下追加历史),
 > 永远保持这个长度。完成了什么、里程碑历史,看 `git log` 和各功能的 `progress.md`,

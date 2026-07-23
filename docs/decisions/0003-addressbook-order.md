@@ -182,3 +182,12 @@
 - 其余机械修正(测试门注入点、NOT NULL 字段前端定死、编辑不提交 isDefault、越权补 body 伪造用例、归因订正、LOW 记档)一并落入 requirement / proposal。
 
 **评审留痕**:内审 = 会话内全新上下文红队 subagent(实读 `OrderServiceImpl` / `AddressBookMapper(.java/.xml)` / `AddressBookServiceImpl` / `sky.sql` / 前端 `cart.ts` / `router` / `package.json`);外审 = `~/.claude/tools/deepseek_review.py`(`deepseek-v4-pro`)。这是"你如何验证自己的设计"的面试实证 —— **异构双路敌对评审**:收敛处(D6、假绿门)高置信;分歧处(自调用)靠**实读源码**判真伪(外审只有文档,内审能读码,故内审更准);D6 是"看似一行 UPDATE 加条件、实则牵出编译依赖 + 层级 + 假修复 + 契约矛盾"的真实案例。
+
+### AD2 — Phase 3 执行完成:决策 → 实现落点(2026-07-23)
+> Phase 3 五步全部 TESTED 并合并 `main`(merge `3365f69`,`--no-ff` 保留粒度)。记录每决策的实现 commit + 验证方式,便于面试复盘"决策如何落地 + 如何证伪"。原决策 D1–D6 结论均无变更。
+
+- **D1**(`van-area` + `@vant/area-data`):`28958d3`(脚手架 + areaList 样例)+ `f19d218`(Edit 页 van-area 三级,confirm 写六字段 code+name;回显靠区 code,旧种子 code 对不上则退化空选、不崩)。
+- **D2 去百度 / D3 `@Transactional` / D4 `amount>0` / D6 下单侧**:`b2e2389`(`OrderServiceImpl.submitOrder`)。验证:远地址下单成功(改前假 AK 500);**原子性注入回滚对照**——清购物车后注入 `throw` → 无脏单 + 购物车仍在,去 `@Transactional` → 脏单落库 + 购物车已清(证测试非恒真);amount 0/负拒;乙用甲 addressBookId 拒。
+- **D5 结算页衔接**:`d0fdbaa`(`Confirm.vue` 复用 0002 cart store + 落 `/order-created` 占位页;`CartBar` 接线 `/order-confirm`)。端到端:加购→下单 ¥152→成功页显订单号→购物车清空。
+- **D6 地址簿越权(Service 层)**:`e1ebbf0`(`getById`/`update`/`deleteById` 归属校验 + `AddressBookMapper.xml` 的 `update` WHERE 加 `user_id`;userId 只认 `BaseContext`、不改 Mapper 签名)。5 门含 **body 伪造 userId** 用例(乙带甲 userId → 甲数据不变)。
+- **执行纪律实证(铁律 8)**:每步一 subagent 实现(读文件 + 写码)+ 独立 verifier(后端 curl/注入回滚)/ 主窗口 preview + XHR 录制(前端)硬验;主窗口只编排 / 审 diff / 把测试门 / 提交。**踩坑**:越权验证任务描述用"攻击/篡改/伪造"字眼触发 Opus 实时 cyber 安全过滤(subagent 被中止),改中性"多用户数据隔离"措辞后一次跑通。
