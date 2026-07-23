@@ -31,6 +31,7 @@
 - **契约来源**:**校准**现有 `docs/api-contract/用户端接口.md`(YAPI 导出);认证头统一 `Authorization: Bearer`;
   reference 里的堂食扫码点餐接口 out of scope。
 - **认证**:复用 0001(账密 + JWT + Spring Security + Bearer),**不新做**。
+- **媒体资源(商品图片)**:**不接阿里云**(现在与将来都不用);当前一律用占位图 `Dummy.png`;将来升级走 **AWS S3**(epic 外 backlog,用户待学 AWS)→ 详见 0002 ADR D3。
 
 ## Feature 路线图
 
