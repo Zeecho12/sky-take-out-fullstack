@@ -89,3 +89,28 @@
 **遗留决策**:安全过滤误报——描述越权测试用"攻击/篡改"字眼触发 Opus cyber 安全过滤,改中性"多用户数据隔离"措辞后跑通(经验记忆)。
 
 **下一步**:进 Phase 3 步骤3(前端脚手架:`@vant/area-data` + api + 类型 + 4 路由骨架)。
+
+---
+
+## 2026-07-22 · Phase 3 步骤3(前端脚手架)完成
+
+**做了什么**
+- Tech Lead 确认(路由占位用推荐的"4 个最小占位 .vue")后开工。派实现 subagent 装包 + 写 api/类型/路由/占位页(回 diff + 自跑 type-check),主窗口审 diff + 独立 type-check + preview 浏览器冒烟。commit `28958d3`(10 文件):
+  - 依赖 `@vant/area-data@^2.1.0`(`areaList = {province_list, city_list, county_list}`,均 `Record<6位code, 中文名>`;样例:江苏 320000 / 南京 320100 / 玄武 320102)。
+  - `api/address.ts`(7 函数,复用 request.ts,照 `cart.ts`/`setmeal.ts` 风格)+ `api/order.ts`(submitOrder)。
+  - `types/business.ts` 追加 `AddressBook`/`OrdersSubmitDTO`/`OrderSubmitVO`。
+  - `router/index.ts` 加 4 路由 + `views/Address/{List,Edit}.vue`、`views/Order/{Confirm,Created}.vue` 占位页。
+
+**关键发现(纠正复述)**
+- 本项目路由门槛**不是** `requiresAuth` opt-in,而是**「默认全需登录、只有 `meta:{public:true}` 放行」**(`beforeEach`)。故 4 新路由**不加 meta** 即自动受保护。subagent 实读源码纠正,已在浏览器冒烟证实(未登录跳 /login)。
+
+**测试门(全绿)**
+- type-check exit 0(subagent + 主窗口独立各一次)。
+- preview 冒烟:dev 无构建/console 报错;`/menu` 0002 回归正常(分类/菜品/CartBar);4 新路由 `/address`、`/address/edit`、`/order-confirm`、`/order-created` 均解析渲染占位页;未登录跳 `/login`、登录(`s7v_2268` id=8,token 存 `localStorage.sky_user_token`)后放行。
+- "curl 复核 7 addressBook + submit"降级为 diff 核对(端点已在步骤1/2 端到端验证两遍,前端 api 为字面量路径)。
+
+**坑 / 备忘**
+- token 持久化 key:`localStorage.sky_user_token`(+ `sky_user_info`),reload 不丢登录态。
+- 登录页输入框无 name/class,用 placeholder 选择器(`请输入用户名`/`请输入密码`)驱动。
+
+**下一步**:进 Phase 3 步骤4(地址簿列表页 + 新增/编辑页,`van-area` 三级 + 表单校验)。
