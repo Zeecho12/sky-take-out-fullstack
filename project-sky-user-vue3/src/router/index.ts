@@ -15,7 +15,11 @@ const routes: RouteRecordRaw[] = [
   { path: '/order-confirm', name: 'order-confirm', component: () => import('@/views/Order/Confirm.vue') },
   // 支付页(0004):非 public,受登录门槛保护
   { path: '/order-pay', name: 'order-pay', component: () => import('@/views/Order/Pay.vue') },
-  { path: '/order-created', name: 'order-created', component: () => import('@/views/Order/Created.vue') }
+  { path: '/order-created', name: 'order-created', component: () => import('@/views/Order/Created.vue') },
+  // 历史订单 / 订单详情 / 用户中心(0005):均非 public,受登录门槛保护
+  { path: '/order-list', name: 'order-list', component: () => import('@/views/Order/List.vue') },
+  { path: '/order-detail/:id', name: 'order-detail', component: () => import('@/views/Order/Detail.vue') },
+  { path: '/user', name: 'user-center', component: () => import('@/views/User/Center.vue') }
 ]
 
 const router = createRouter({
