@@ -145,3 +145,23 @@
 
 **下一步**
 - Phase 3 步骤5(订单详情页 Detail.vue + 动作 + 成功页接线,D4):orderDetail 全字段 + 取消/立即支付/催单/再来一单;Created 查看订单去 disabled + orderId 兜底;Confirm/Pay 补透传 orderId。复用 List.vue 动作写法。
+
+---
+
+## 2026-07-23 · Phase 3 步骤5 详情页 Detail.vue + 动作 + 成功页接线(D4)—— 完成 TESTED
+
+**做了什么(铁律 8)**
+- 派实现 subagent 改 4 文件:`Detail.vue`(占位→实现:orderDetail(route.params.id) 全字段+明细 + 按状态动作,复用 List.vue 的 cancel/reminder/repetition/goPay 写法);`Created.vue`(查看订单去 disabled + `goDetail`:有 orderId 跳 `/order-detail/:id`、缺则退化 `/order-list`);`Pay.vue`/`Confirm.vue`(query 每跳补透传 orderId:Confirm 源自 `res.data.id`=OrderSubmitVO.id → Pay → Created)。type-check exit0。
+- 主窗口审 diff(三处透传接线贯通 Confirm→Pay→Created)→ 派 verifier 跑 preview mobile 端到端。
+- 提交 code commit `91f0ef5`(4 文件)。
+
+**验证证据(verifier,preview mobile 端到端,7/7 PASS)**
+- ①详情字段:`/order-detail/8`(有明细单)显示号/时间/状态/收货(张三/13800000001/U1自己改的)/明细(草鱼2斤 x1 ¥68)/合计 ¥75,命中 `GET orderDetail/8` code1。②取消:`/order-detail/13`(status1)取消→确认→`PUT cancel/13` code1→刷新已取消,DB status=6;负例:status6 单只显「再来一单」,不显取消/支付/催单。③立即支付:status1→`/order-pay?orderNumber=..&orderAmount=..&orderId=14`(orderId 带上)。④催单:status2→`GET reminder/16` code1 + toast。⑤**再来一单合并**:购物车基线 {馒头}→点再来一单(订单8)→确认→**只 `POST repetition/8`、全程无 clean/deleteByUserId 请求**→跳 /menu→购物车 {草鱼,馒头}(合并非替换)。⑥成功页接线:`/order-created?...&orderId=14`→查看订单非 disabled→`/order-detail/14`。⑦orderId 兜底:`/order-created` 无 orderId→查看订单→`/order-list`(非 `/order-detail/undefined`)。
+
+**坑 / 发现**
+- **orderId 透传闭环靠"每跳写 URL query"**(AD1 收敛):Confirm 的 submit 响应 `OrderSubmitVO.id` → 每一跳(Confirm→Pay→Created)query 显式带 orderId,Created 再用它跳详情;缺 orderId 一律退化 `/order-list`,杜绝 `/order-detail/undefined`。verifier ⑥⑦ 分别验了正例闭环与兜底负例。
+- **详情/再来一单需要有明细的单**:脚手期造的 13-17 无 order_detail,只能验取消/支付/催单(不看明细);①明细展示与⑤再来一单合并用订单 8(有真实明细)验。
+- step5 消耗订单 13(status1→6);购物车留 {草鱼,馒头}(step6 纯导航壳不受影响)。
+
+**下一步**
+- Phase 3 步骤6(收官):`User/Center.vue` 纯导航壳(store username + van-cell-group:历史订单/地址/改密/退出)+ `Menu/Index.vue` 顶栏加「我的」入口。测试门 preview:Menu「我的」→/user、4 入口跳对、退出清 token 回 /login、加载无查用户信息请求、0002-0004 回归。之后进 Phase 4 收尾。
