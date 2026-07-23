@@ -1,11 +1,17 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { showToast, showConfirmDialog } from 'vant'
 import { getAddressList, setDefaultAddress, deleteAddress } from '@/api/address'
+import { useAddressStore } from '@/stores/address'
 import type { AddressBook } from '@/types/business'
 
+const route = useRoute()
 const router = useRouter()
+const addressStore = useAddressStore()
+
+// 选择模式(0003 步骤5):结算页带 ?mode=select 进来,点卡片=选中回传,而非进编辑
+const isSelectMode = computed(() => route.query.mode === 'select')
 
 const list = ref<AddressBook[]>([])
 const loading = ref(false)
@@ -60,6 +66,16 @@ function goEdit(a: AddressBook) {
   router.push({ path: '/address/edit', query: { id: a.id } })
 }
 
+// 点卡片:选择模式=选中该地址并回结算页;否则进编辑(步骤4 现状)
+function onCardClick(a: AddressBook) {
+  if (isSelectMode.value) {
+    addressStore.setSelected(a)
+    router.back()
+  } else {
+    goEdit(a)
+  }
+}
+
 function goAdd() {
   router.push('/address/edit')
 }
@@ -69,12 +85,19 @@ onMounted(loadList)
 
 <template>
   <div class="addr-list">
-    <van-nav-bar title="收货地址" left-text="返回" left-arrow @click-left="router.back()" />
+    <van-nav-bar
+      :title="isSelectMode ? '选择收货地址' : '收货地址'"
+      left-text="返回"
+      left-arrow
+      @click-left="router.back()"
+    />
+
+    <div v-if="isSelectMode" class="select-hint">请选择收货地址</div>
 
     <div class="body">
       <van-empty v-if="!loading && !list.length" description="还没有收货地址" />
 
-      <div v-for="a in list" :key="a.id" class="card" @click="goEdit(a)">
+      <div v-for="a in list" :key="a.id" class="card" @click="onCardClick(a)">
         <div class="head">
           <span class="name">{{ a.consignee }}</span>
           <span class="phone">{{ a.phone }}</span>
@@ -111,6 +134,7 @@ onMounted(loadList)
 
 <style scoped>
 .addr-list { min-height: 100vh; padding-bottom: 72px; background: #f7f8fa; }
+.select-hint { padding: 8px 16px 0; color: #969799; font-size: 13px; }
 .body { padding: 8px; }
 .card {
   background: #fff;
