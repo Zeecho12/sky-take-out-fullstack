@@ -9,6 +9,18 @@ const router = useRouter()
 const orderNumber = route.query.orderNumber as string | undefined
 const orderAmount = route.query.orderAmount as string | undefined
 
+// 0005:订单 id 由 Pay 页透传过来,供「查看订单」跳详情
+const orderId = route.query.orderId as string | undefined
+
+// 查看订单:有 orderId 跳该单详情;缺 orderId 兜底退化到历史订单列表(绝不跳 /order-detail/undefined)
+function goDetail() {
+  if (orderId) {
+    router.push(`/order-detail/${orderId}`)
+  } else {
+    router.push('/order-list')
+  }
+}
+
 function goMenu() {
   router.push('/menu')
 }
@@ -32,8 +44,8 @@ function goMenu() {
 
     <div class="actions">
       <van-button type="primary" round block class="action-btn" @click="goMenu">返回菜单</van-button>
-      <!-- 查看订单:0005 接管,当前禁用占位,不跳转 -->
-      <van-button round block disabled class="action-btn">查看订单(0005 接管)</van-button>
+      <!-- 查看订单(0005):有 orderId 跳详情,缺则退化到历史订单(兜底) -->
+      <van-button round block class="action-btn" @click="goDetail">查看订单</van-button>
     </div>
   </div>
 </template>
