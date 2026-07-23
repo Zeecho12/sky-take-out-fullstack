@@ -13,6 +13,8 @@ const routes: RouteRecordRaw[] = [
   { path: '/address', name: 'address', component: () => import('@/views/Address/List.vue') },
   { path: '/address/edit', name: 'address-edit', component: () => import('@/views/Address/Edit.vue') },
   { path: '/order-confirm', name: 'order-confirm', component: () => import('@/views/Order/Confirm.vue') },
+  // 支付页(0004):非 public,受登录门槛保护
+  { path: '/order-pay', name: 'order-pay', component: () => import('@/views/Order/Pay.vue') },
   { path: '/order-created', name: 'order-created', component: () => import('@/views/Order/Created.vue') }
 ]
 

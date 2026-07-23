@@ -27,10 +27,10 @@
 
 ## 三、当前进度
 
-- **Phase**:功能 0003「C 端重建②:地址簿 + 下单」**全部交付并已合并 `main`**(merge `3365f69`,`--no-ff` 保留 15 commit 粒度)。Phase 3 五步:后端 submitOrder 改造(`b2e2389`:去百度 + `@Transactional` 原子化 + 下单读地址归属 + `amount>0` 防呆)+ 地址簿越权修复(`e1ebbf0`:D6 Service 层 IDOR);前端脚手架(`28958d3`)+ 地址簿列表/新增-编辑(`f19d218`)+ 结算下单收官(`d0fdbaa`:结算页 + 下单 + 占位成功页 + CartBar 接线)。全部 AC 硬验通过(含越权、下单原子性注入回滚、编辑不吞默认、去百度端到端),ADR D1–D6 落地。(0002 merge `df53f0b`、0001 merge `b02590b` 均已交付。)
-- **进行中**:epic「C 端完整重建」推进中 —— **0001 / 0002 / 0003 已交付**;下一块 **0004(mock 支付)未开工**。跨功能决策(Vant / 整站登录门槛 / 后端改造复用 / 认证复用 0001)已落地;0003 已把下单成功落到「订单已创建」占位页,留给 0004 用支付页替换。
-- **下一步**:立项 **0004「mock 支付」**——`PUT /user/order/payment` + 支付页替换 0003 占位成功页 + 去 openid/微信支付 + mock 支付流程。按 5 阶段走(Phase 0 起环境 → Phase 2 规划 Requirement/ADR/契约 → Phase 3 执行,铁律 1 复述 / 铁律 8 派 subagent)。0005(订单管理)随后。
-- **git**:0003 已合并 `main`(merge `3365f69`);`feature/0003-addressbook-order` 已合并**未删**(仿 0001/0002);`main` **领先 `origin/main`,未推送**。起环境:`docker start sky-redis` → 后端 jar(:8080,构建前先停旧 jar)→ admin `PUT /admin/shop/1` 初始化店铺 → C 端 `npm --prefix project-sky-user-vue3 run dev`(:5173);C 端测试账号 `s7v_2268`/`123456`(id=8);dish/setmeal/shop 依赖 Redis;MySQL 5.7 连库需 `--ssl-mode=DISABLED`(详见 `docs/WORKFLOW.md`)。冒烟基线 `docs/smoke-tests.md`。
+- **Phase**:功能 0004「C 端重建③:mock 支付」**Phase 2(规划 + 双路评审)完成,进 Phase 3(执行)**。分支 `feature/0004-mock-payment` 两 commit:`4065fd3`(规划立项:Requirement + ADR-0004 五决策 + 契约校准 + Proposal 3 步)、`da069ac`(双路评审融合:ADR AD1)。五决策:D1 payment **内部同步 + 原子 CAS 幂等**(`WHERE pay_status=0` 按影响行数判成败,删 `paySuccess`)/ D2 去 openid / D3 响应简化删 `OrderPaymentVO` + 订正文档漂移 / D4 删微信基建(类 + 配置 + pom + 3 处 refund 换 mock,逐处枚举防编译失败)/ D5 支付页 + 成功页替 0003 占位页。评审融合:采纳外审 CAS(用户拍板 A)+ 内审订正 D4 边界。(0003 merge `3365f69`、0002 `df53f0b`、0001 `b02590b` 均已交付。)
+- **进行中**:epic「C 端完整重建」—— **0001 / 0002 / 0003 已交付**;**0004(mock 支付)Phase 3 待执行**(3 步:①后端 payment CAS 重写 ②后端去微信删干净 ③前端支付页/成功页 + 接线)。跨功能决策(Vant / 整站门槛 / 改造复用 / 认证复用 0001)已落地;0003 占位成功页留给 0004 用支付页替换。
+- **下一步**:**Phase 3 步骤1(后端)**——payment CAS 重写:去 openid + 去微信 `pay` + 取单校验(存在+归属)+ 新增 `OrderMapper.updateToPaidIfUnpaid`(原子 CAS)+ 删 `paySuccess` / `OrderPaymentVO`(删前 grep)+ 返回简化。测试门 curl+DB(正例/去 openid/重复支付原子拒/归属拒)交 verifier。按铁律 1 复述后动手、铁律 8 每步派 subagent。0005(订单管理;`userCancelById` IDOR + `payStatus=REFUND` 口径不一致记 backlog)随后。
+- **git**:0004 在 `feature/0004-mock-payment`(**未合并 main**,Phase 3 前只有 2 个规划 commit);0003 已合并 `main`(merge `3365f69`),`feature/0003-addressbook-order` 已合并**未删**;`main` **领先 `origin/main`,未推送**。起环境:`docker start sky-redis` → 后端 jar(:8080,构建前先停旧 jar)→ admin `PUT /admin/shop/1` 初始化店铺 → C 端 `npm --prefix project-sky-user-vue3 run dev`(:5173);C 端测试账号 `s7v_2268`/`123456`(id=8,**openid 为 NULL,正好验去 openid**);dish/setmeal/shop 依赖 Redis;MySQL 5.7 连库需 `--ssl-mode=DISABLED`(详见 `docs/WORKFLOW.md`)。冒烟基线 `docs/smoke-tests.md`。
 
 > 本节是**当前快照**,只写"现在":**覆盖式更新**(改写这几行,不往下追加历史),
 > 永远保持这个长度。完成了什么、里程碑历史,看 `git log` 和各功能的 `progress.md`,
