@@ -2,10 +2,10 @@
 
 ## 元信息
 - 编号: 0004
-- 类型: 改造 + 新功能(C 端重建 epic 的第三块,见 `docs/blueprint.md`)
+- 类型: 改造 + 新功能(C 端重建 epic 的第三块,见 `docs/blueprint/E01-cend-rebuild.md`)
 - 档位: T3(全栈:后端改造 + 删代码 + 前端两页 + 契约校准;含 ADR 五决策)
 - 状态: 规划中(Phase 2,2026-07-23)
-- 关联: Proposal → ./proposal.md | Progress → ./progress.md | ADR → ../../decisions/0004-mock-payment.md | 契约 → ../../api-contract/用户端接口.md
+- 关联: Proposal → ./proposal.md | Progress → ./progress.md | ADR → ../../decisions/0004-mock-payment.md | 契约 → ../../api-contract/用户端接口.md | epic → ../../blueprint/E01-cend-rebuild.md
 
 ## 1. 背景与动机 (Why)
 0003 已让顾客能把购物车"下单"成一笔真实订单(`orders` + `order_detail`),但下单成功后只落到一个"订单已创建"**占位页**([Order/Created.vue](../../../project-sky-user-vue3/src/views/Order/Created.vue)),写着"支付功能即将上线(0004)"——**订单永远停在"待付款"状态,付不了款、进不了后续流程**。0004 补上「浏览 → 下单 → **支付**」链路的最后一环:顾客在支付页确认支付后,订单变为"已支付 / 待接单",并落到支付成功页。

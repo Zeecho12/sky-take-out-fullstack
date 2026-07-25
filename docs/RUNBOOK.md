@@ -1,6 +1,6 @@
-# WORKFLOW —— CQWM2 运行速查卡
+# RUNBOOK —— CQWM2 运行速查卡
 
-> 方法论(5 阶段、文档体系、模板、协作模型)看 [GOOD.md](../GOOD.md),本文件**不复述**。
+> 方法论(5 阶段、文档体系、模板、协作模型)看 [PLAYBOOK.md](../PLAYBOOK.md),本文件**不复述**。
 > 这里只写"在这台机器、这个项目上具体怎么敲命令 + 踩过的坑"。
 
 ---
@@ -20,8 +20,13 @@
 - C 端前端:`npm --prefix project-sky-user-vue3 run dev`(http://localhost:5173,需后端 :8080;首次先 `npm install --prefix project-sky-user-vue3`)
 - 登录冒烟:`curl -s -X POST http://localhost:8080/admin/employee/login -H "Content-Type: application/json" -d '{\"username\":\"admin\",\"password\":\"123456\"}'`
 
+## 起环境顺序 + 测试账号
+- **起环境顺序**:Docker Desktop → `docker start sky-redis` → 后端 jar(:8080,构建前先停旧 jar)→ admin `PUT /admin/shop/1` 初始化店铺(Redis 重启后状态丢失需重设)→ C 端 dev server(:5173,`npm --prefix project-sky-user-vue3 run dev`)。
+- **测试账号**:C 端 `s7v_2268`/`123456`(id=8);admin `admin`/`123456`。dish/setmeal/shop 依赖 Redis。
+- **新会话先核 env**:`java`(sky-server jar 在否)/ 端口 8080 / 6379 / `docker ps`——jar/Docker/dev server 扛不过 Claude Code 进程重启。
+
 ## Phase 2 计划外审(DeepSeek CLI,全局工具)
-> 方法论见 GOOD.md §3 Phase 2 步骤5(内审 + 外审**双路必跑**)。内审 = 会话内开全新上下文敌对 subagent;
+> 方法论见 PLAYBOOK.md §3 Phase 2 步骤5(内审 + 外审**双路必跑**)。内审 = 会话内开全新上下文敌对 subagent;
 > 外审 = 下面的 DeepSeek CLI。工具在**全局** `C:\Users\18582\.claude\tools\`(跨项目复用;key 不进任何 repo)。
 - 列模型:`python "C:\Users\18582\.claude\tools\deepseek_review.py" --key-file "C:\Users\18582\.claude\tools\deepseek.key" --list-models`
 - 外审一份计划(敌对提示词放文件;输出写 UTF-8 文件避免控制台中文乱码):

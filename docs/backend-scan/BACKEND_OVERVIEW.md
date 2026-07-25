@@ -43,7 +43,7 @@
 ---
 
 ## SECTION-1: 项目定性
-> SOURCE: docs/Backend_scan/PROJECT_S1_PROFILE.md
+> SOURCE: docs/backend-scan/PROJECT_S1_PROFILE.md
 
 ### 项目基本信息
 - 项目名称：`sky-take-out`（`pom.xml` 第 12 行 `<artifactId>sky-take-out</artifactId>`，第 11 行 `<groupId>com.sky</groupId>`，第 14 行 `<version>1.0-SNAPSHOT</version>`）；中文名「苍穹外卖」。
@@ -70,7 +70,7 @@
 ---
 
 ## SECTION-2: 技术栈全景
-> SOURCE: docs/Backend_scan/PROJECT_S2_TECHSTACK.md
+> SOURCE: docs/backend-scan/PROJECT_S2_TECHSTACK.md
 > 版本约定：Spring 全家桶 starter 未显式写版本，由根 pom `<parent>` 继承的 `spring-boot-starter-parent` 2.7.3 统一管理（标「父 pom 管理（2.7.3）」）；其余第三方库版本来自根 pom `<properties>` + `<dependencyManagement>`（标「根 pom 管理」）。
 
 ### 核心框架
@@ -121,7 +121,7 @@
 ---
 
 ## SECTION-3: 模块地图
-> SOURCE: docs/Backend_scan/PROJECT_S3_MODULES.md
+> SOURCE: docs/backend-scan/PROJECT_S3_MODULES.md
 > spring.application.name：未声明（`application.yml` 只设 `server.port: 8080`）。启动类：`com.sky.SkyApplication`（`D:\CQWM2\sky-take-out\sky-server\src\main\java\com\sky\SkyApplication.java`）。基础包：`com.sky`。
 > 粒度：Part A 每 Maven 子模块一卡片（打包结构）；Part B 对 `sky-server` 按内部顶层分层包各一卡片（分层架构，均借用主启动类 `SkyApplication`）。各卡片「完整文件清单」已移至 `FILE_INDEX.md`。
 
@@ -269,7 +269,7 @@ Part B — sky-server 内部分层包：
 ---
 
 ## SECTION-4: 核心入口配置
-> SOURCE: docs/Backend_scan/PROJECT_S4_ENTRYPOINT.md
+> SOURCE: docs/backend-scan/PROJECT_S4_ENTRYPOINT.md
 > 默认激活 Profile：`dev`。配置文件：`sky-server/src/main/resources/application.yml`（骨架 + 占位符 + 少量直填）、`application-dev.yml`（为占位符提供实际值）；无 `bootstrap.yml`；`sky-common`/`sky-pojo` 无 `application.yml`。
 
 ### 配置组织模式（关键机制）
@@ -411,7 +411,7 @@ C 端顾客（`controller/user`，鉴权推断 ROLE USER，`/user/**`）：
 ---
 
 ## SECTION-5: 核心业务调用链
-> SOURCE: docs/Backend_scan/PROJECT_S5_FLOW.md
+> SOURCE: docs/backend-scan/PROJECT_S5_FLOW.md
 > ⚠️ 代码片段是下游 codebase-annotate 的核心锚点，逐字锁死，严禁删改。
 
 ### 调用链清单

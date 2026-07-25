@@ -110,7 +110,7 @@
 
 **做了什么**
 - 合并 `feature/0004-mock-payment` → `main`:`--no-ff`(merge `b08bf8e`),保留 Phase 3 三步 commit 粒度(铁律 2);惯例与 0003(`3365f69`)一致。合并前确认 feature 是 main(`c8c42e2`)线性后代、工作树干净。
-- Phase 4 收尾单 commit `cea9571`(在 main,仿 0003 c8c42e2):CLAUDE.md「当前进度」覆盖式更新(0004 DONE、epic 仅剩 0005)+ blueprint 0004 → 已交付 + 时间线 + ADR-0004 **AD2**(执行期边界订正:PayNotifyController 提前删,教训=删方法与删其唯一调用者应同一步保证中间态可编译)+ WORKFLOW 补两条 gotcha(环境扛不过进程重启、日志 GBK)。
+- Phase 4 收尾单 commit `cea9571`(在 main,仿 0003 c8c42e2):CLAUDE.md「当前进度」覆盖式更新(0004 DONE、epic 仅剩 0005)+ blueprint 0004 → 已交付 + 时间线 + ADR-0004 **AD2**(执行期边界订正:PayNotifyController 提前删,教训=删方法与删其唯一调用者应同一步保证中间态可编译)+ RUNBOOK 补两条 gotcha(环境扛不过进程重启、日志 GBK)。
 - 派生文档 `BACKEND_OVERVIEW`:按铁律 7「里程碑再生」+ 0003 先例(未逐次再生)**本次不再生**,留 C 端重建 epic 收口(仅剩 0005)统一再生。divedeep(CAS 面试点)按需另写,未做。
 
 **DoD 核对(铁律 4)**:代码 ✅(合并 main)/ 测试 ✅(后端 curl+DB+编译启动+grep 归零、前端 type-check+端到端全绿)/ requirement ✅ / proposal ✅(交接头收 DONE、3 步 TESTED)/ progress ✅ / ADR ✅(D1–D5 + AD1 + AD2)/ 契约 ✅(规划期已校准 payment 段)。→ **0004 DONE**。

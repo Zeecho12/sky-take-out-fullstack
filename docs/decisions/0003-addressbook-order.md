@@ -2,7 +2,7 @@
 
 ## 状态: 已采纳(2026-07-22)
 
-> 关联: Requirement/Proposal/Progress → ../features/0003-addressbook-order/ | 契约 → ../api-contract/用户端接口.md | 路线图 → ../blueprint.md
+> 关联: Requirement/Proposal/Progress → ../features/0003-addressbook-order/ | 契约 → ../api-contract/用户端接口.md | 路线图 → ../blueprint/E01-cend-rebuild.md
 > 定位: 本文件管"**为什么选 A 不选 B**"(广度)。机制深挖见 ../divedeep/(深度);
 > **代码现状 / 要改哪些文件见 ../features/0003-addressbook-order/proposal.md**,此处不重复。
 
@@ -162,7 +162,7 @@
 ## Addendum(执行期细化,追加式)
 
 ### AD1 — 双路评审发现与处置(2026-07-22,内审:会话内全新上下文红队 subagent + 外审:DeepSeek-v4-pro)
-> 按 GOOD.md Phase 2 步骤5,规划稿交内审(会话内全新上下文敌对 subagent,**实读源码**)+ 外审(DeepSeek 异构模型,**只看四份规划文档**)双路敌对评审,融合后修订计划。原决策 D1–D6 结论不变;此处记录发现与处置,作为学习 / 面试资产。**净判定:两路一致 —— 修订前不可进 Phase 3**,问题几乎全集中在 D6 + 两条假绿测试门。
+> 按 PLAYBOOK.md Phase 2 步骤5,规划稿交内审(会话内全新上下文敌对 subagent,**实读源码**)+ 外审(DeepSeek 异构模型,**只看四份规划文档**)双路敌对评审,融合后修订计划。原决策 D1–D6 结论不变;此处记录发现与处置,作为学习 / 面试资产。**净判定:两路一致 —— 修订前不可进 Phase 3**,问题几乎全集中在 D6 + 两条假绿测试门。
 
 **① 两路收敛(高置信,已改进计划):**
 - **D6 不是"一行修法"**(外审标 PLAUSIBLE、内审实读 CONFIRMED):

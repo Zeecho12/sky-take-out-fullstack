@@ -2,10 +2,10 @@
 
 ## 元信息
 - 编号: 0005
-- 类型: 改造 + 新功能(C 端重建 epic 的第四块 = 收官,见 `docs/blueprint.md`)
+- 类型: 改造 + 新功能(C 端重建 epic 的第四块 = 收官,见 `docs/blueprint/E01-cend-rebuild.md`)
 - 档位: T3(全栈:后端安全/正确性多处修复 + 前端多页 + 契约校准;含 ADR 五决策)
 - 状态: 规划中(Phase 2,2026-07-23)
-- 关联: Proposal → ./proposal.md | Progress → ./progress.md | ADR → ../../decisions/0005-order-manage.md | 契约 → ../../api-contract/用户端接口.md
+- 关联: Proposal → ./proposal.md | Progress → ./progress.md | ADR → ../../decisions/0005-order-manage.md | 契约 → ../../api-contract/用户端接口.md | epic → ../../blueprint/E01-cend-rebuild.md
 
 ## 1. 背景与动机 (Why)
 0002→0003→0004 已把 C 端「浏览 → 下单 → 支付」主链跑通:顾客能浏览菜品、加购、填地址结算下单、mock 支付变「已支付/待接单」。但**支付成功后就断了**——[Order/Created.vue](../../../project-sky-user-vue3/src/views/Order/Created.vue) 成功页那个"查看订单"按钮还是 0004 留下的 `disabled` 占位(注释写着"0005 接管"),顾客**看不到自己下过哪些单、看不了详情、不能取消、不能催单、不能再来一单,也没有一个"我的/个人中心"入口**。0005 补上订单生命周期的下半段,给 C 端重建 epic 收官。

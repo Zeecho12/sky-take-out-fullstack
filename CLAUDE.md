@@ -1,7 +1,7 @@
 # CQWM2 —— 苍穹外卖学习改造项目
 
 > 这份文件每个新窗口开机自动加载。它是本项目的"宪法":定义我们怎么协作、
-> 铁律有哪些、文档放在哪。**方法论详见 [GOOD.md](GOOD.md);本机命令速查见 [docs/WORKFLOW.md](docs/WORKFLOW.md)。**
+> 铁律有哪些、文档放在哪。**方法论详见 [PLAYBOOK.md](PLAYBOOK.md);本机命令速查见 [docs/RUNBOOK.md](docs/RUNBOOK.md)。**
 
 ---
 
@@ -28,9 +28,9 @@
 ## 三、当前进度
 
 - **Phase**:**无进行中 feature**。功能 0005「C 端重建④:订单管理」**已交付并合并回 main(merge `0fcaca4`,`--no-ff`,2026-07-23)**,DoD 全绿。**「C 端完整重建」epic(0002→0005)全部交付收官**:C 端浏览→加购→下单→(mock)支付→订单管理(历史/详情/取消/催单/再来一单/用户中心)端到端跑通,微信特定实现(登录/支付/小程序客户端)已全部换成账密+JWT / mock 支付 / Vue3 Web;顺带清偿多笔安全/正确性欠债(整站认证统一、地址簿+订单越权 BOLA、事务原子性、退款口径)。0005 六 code commit `353f772`(D1 越权)/`a296f2e`(D2 退款口径)/`8b5d584`(脚手架)/`7c961f9`(List 含 van-list 修复)/`91f0ef5`(Detail+接线)/`a5e4aa0`(Center+入口);验证后端 8/8+4/4、前端 preview 逐步 PASS + 端到端冒烟 A~G。(0004 `b08bf8e`、0003 `3365f69`、0002 `df53f0b`、0001 `b02590b` 均已交付。)
-- **进行中**:**焦点转向工作流 / 方法论(GOOD.md)优化,非新功能开发**。C 端重建 epic 已收官;暂无排期中的下一个 feature。跨功能决策(Vant / 整站门槛 / 改造复用 / 认证复用 0001)沉淀于各 ADR + blueprint。
-- **下一步**:**与用户探讨 GOOD.md 相关事宜、继续优化工作流**(用户在新窗口发起)。可回顾的素材:0002–0005 五个 feature 的完整实践(尤其本次 0005 的 Phase 3 铁律 8「一步一 subagent + 独立 verifier」执行、verifier 抓到 van-list 真 bug、Phase 2 双路评审 2 HIGH 全靠内审实读)——这些是评估/打磨方法论的一手经验。若之后要开新 feature,再按 GOOD.md 5 阶段走。
-- **git/环境**:`main` 已含 0002–0005 全部(HEAD = merge `0fcaca4`);`feature/0005-order-manage` 已合并(未删,已推 origin);更早 `feature/0004-mock-payment` 等同理。起环境:**Docker Desktop → `docker start sky-redis` → 后端 jar(:8080,构建前先停旧 jar)→ admin `PUT /admin/shop/1` 初始化店铺(Redis 重启后状态丢失需重设)→ C 端 `preview_start` `user-web` 或 `npm --prefix project-sky-user-vue3 run dev`(:5173)**。⚠️**jar/Docker/dev server 扛不过 Claude Code 进程重启,新窗口先核环境**(`java`/8080/6379/`docker ps`)。C 端测试账号 `s7v_2268`/`123456`(id=8);admin `admin`/`123456`;dish/setmeal/shop 依赖 Redis;MySQL 5.7 连库需 `--ssl-mode=DISABLED`(详见 `docs/WORKFLOW.md`)。冒烟基线 `docs/smoke-tests.md`。
+- **进行中**:**焦点转向工作流 / 方法论(PLAYBOOK.md)优化,非新功能开发**。C 端重建 epic 已收官;暂无排期中的下一个 feature。跨功能决策(Vant / 整站门槛 / 改造复用 / 认证复用 0001)沉淀于各 ADR + blueprint。
+- **下一步**:**与用户探讨 PLAYBOOK.md 相关事宜、继续优化工作流**(用户在新窗口发起)。可回顾的素材:0002–0005 五个 feature 的完整实践(尤其本次 0005 的 Phase 3 铁律 8「一步一 subagent + 独立 verifier」执行、verifier 抓到 van-list 真 bug、Phase 2 双路评审 2 HIGH 全靠内审实读)——这些是评估/打磨方法论的一手经验。若之后要开新 feature,再按 PLAYBOOK.md 5 阶段走。
+- **git/环境**:`main` 已含 0002–0005 全部(HEAD = merge `0fcaca4`);epic 路线图见 `docs/blueprint/E01-cend-rebuild.md`。**起环境步骤 / 本机踩坑 / 测试账号 一律见 `docs/RUNBOOK.md`;新会话先核 env**(`java`/8080/6379/`docker ps`;⚠️ jar/Docker/dev server 扛不过进程重启)。冒烟基线 `docs/smoke-tests.md`。
 
 > 本节是**当前快照**,只写"现在":**覆盖式更新**(改写这几行,不往下追加历史),
 > 永远保持这个长度。完成了什么、里程碑历史,看 `git log` 和各功能的 `progress.md`,
@@ -38,9 +38,9 @@
 
 ## 四、铁律(每个窗口都必须遵守)
 
-1. **开工前先读状态、先复述、后动手**:动任何代码前,先读对应的
-   `docs/features/NNNN-slug/proposal.md` 的「交接头」和实施清单,并向我复述"当前在哪一步 /
-   下一步做什么 / 打算改哪些文件 / 怎么验证",**我确认后才动手**。
+1. **开工前先核 env、先读状态、先复述、后动手**:先核环境(项目能否跑起来——新会话 / 进程重启后
+   尤其要核,命令见 `docs/RUNBOOK.md`),再读对应的 `docs/features/NNNN-slug/proposal.md` 的「交接头」
+   和实施清单,并向我复述"当前在哪一步 / 下一步做什么 / 打算改哪些文件 / 怎么验证",**我确认后才动手**。
 2. **提交粒度**:一步一 commit,一功能一分支(`feature/xxx`),一功能一次合并。
 3. **契约优先(contract-first)**:全栈功能先在 `docs/api-contract/` 定死接口契约,
    再实现;契约定死后前后端才可并行。
@@ -69,17 +69,18 @@
 | 文档 | 类型 | 说明 |
 |---|---|---|
 | `CLAUDE.md`(本文件) | 常驻 | 协作宪法,自动加载 |
-| `GOOD.md` | 方法论 | 可移植主文档,方法论的唯一真相源 |
-| `docs/WORKFLOW.md` | 项目速查 | 本机命令 / 环境 / 踩坑(不含方法论) |
-| `docs/blueprint.md` | 备忘/索引 | 跨 feature 大工程路线图(如 C 端重建 0002~0005);一行一 feature,详情看各 requirement,里程碑更新 |
+| `PLAYBOOK.md` | 方法论 | 可移植主文档,方法论的唯一真相源 |
+| `PLAYBOOK_LOG.md` | 方法论 | 方法论变更日志 + 搁置背包(随 PLAYBOOK 主副本走) |
+| `docs/RUNBOOK.md` | 项目速查 | 本机命令 / 环境 / 踩坑(不含方法论) |
+| `docs/blueprint/E01-*.md` | 源头/epic | 跨 feature 大工程路线图(每 epic 一文件,如 C 端重建 E01=0002~0005);一行一 feature,里程碑更新 |
 | `docs/features/NNNN-slug/` | 源头/living | 每功能一文件夹:requirement + proposal(含交接头) + progress |
 | `docs/decisions/NNNN-*.md` | 源头/永久 | ADR 决策记录(广度学习资产) |
 | `docs/divedeep/*.md` | 学习/永久 | 源码精读笔记(深度学习资产) |
 | `docs/api-contract/` | 源头 | 前后端接口契约 |
-| `docs/Backend_scan/` | 派生 | Phase 1 backend-scan 产出(S1~SN + BACKEND_OVERVIEW.md),里程碑再生 |
+| `docs/backend-scan/` | 派生 | Phase 1 backend-scan 产出(S1~SN + BACKEND_OVERVIEW.md),里程碑再生 |
 | `reference/` | 只读 | 参考资料(微信小程序源码等) |
 
-## 六、5 阶段流程(一句话版,详见 GOOD.md §3)
+## 六、5 阶段流程(一句话版,详见 PLAYBOOK.md §3)
 
 ```
 Phase 0 安全网   git + 跑起来 + 关键路径测试(动业务代码前的前提)

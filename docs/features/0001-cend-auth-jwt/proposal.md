@@ -10,7 +10,7 @@
 - **当前**: 功能 0001 **已交付并合并回 `main`**(merge `b02590b`);步骤 1–7 全部 TESTED、DoD 全绿。后端全站统一 Spring Security + 单套 JWT;admin 前端认证头已迁 Bearer;C 端新工程 `project-sky-user-vue3` 全链路跑通;冒烟基线 `docs/smoke-tests.md` 全绿。
 - **下一步**: 本功能已收口。剩余均为按需项:(a)从 ADR-0001 的 divedeep backlog 挑深读笔记(Spring Security Filter 链 / 认证时序 / `OncePerRequestFilter`);(b)openid 支付遗留 → 功能 0002;(c)里程碑再生 `docs/BACKEND_OVERVIEW.md`。
 - **别碰**: `reference/`(只读)、`.backup-original-git/`、`.tools/`;`OrderServiceImpl.payment()` 的 openid 调用(留给 0002)。
-- **怎么验证**: 构建/起 jar/前端命令见 `docs/WORKFLOW.md` 常用命令;构建前先停 jar(`Get-CimInstance Win32_Process` 找 `sky-server-...jar` → `Stop-Process -Id <pid> -Force`);DB 迁移/校验用 `mysql.exe ... --ssl-mode=DISABLED sky_take_out < docs\features\0001-cend-auth-jwt\0001-migration.sql`(可重跑);C 端 `npm --prefix project-sky-user-vue3 run dev`(:5173,需后端 :8080)。
+- **怎么验证**: 构建/起 jar/前端命令见 `docs/RUNBOOK.md` 常用命令;构建前先停 jar(`Get-CimInstance Win32_Process` 找 `sky-server-...jar` → `Stop-Process -Id <pid> -Force`);DB 迁移/校验用 `mysql.exe ... --ssl-mode=DISABLED sky_take_out < docs\features\0001-cend-auth-jwt\0001-migration.sql`(可重跑);C 端 `npm --prefix project-sky-user-vue3 run dev`(:5173,需后端 :8080)。
 
 ## 1. 现状(与本改动相关的技术起点)
 > 只写和本功能相关的;全局架构看 BACKEND_OVERVIEW。

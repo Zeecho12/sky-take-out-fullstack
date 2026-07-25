@@ -1,4 +1,4 @@
-# GOOD.md —— 教学项目 AI 改造方法论(可移植主文档)
+# PLAYBOOK.md —— 教学项目 AI 改造方法论(可移植主文档)
 
 > **这是一份可移植的通用工作流方法论,不绑定任何具体项目。**
 > 用户用它来系统性地改造从 GitHub 下载的教学项目,目标是学习工业级全栈开发
@@ -17,9 +17,9 @@
 1. **理解这套方法论**(读完全文)。
 2. **为当前项目生成专属文档**:根据本文档 §9 的模板——
    - 生成 `CLAUDE.md`(常驻宪法:填入该项目技术栈、改造目标、铁律、文档地图);
-   - 生成一份**薄** `docs/WORKFLOW.md`(项目运行速查卡;真实命令等 Phase 0 跑通后再填);
+   - 生成一份**薄** `docs/RUNBOOK.md`(项目运行速查卡;真实命令等 Phase 0 跑通后再填);
    - 建好 `docs/features/`、`docs/decisions/`、`docs/divedeep/` 目录。
-   - ⚠️ **GOOD.md 本身不改、不分叉**——它是可移植主文档,方法论的唯一真相源。改进回流到主副本(见 §附)。
+   - ⚠️ **PLAYBOOK.md 本身不改、不分叉**——它是可移植主文档,方法论的唯一真相源。改进回流到主副本(见 §附)。
 3. **和用户确认后,进入 Phase 0**(安全网:git + 跑起来 + 关键路径测试)。
 
 **牢记两条最重要的原则**(贯穿全程):
@@ -132,13 +132,13 @@ Phase 4 验证收尾 Close-out   验证 + 合并回 main + 复核 ADR / 收口 d
 - **谁做**:git / 调环境在主窗口(交互调试);写测试可派 subagent。
 - **完成标准**:项目能跑;核心链路测试全绿;基线已 commit。
 - **产出后**:把跑通用到的真实命令(build / run / test / 环境路径 / 本机踩坑)填进
-  `docs/WORKFLOW.md`——这是 WORKFLOW.md 第一次被真正填内容的时机。
+  `docs/RUNBOOK.md`——这是 RUNBOOK.md 第一次被真正填内容的时机。
 
 ### Phase 1 —— 理解(Understand)
 
 - **目的**:搞清架构、模块职责、耦合关系,建立"空间地图"。
 - **步骤**:
-  1. 扫描项目,产出 `docs/Backend_scan/`(Phase 1 专用文件夹):里面放 backend-scan 的
+  1. 扫描项目,产出 `docs/backend-scan/`(Phase 1 专用文件夹):里面放 backend-scan 的
      **全部产出**——各步原始输出 `PROJECT_S1~SN_*.md` + 合并后的 `BACKEND_OVERVIEW.md`(架构总览,下游 AI 读它)。
      > 用户已有一套 `backend-scan-*` skill(单体版)专做这件事;若无,则
      > 由 AI 系统性地读目录结构、配置、启动类、调用链,产出等价的总览文档。
@@ -151,6 +151,8 @@ Phase 4 验证收尾 Close-out   验证 + 合并回 main + 复核 ADR / 收口 d
 ### Phase 2 —— 规划(Plan)
 
 - **目的**:把"想改的地方"变成"可执行、可验收的文档",并把设计决策拍板留痕。
+  > 若本功能属于一个 **epic**(≥2 feature 的大工程),epic 的 **blueprint** 在立项时、**写第一份
+  > Requirement 之前**先建(见 §4.2.1),本 feature 的 Requirement 头「关联」块指向它。
 - **步骤**(按档位裁剪,见 §4.3 右-sizing):
   1. **写 Requirement**(需求文档):背景/目标/范围(In·Out)/**功能级验收标准**。
      规划期写一次、基线化。
@@ -167,13 +169,15 @@ Phase 4 验证收尾 Close-out   验证 + 合并回 main + 复核 ADR / 收口 d
      - **内审(in-house)**:开一个**全新上下文**的敌对 subagent,任务是"驳倒方案"——漏掉的候选 /
        被美化的 trade-off / 没说出口的假设 / 过于乐观的验收标准 / 难回滚的单向门。
      - **外审(external)**:用 **DeepSeek**(异构外部模型)做同样的敌对评审(CLI 位置见项目
-       WORKFLOW / 全局工具目录)。异构 = 不共享内审模型对方案的自我偏好。
+       RUNBOOK / 全局工具目录)。异构 = 不共享内审模型对方案的自我偏好。
      - **融合 → 修订**:把两路批评合并——**收敛项(两家都提)= 高置信,优先改;分歧项 = 各自补的
        覆盖,逐条判去留**。据此修订 Requirement/ADR/Proposal。
      - **回灌 ADR**:融合后的关键发现记成 Addendum / 决策行("评审提了什么、为何仍否 / 怎么改"),
        变成学习资产 + 面试料("你怎么验证你的设计")。
      > 用**结构化批判**、不用开放辩论(后者易被嗓门大的一方带偏、易附和塌缩)。ADR-0001 首次实战印证:
      > 两家收敛处置信最高、分歧处补覆盖——这正是双路并跑而非单审的价值。
+     > **评审的盲区**:双路评审读的是文档 + 源码,**看不见前端组件 / 工具的运行期涌现行为**。这类"运行期
+     > 行为断言"别写进 ADR 当护栏——标"待验假设"进 Proposal「假设 / 待验」栏,Phase 3 证伪(见 4.4 / 9.4)。
   - 以上都落到 `docs/features/NNNN-slug/`(requirement.md + proposal.md;progress.md 到执行期才追加)。
 - **谁做**:决策、融合与拍板**全程主窗口,用户在环**(绝不外包);内审派**全新上下文 subagent**、
   外审走 **DeepSeek CLI**——评审的"劳动"可外包,融合/拍板不外包。
@@ -214,7 +218,7 @@ Phase 4 验证收尾 Close-out   验证 + 合并回 main + 复核 ADR / 收口 d
      —— 候选的**收集**是跨阶段的(Phase 1/2/3 边走边攒进 ADR 面试要点);此处是**选择**检查点。
      `divedeep` 本身仍是**按需**:写哪几条由用户拍板(高=默认建议写、中=默认建议并入或缓写、
      低=不写),AI **不擅自生成**。
-  4. **再生派生文档**:里程碑处**再生** `docs/Backend_scan/BACKEND_OVERVIEW.md`(及需要时的 S 系列)。
+  4. **再生派生文档**:里程碑处**再生** `docs/backend-scan/BACKEND_OVERVIEW.md`(及需要时的 S 系列)。
   5. **收尾快照**:覆盖式更新 `CLAUDE.md` 的「当前进度」。
 - **谁做**:验证 / 合并 / 拍板在主窗口;独立复审、(按需)写 divedeep 可派 subagent。
 - **完成标准**:功能已合并;DoD 全部满足;派生文档已再生;学习入口(ADR / backlog)已收口。
@@ -235,14 +239,14 @@ Phase 4 验证收尾 Close-out   验证 + 合并回 main + 复核 ADR / 收口 d
 
 | 文档 | 装什么 | 可移植? | 加载方式 |
 |---|---|---|---|
-| **GOOD.md** | **全部方法论**:5 阶段、文档体系、模板、协作模型、概念词典 | ✅ 项目无关,**唯一真相源** | 需要时读 / 新项目的种子 |
-| **CLAUDE.md** | 项目宪法:身份、技术栈、改造目标、**当前进度**、铁律(摘要,细节指向 GOOD.md)、文档地图 | ❌ 项目特定 | **每窗口自动加载,必须短** |
-| **docs/WORKFLOW.md** | **项目运行速查卡**:真实构建/启动/测试命令(带本机路径)、环境、本机踩坑、新窗口指路 | ❌ 项目特定 | 需要时查 |
+| **PLAYBOOK.md** | **全部方法论**:5 阶段、文档体系、模板、协作模型、概念词典 | ✅ 项目无关,**唯一真相源** | 需要时读 / 新项目的种子 |
+| **CLAUDE.md** | 项目宪法:身份、技术栈、改造目标、**当前进度**、铁律(摘要,细节指向 PLAYBOOK.md)、文档地图 | ❌ 项目特定 | **每窗口自动加载,必须短** |
+| **docs/RUNBOOK.md** | **项目运行速查卡**:真实构建/启动/测试命令(带本机路径)、环境、本机踩坑、新窗口指路 | ❌ 项目特定 | 需要时查 |
 
-> WORKFLOW.md 只写"在这台机器、这个项目上具体怎么敲命令",**方法论一律指向 GOOD.md,
+> RUNBOOK.md 只写"在这台机器、这个项目上具体怎么敲命令",**方法论一律指向 PLAYBOOK.md,
 > 绝不复述**。它不是方法论文档,是运行手册。
-> 类比(餐厅):GOOD.md = 连锁《运营宝典》(每家店一样,可移植);CLAUDE.md = 这家店的
-> 前台牌(我们是谁、今日状态、店规摘要);WORKFLOW.md = 贴在这间厨房墙上的操作便条
+> 类比(餐厅):PLAYBOOK.md = 连锁《运营宝典》(每家店一样,可移植);CLAUDE.md = 这家店的
+> 前台牌(我们是谁、今日状态、店规摘要);RUNBOOK.md = 贴在这间厨房墙上的操作便条
 > (本店设备、燃气总闸在哪)。你不会把整本宝典抄到厨房墙上。
 
 **贯穿铁则:自动加载的文档必须有界(bounded)。** CLAUDE.md 每窗口都加载,越短越好——
@@ -269,6 +273,30 @@ Phase 4 验证收尾 Close-out   验证 + 合并回 main + 复核 ADR / 收口 d
   **全站一套、每个功能都一样**,写在 CLAUDE.md 铁律。Requirement 里只写**功能级验收
   标准**(可观测、可测试、含负例)。这是 Acceptance Criteria(功能对不对)和 DoD
   (流程走没走完)的区别——别混成一坨。
+
+### 4.2.1 epic 层(可选):跨多 feature 大工程的路线图 —— blueprint
+
+**为什么需要**:一句自然语言目标(如"重做 C 端")常常拆成 **≥2 个各自走完整 feature 流程的
+feature**。CLAUDE.md「当前进度」只写"现在在哪个 feature",per-feature 文档只管"一个 feature",
+中间缺了"这一大坨拆成哪几个 feature、什么顺序、当前到哪"的**前瞻全景**——这层就是 **epic**,
+它的路线图文档叫 **blueprint**。
+
+- **触发门槛(右-sizing)**:目标必须拆成 **≥2 个各自走完整 feature 流程(各自分支 / 合并)的
+  feature、且它们有跨 feature 的共享决策或强顺序依赖** → 才是 epic、才建 blueprint;单 feature
+  能交付的不建。**epic 本身不走 Phase 0–4;走 0–4 的是它下面的每个 feature。**
+- **文档 & 命名**:`docs/blueprint/E01-<slug>.md`(epic 用 **`E` 前缀**区别于 feature 的 `NNNN`——
+  folder `blueprint/` 命名文档类型、`E01` 命名它描述的 epic;epic 是 Agile 标准词)。装:背景一段 +
+  跨功能已定决策(摘要 + 指针)+ Feature 路线图表(一行一 feature:编号 / 名称 / 一句话范围 / 依赖 /
+  状态)+ 粗粒度时间线。**纪律:一行一 feature、状态列覆盖式、里程碑再更新、索引不是源头**(详细
+  范围看各 requirement,blueprint 不重抄)。
+- **何时建 / 更新**:判定 ≥2 feature 后、**写第一份 Requirement 之前**建(承载现状盘点 + feature
+  拆分 + 跨功能决策);每个 feature 交付(里程碑)翻状态列 + 补一行时间线,覆盖式。
+- **谁读 / 追溯**:冷启动 / 新窗口要跨 feature 全景时读;CLAUDE.md「当前进度」一句话指向它;
+  feature 的 requirement 头「关联」块加 `epic → ../../blueprint/E01-*.md`,blueprint 路线图表反向
+  列全部 feature(双向可追)。
+- **跨功能决策归哪(混合)**:默认落到"第一个碰到它的 feature ADR" + blueprint 摘要指针;当一个
+  决策**确实跨多 feature、不属于任何单个 feature**时,才升格为 epic 级 ADR `docs/decisions/E01-*.md`。
+- **可选性**:**不是每个项目都有 epic**;epic 层**条件触发**(见门槛),单 feature 项目没有这层。
 
 ### 4.3 七条贯穿设计原则(为什么这么切)
 
@@ -298,6 +326,12 @@ Phase 4 验证收尾 Close-out   验证 + 合并回 main + 复核 ADR / 收口 d
 - **ADR 纪律**:一功能一份;顶部**决策概览表**(≥2 个决策必填,当导航);采纳后**不可变**。
   同功能执行期发现的细化 → 写 **Addendum**;后续功能推翻旧决策 → 开**新 ADR** 标
   `supersedes NNNN`,**绝不回改旧 ADR**(旧决策的"当时为什么"本身是学习资产)。
+- **ADR 只装有依据的决策,运行期行为断言归"待验假设"**:ADR 记的是"为什么选 A 不选 B"(有代码 /
+  文档依据的决策)。**关于外部组件 / 工具 / 框架运行期行为的、未经真实运行验证的断言,不进 ADR**——
+  标"待验假设"进 Proposal 的「假设 / 待验」栏(见 9.4),由 Phase 3 用真环境 / 真浏览器证伪、结论回填
+  Progress。为什么:双路评审(Phase 2)读的是文档 + 源码,**看不见组件运行期涌现行为**(教训:把
+  "某前端列表组件只靠自动触发首拉"当护栏写进 ADR,切 tab 场景被执行期实测推翻——它本是未验证的
+  行为断言、不是决策)。
 
 ### 4.5 派生文档 vs 源头文档(治"文档漂移")
 
@@ -318,10 +352,13 @@ Phase 4 验证收尾 Close-out   验证 + 合并回 main + 复核 ADR / 收口 d
 ├─ <前端代码目录>/
 ├─ reference/                        # [只读] 参考资料(被替换的旧客户端源码),禁改、不构建、不扫描
 ├─ CLAUDE.md                         # 常驻宪法,自动加载
-├─ GOOD.md                           # [方法论] 可移植主文档(从主副本复制进来,不分叉)
+├─ PLAYBOOK.md                           # [方法论] 可移植主文档(从主副本复制进来,不分叉)
+├─ PLAYBOOK_LOG.md                   # [方法论] 变更日志 + 搁置背包(随 PLAYBOOK 主副本走)
 └─ docs/
-   ├─ WORKFLOW.md                    # [项目速查] 本机命令/环境/踩坑(方法论看 GOOD.md)
-   ├─ Backend_scan/                  # [派生] Phase 1 backend-scan 产出,里程碑再生
+   ├─ RUNBOOK.md                    # [项目速查] 本机命令/环境/踩坑(方法论看 PLAYBOOK.md)
+   ├─ blueprint/                     # [源头/epic] 跨 feature 大工程路线图(可选),每 epic 一文件
+   │    └─ E01-<slug>.md
+   ├─ backend-scan/                  # [派生] Phase 1 backend-scan 产出,里程碑再生
    │    ├─ PROJECT_S1~SN_*.md        #   各步扫描原始输出
    │    └─ BACKEND_OVERVIEW.md       #   合并的架构总览(下游 AI 读它)
    ├─ api-contract/                  # [源头] 前后端接口契约
@@ -377,8 +414,10 @@ Phase 4 验证收尾 Close-out   验证 + 合并回 main + 复核 ADR / 收口 d
 - **完成的定义(DoD)**:一个功能"完成"= 代码 + 测试 + 相关文档(requirement / proposal /
   progress)+ ADR 全部更新。文档更新是"完成"的一部分,不是事后补。
 
-- **复述握手(Verification Handshake)**:新窗口 AI 读完状态后,**先向用户复述**"当前
-  在哪步 / 下一步 / 要改哪些文件 / 怎么验证",用户确认后才动手。防止"理解偏了还狂奔"。
+- **复述握手(Verification Handshake)**:新窗口 / 新会话 AI **先核环境**(项目能否跑起来:构建 / 端口 /
+  依赖服务是否在;易失状态[如缓存]需否重初始化——具体命令见项目 RUNBOOK),**再向用户复述**"当前在
+  哪步 / 下一步 / 要改哪些文件 / 怎么验证",用户确认后才动手。**核环境列入握手**是因为环境常扛不过
+  进程重启 / 会话边界,"读完状态就狂奔"会撞到跑不起来的坑;也防止"理解偏了还狂奔"。
 
 - **计划评审关卡(双路必跑:内审 + 外审)**:Phase 2 的独立怀疑者,把"运动员≠裁判"从代码延伸到
   计划。**为什么需要**:产出方案的模型对自己的选择有**自我偏好(self-preference bias)**、倾向
@@ -398,6 +437,14 @@ Phase 4 验证收尾 Close-out   验证 + 合并回 main + 复核 ADR / 收口 d
   排除构建 / 扫描 / AI 修改。用它之前先榨取价值(如提取接口契约写进 `api-contract`)。
 
 - **派生文档里程碑再生**:能从代码再生的文档(架构总览)不逐次手改,大节点重跑一次。
+
+- **epic / blueprint(跨 feature 大工程路线图)**:一句自然语言目标拆成 ≥2 个 feature 时,这一大坨叫
+  **epic**;它的前瞻路线图文档叫 **blueprint**(`docs/blueprint/E01-<slug>.md`)。补 CLAUDE.md(只写现在)
+  与 per-feature 文档(只管一个)之间缺的"跨 feature 全景"层。条件触发、非每个项目都有。详见 4.2.1。
+
+- **待验假设(Assumption-to-Verify)**:规划期对外部组件 / 工具 / 框架**运行期行为**的、未经真实运行
+  验证的断言。**不进 ADR**(那是决策),标进 Proposal「假设 / 待验」栏,Phase 3 用真环境证伪、结论回填
+  Progress。区分"有依据的决策"和"未验证的行为断言",守住 ADR 纯度。详见 4.4 / 9.4。
 
 ---
 
@@ -442,11 +489,11 @@ Phase 4 验证收尾 Close-out   验证 + 合并回 main + 复核 ADR / 收口 d
 
 方法论有双重身份:
 
-- **现在**:手动跑流程的操作指南(就是 GOOD.md 本身各 Phase 段)。
-- **将来**:某个 phase 跑顺、步骤稳定了,GOOD.md 里那节的内容**就是那个 skill 的规格
+- **现在**:手动跑流程的操作指南(就是 PLAYBOOK.md 本身各 Phase 段)。
+- **将来**:某个 phase 跑顺、步骤稳定了,PLAYBOOK.md 里那节的内容**就是那个 skill 的规格
   说明**,可交给 skill-creator 固化成 skill(如 `backend-scan-*`、`divedeep` 就是这么来的)。
 
-> 注意:**proto-skill 的规格在 GOOD.md(方法论),不在 WORKFLOW.md**(后者只是项目命令
+> 注意:**proto-skill 的规格在 PLAYBOOK.md(方法论),不在 RUNBOOK.md**(后者只是项目命令
 > 速查,不是 skill 素材)。
 
 **所以"先手动跑"不是浪费,是在给未来的 skill 攒真实规格。**
@@ -483,7 +530,7 @@ Phase 4 验证收尾 Close-out   验证 + 合并回 main + 复核 ADR / 收口 d
 > 覆盖式更新(只写"现在",不追加历史),永远保持这个长度。历史看 git log 与各功能 progress。
 
 ## 四、铁律
-1. 开工前先读对应 features/NNNN 的 proposal 交接头+清单,先复述后动手,用户确认才改。
+1. 开工前先核 env(项目能否跑起来)+ 读对应 features/NNNN 的 proposal 交接头+清单,先复述后动手,用户确认才改。
 2. 一步一 commit,一功能一分支,一功能一次合并。
 3. 契约优先:全栈功能先定 api-contract 再实现。
 4. DoD = 代码+测试+文档(requirement/proposal/progress)+ADR 都更新才算 DONE。
@@ -497,25 +544,27 @@ Phase 4 验证收尾 Close-out   验证 + 合并回 main + 复核 ADR / 收口 d
 | 文档 | 类型 | 说明 |
 |---|---|---|
 | CLAUDE.md(本文件) | 常驻 | 宪法,自动加载 |
-| GOOD.md | 方法论 | 可移植主文档(方法论看它) |
-| docs/WORKFLOW.md | 项目速查 | 本机命令/环境/踩坑 |
+| PLAYBOOK.md | 方法论 | 可移植主文档(方法论看它) |
+| PLAYBOOK_LOG.md | 方法论 | 方法论变更日志 + 搁置背包(随 PLAYBOOK 主副本走) |
+| docs/RUNBOOK.md | 项目速查 | 本机命令/环境/踩坑 |
 | docs/features/NNNN-slug/ | 源头/living | requirement + proposal(含交接头) + progress |
+| docs/blueprint/E01-*.md | 源头/epic | 跨 feature 大工程路线图(可选,≥2 feature 才建) |
 | docs/decisions/NNNN-*.md | 源头/永久 | ADR(广度学习资产) |
 | docs/divedeep/*.md | 学习/永久 | 源码精读(深度学习资产) |
 | docs/api-contract/ | 源头 | 接口契约 |
-| docs/Backend_scan/ | 派生 | Phase 1 backend-scan 产出(S1~SN + BACKEND_OVERVIEW.md),里程碑再生 |
+| docs/backend-scan/ | 派生 | Phase 1 backend-scan 产出(S1~SN + BACKEND_OVERVIEW.md),里程碑再生 |
 | reference/ | 只读 | 参考资料 |
 
-## 六、5 阶段流程(一句话版,详见 GOOD.md §3)
-<见 GOOD.md §3 的五阶段表>
+## 六、5 阶段流程(一句话版,详见 PLAYBOOK.md §3)
+<见 PLAYBOOK.md §3 的五阶段表>
 ```
 
-### 9.2 项目 `docs/WORKFLOW.md` 模板(薄!只写项目特定的)
+### 9.2 项目 `docs/RUNBOOK.md` 模板(薄!只写项目特定的)
 
 ```markdown
-# WORKFLOW —— <项目名> 运行速查卡
+# RUNBOOK —— <项目名> 运行速查卡
 
-> 方法论(5 阶段、文档体系、模板)看 GOOD.md,本文件**不复述**。
+> 方法论(5 阶段、文档体系、模板)看 PLAYBOOK.md,本文件**不复述**。
 > 这里只写"在这台机器、这个项目上具体怎么敲命令 + 踩过的坑"。
 
 ## 本机环境
@@ -586,7 +635,7 @@ Phase 4 验证收尾 Close-out   验证 + 合并回 main + 复核 ADR / 收口 d
 - 怎么验证: 关键命令(构建 / 起服务 / 冒烟)
 
 ## 1. 现状(与本改动相关的技术起点)
-> 只写和本功能相关的;全局架构看 docs/Backend_scan/BACKEND_OVERVIEW.md。
+> 只写和本功能相关的;全局架构看 docs/backend-scan/BACKEND_OVERVIEW.md。
 现在怎么实现、涉及哪些文件、关键数据怎么流。
 
 ## 2. 方案总览(选定方案长什么样)
@@ -602,6 +651,11 @@ Phase 4 验证收尾 Close-out   验证 + 合并回 main + 复核 ADR / 收口 d
 - [ ] 步骤2: <做什么>  [依赖: 步骤1]  —— TODO
       测试门: ...
 > 依赖链: 1 → 2 → 3 …    状态标记: TODO / IN_PROGRESS(~) / CODE_DONE / TESTED
+
+## 5. 假设 / 待验(执行期证伪)—— 运行期行为断言放这里,不放 ADR
+> 规划期对"外部组件 / 工具 / 框架的运行期行为"的假设(尤其前端组件),**未经真实运行验证的一律标这里**,
+> 由 Phase 3 用真环境 / 真浏览器证伪;证伪后把结论回填 Progress。别把这类断言写进 ADR 当决策(见 4.4)。
+- [ ] 假设1: <断言 + 依据(文档 / 源码)> —— 待 <怎么验> 证伪 —— 状态: 待验 / 已证 / 已伪(改法记 Progress)
 ```
 
 ### 9.5 ADR 模板(`docs/decisions/NNNN-*.md`)
@@ -660,15 +714,15 @@ Phase 4 验证收尾 Close-out   验证 + 合并回 main + 复核 ADR / 收口 d
 ## 元信息
 - 编号: NNNN
 - 关联: Requirement → ./requirement.md | Proposal → ./proposal.md | ADR → ../../decisions/NNNN-*.md
-- 纪律: 追加式,旧条目不改。只记 git 看不出的东西,别抄 diff。
+- 纪律: 追加式,旧条目不改。**按里程碑 / 日期分节**(时间线天然);每节四要素必填。只记 git 看不出的东西,别抄 diff。
 
-## 步骤记录(追加式,新条目往下加)
+## 现场记录(追加式,新条目往下加;一个窗口 / 里程碑一节)
 
-### <步骤N / 里程碑> (YYYY-MM-DD) — <一句话它干了啥>
-- **改了什么**: 语义级摘要(1–3 行,别逐文件抄 diff)
+## <YYYY-MM-DD · 步骤N / 里程碑> — <一句话它干了啥>
+- **做了什么**: 语义级摘要(1–3 行,别逐文件抄 diff)
 - **验证**: 对应 Proposal 步骤N 的测试门,实测跑了什么、结果、关键证据
-- **发现 / 踩坑 / 临场决策**: git 看不出来的东西 ← 重点,没有就写"无"
-- **关联**: commit <hash> / ADR addendum ADx / 契约变更 …
+- **发现 / 踩坑 / 临场决策**: git 看不出来的东西 ← **一等公民,必填,没有就写"无"**
+- **关联 / 下一步**: commit <hash> / ADR addendum / 契约变更;下一步做什么
 ```
 
 ### 9.7 divedeep(源码深读笔记)
@@ -683,34 +737,65 @@ Phase 4 验证收尾 Close-out   验证 + 合并回 main + 复核 ADR / 收口 d
 - **只有「高」默认触发**:高 = 默认进候选、Phase 4 主动问是否写;中 = 按需 / 并入高篇;低 = 不写。
   宁缺毋滥 —— 目标是每个功能**不漏掉那 1 条真正值钱的链路**,不是凑数量。
 
+### 9.8 Blueprint 模板(`docs/blueprint/E01-<slug>.md`;仅 epic 场景,≥2 feature 才建,见 4.2.1)
+
+```markdown
+# <epic 名> —— Blueprint / 路线图 (epic E0N)
+
+## epic 元信息
+- 编号: E0N
+- 名称: <epic 名>
+- 状态: 规划中 | 执行中(feature k/N) | 已交付收官
+- 关联 feature: <编号列表>(各 requirement 头「关联」块反向指回本文件)
+- 触发门槛: <一句自然语言目标拆成哪几个 feature + 跨功能共享决策>
+- 方法论: epic 层见 PLAYBOOK.md §4.2.1
+
+> 备忘录性质:只记"拆成哪几个 feature、什么顺序、当前到哪"。纪律:一行一 feature、
+> 状态列覆盖式、里程碑再更新、索引不是源头(详细范围看各 requirement,不重抄)。
+
+## 背景
+<这个 epic 要干什么,一段话>
+
+## 跨功能已定决策(拍板日期;论证见各 feature ADR,或跨多 feature 的 epic 级 decisions/E0N-*)
+- <决策>: <结论> → 详见 <ADR 指针>
+
+## Feature 路线图
+| 编号 | 名称 | 一句话范围 | 依赖 | 状态 |
+|---|---|---|---|---|
+| 000X | ... | ... | ... | 未开始 / 规划中 / 执行中 / 已交付 |
+
+## 时间线(粗粒度备忘,里程碑追加)
+- YYYY-MM-DD: <里程碑>
+```
+
 ---
 
 ## 10. 用这份文档启动一个新项目(操作清单)
 
 当用户下载了一个新的教学项目,想套用这套工作流时:
 
-1. **把 GOOD.md 复制进新项目根目录**(从主副本复制,见 §附;GOOD.md 本身不改)。
-2. **AI 通读 GOOD.md**,理解方法论。
+1. **把 PLAYBOOK.md 复制进新项目根目录**(从主副本复制,见 §附;PLAYBOOK.md 本身不改)。
+2. **AI 通读 PLAYBOOK.md**,理解方法论。
 3. **AI 为新项目生成专属文档**:
    - 据 9.1 生成 `CLAUDE.md`(填该项目技术栈、改造目标、平台特定点)。
-   - 据 9.2 生成一份**薄** `docs/WORKFLOW.md`(命令等 Phase 0 跑通后再填)。
-   - 建好 `docs/features/`、`docs/decisions/`、`docs/divedeep/`、`docs/api-contract/`。
+   - 据 9.2 生成一份**薄** `docs/RUNBOOK.md`(命令等 Phase 0 跑通后再填)。
+   - 建好 `docs/features/`、`docs/decisions/`、`docs/divedeep/`、`docs/api-contract/`(epic 场景再建 `docs/blueprint/`)。
 4. **AI 先做 2.1 判断**:识别"有价值的业务后端"和"平台特定噪音",和用户一起定改造目标
    (先别删任何东西)。
 5. **和用户确认后,进入 Phase 0**(安全网)。
 6. 之后按 Phase 1→4 循环推进每个功能。
 
-> 一句话:GOOD.md 是"种子",AI 读完它,为具体项目长出 CLAUDE.md + 薄 WORKFLOW.md +
+> 一句话:PLAYBOOK.md 是"种子",AI 读完它,为具体项目长出 CLAUDE.md + 薄 RUNBOOK.md +
 > docs 结构,然后按统一工作流干活。**种子不变,各项目只长自己的枝叶。**
 
 ---
 
 ## 附:本文件维护说明
 
-- GOOD.md 是**可移植主文档**,项目无关。建议在个人配置目录(如 `~/.claude/`)保留一份
+- PLAYBOOK.md 是**可移植主文档**,项目无关。建议在个人配置目录(如 `~/.claude/`)保留一份
   **主副本**,每次开新项目复制过去。
 - 方法论本身有改进(在某个项目里发现更好的做法)时,回来更新**主副本**;项目专属的
-  调整则写进各项目自己的 CLAUDE.md / WORKFLOW.md,不污染这份主文档。
+  调整则写进各项目自己的 CLAUDE.md / RUNBOOK.md,不污染这份主文档。
 - 配套工具:`backend-scan-*`(架构扫描)、`divedeep`(源码深读笔记)等 skill 是方法论
   某些步骤的固化产物(见 §8)。
 - 首次成文:基于苍穹外卖(CQWM2)项目的方法论设计讨论整理而成;文档体系于二轮讨论

@@ -8,7 +8,7 @@
 ## 2026-07-23 · Phase 2 立项 + 规划
 
 **做了什么**
-- 读状态(铁律 1):CLAUDE.md 快照 + blueprint(0005 收官、两笔 backlog)+ 0003/0004 全套(格式/深度范本 + D6 归属修法 + 越界纪律)+ 契约用户端 5 端点 + `OrderServiceImpl` 五端点方法体 + GOOD.md §3 Phase 2 + WORKFLOW。
+- 读状态(铁律 1):CLAUDE.md 快照 + blueprint(0005 收官、两笔 backlog)+ 0003/0004 全套(格式/深度范本 + D6 归属修法 + 越界纪律)+ 契约用户端 5 端点 + `OrderServiceImpl` 五端点方法体 + PLAYBOOK.md §3 Phase 2 + RUNBOOK。
 - 向 Tech Lead 复述 6 决策点(比 blueprint 记的两笔宽:实读发现越权是**一整片** 4 处,不止 `userCancelById`)→ **全部拍板**:D1 归属校验 4 处全修 Service 层 / D2 退款口径三处统一 REFUND(授权越界碰管理端)/ D3、D4 授权我对齐 reference 定 / D5 用户中心纯导航壳。
 - 派 2 个 Explore subagent(保护主窗口上下文):①摸 reference 订单管理交互(historyOrder 3 tab、details 按状态出按钮、my 取 Vuex 不查接口、success→details、导航层级 my→history→details);②摸 C 端前端现状(request.ts 返整 Result 判 `code===1`、无 tabbar/无"我的"入口需从零加、Created 查看订单 disabled 且 query 缺 id、Vant 全量、路由 meta.public 门槛)。
 - 自核后端事实:`Orders` 状态常量(TO_BE_CONFIRMED=2/PAID=1/REFUND=2/CANCELLED=6)、`MessageConstant.ORDER_NOT_FOUND` 可复用、`rejection`/`cancel` 确由 `controller/admin/OrderController`(L84/L98)调用=管理端(D2 越界点坐实)。

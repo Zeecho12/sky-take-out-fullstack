@@ -2,10 +2,10 @@
 
 ## 元信息
 - 编号: 0002
-- 类型: 新功能(C 端重建 epic 的第一块,见 `docs/blueprint.md`)
+- 类型: 新功能(C 端重建 epic 的第一块,见 `docs/blueprint/E01-cend-rebuild.md`)
 - 档位: T2(多步骤 / 前端跨模块;含 1 份轻 ADR:UI 方案 + 登录门槛)
 - 状态: 已基线(2026-07-22)
-- 关联: Proposal → ./proposal.md | Progress → ./progress.md | ADR → ../../decisions/0002-cend-browse-cart.md | 契约 → ../../api-contract/用户端接口.md
+- 关联: Proposal → ./proposal.md | Progress → ./progress.md | ADR → ../../decisions/0002-cend-browse-cart.md | 契约 → ../../api-contract/用户端接口.md | epic → ../../blueprint/E01-cend-rebuild.md
 
 ## 1. 背景与动机 (Why)
 C 端 Web(`project-sky-user-vue3`)目前只有 0001 的认证闭环(登录/注册/改密/登出),**没有任何点餐业务**。要照 `reference/` 微信小程序把 C 端端到端重建,第一块必须是"顾客能浏览商品、把想吃的加进购物车"——这是「浏览 → 下单 → 支付」整条链路的**入口和地基**:后续 0003 下单直接读购物车,没有它后面无从谈起。同时这一块要把**整个业务前端的地基**打好(组件库、API 调用模式、登录门槛),供 0003~0005 复用。

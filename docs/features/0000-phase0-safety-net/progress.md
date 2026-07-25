@@ -58,7 +58,7 @@
 
 ## ⭐ 交接:给下一个窗口的话
 **Phase 0 完成。** 安全网齐备:git 基线稳、后端(8080)+ 前端(8888)+ MySQL + Redis
-全部验证跑通,冒烟基线在 docs/smoke-tests.md。启动命令见 docs/WORKFLOW.md「常用命令」。
+全部验证跑通,冒烟基线在 docs/smoke-tests.md。启动命令见 docs/RUNBOOK.md「常用命令」。
 后端/前端 dev server 在这次会话里可能仍后台运行;重启顺序:docker start sky-redis →
 后端 jar → 前端 npm run serve。
 下一步:进 Phase 2 规划第一个功能(建议"替换微信登录 → JWT")——但 Phase 1 理解已有

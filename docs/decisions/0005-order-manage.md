@@ -2,7 +2,7 @@
 
 ## 状态: 已采纳(2026-07-23)
 
-> 关联: Requirement/Proposal/Progress → ../features/0005-order-manage/ | 契约 → ../api-contract/用户端接口.md | 路线图 → ../blueprint.md
+> 关联: Requirement/Proposal/Progress → ../features/0005-order-manage/ | 契约 → ../api-contract/用户端接口.md | 路线图 → ../blueprint/E01-cend-rebuild.md
 > 定位: 本文件管"**为什么选 A 不选 B**"(广度)。机制深挖见 ../divedeep/(深度);
 > **代码现状 / 要改哪些文件见 ../features/0005-order-manage/proposal.md**,此处不重复。
 
@@ -192,7 +192,7 @@ reference `my` 页展示头像/昵称/性别/电话,但**数据取自 Vuex store
 ## Addendum(执行期细化,追加式)
 
 ### AD1 — 双路评审发现与处置(2026-07-23,内审:会话内全新上下文红队 subagent 实读源码 + 外审:DeepSeek-v4-pro 只看规划文档)
-> 按 GOOD.md Phase 2 步骤5,规划稿交内审(全新上下文敌对 subagent,**实读源码**逐条证伪)+ 外审(DeepSeek 异构模型,**只看 requirement/ADR/proposal**)双路敌对评审,融合后修订计划。原决策 D1–D5 **方向不变**;D1 实现订正(details 共用 + reminder 守卫)、D2 表述订正(`.equals()`)、再来一单改合并(Q1)、tab 保持 3(Q2)、催单加守卫(Q3)。**净判定:两路一致——修订后可进 Phase 3**(2 项 HIGH 必修阻断,均**内审实读独有**、外审只看文档抓不到——异构双路的价值再次印证:能读码的一路负责"契约/共用面是否真成立",只看文档的一路负责"设计/UX/安全面是否被粉饰")。
+> 按 PLAYBOOK.md Phase 2 步骤5,规划稿交内审(全新上下文敌对 subagent,**实读源码**逐条证伪)+ 外审(DeepSeek 异构模型,**只看 requirement/ADR/proposal**)双路敌对评审,融合后修订计划。原决策 D1–D5 **方向不变**;D1 实现订正(details 共用 + reminder 守卫)、D2 表述订正(`.equals()`)、再来一单改合并(Q1)、tab 保持 3(Q2)、催单加守卫(Q3)。**净判定:两路一致——修订后可进 Phase 3**(2 项 HIGH 必修阻断,均**内审实读独有**、外审只看文档抓不到——异构双路的价值再次印证:能读码的一路负责"契约/共用面是否真成立",只看文档的一路负责"设计/UX/安全面是否被粉饰")。
 
 **① HIGH 必修阻断(内审 CONFIRMED,均已订正计划):**
 - **[HIGH#1] 归属校验放共用的 `details()` 会打死管理端订单详情**:`orderService.details()` 被用户端 + 管理端 `GET /admin/order/details/{id}`(`admin/OrderController:61`)共用;塞归属校验后管理端(sub=员工 id ≠ 订单 userId)恒抛"订单不存在"。→ 改为**新增 user-only Service 方法** `getUserOrderDetail(id)`,`details()` 留给管理端不动;补管理端详情回归门。(详见 D1 评审补。)**教训:共用面分析要延伸到 Service 层,不能止于 Mapper。**
@@ -222,7 +222,7 @@ reference `my` 页展示头像/昵称/性别/电话,但**数据取自 Vuex store
 **评审留痕**:内审 = 会话内全新上下文红队 subagent(实读 `OrderServiceImpl` / 两个 `OrderController` / `OrderMapper`+XML / `Orders` / `MessageConstant` / `JwtAuthenticationFilter` / `OrderVO` / 前端 `order.ts`/`request.ts`/`router`/`stores`/`Confirm`/`Pay`/`Created`/`Menu`/pom);外审 = `~/.claude/tools/deepseek_review.py`(`deepseek-v4-pro`)。**异构双路敌对评审**再次印证:2 个 HIGH 必修全靠内审实读源码(共用面、参数名绑定这类"文档看不出、只能读码"的坑),外审补足设计/UX/安全面(数据丢失、进行中 tab、催单守卫、退款假一致);收敛处(orderId)高置信;最终由 Tech Lead 就 3 个"范围/行为选择"拍板——决策留人、机制留笔记。
 
 ### AD2 — Phase 4 复核与收尾(2026-07-23)
-> Phase 3 六步全部 TESTED 后的收尾复核(GOOD.md Phase 4)。本节记决策落地一致性、执行期订正、divedeep backlog 收口、契约事实校准。
+> Phase 3 六步全部 TESTED 后的收尾复核(PLAYBOOK.md Phase 4)。本节记决策落地一致性、执行期订正、divedeep backlog 收口、契约事实校准。
 
 **① 决策落地一致性(D1–D5 复核,均与实现一致):**
 - **D1** 订单归属越权 4 处全修:`getUserOrderDetail`(user-only,`details()` 未污染,管理端 `GET /admin/order/details/{id}` 回归通过)+ `userCancelById`/`reminder`/`repetition` Service 层归属校验 + `reminder` `status==2` 守卫。`getById` 签名未动。verifier 8/8。**按 AD1 HIGH#1 订正落地无偏差。**

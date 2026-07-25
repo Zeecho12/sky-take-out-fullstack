@@ -2,7 +2,7 @@
 
 ## 状态: 已采纳(2026-07-23)
 
-> 关联: Requirement/Proposal/Progress → ../features/0004-mock-payment/ | 契约 → ../api-contract/用户端接口.md | 路线图 → ../blueprint.md
+> 关联: Requirement/Proposal/Progress → ../features/0004-mock-payment/ | 契约 → ../api-contract/用户端接口.md | 路线图 → ../blueprint/E01-cend-rebuild.md
 > 定位: 本文件管"**为什么选 A 不选 B**"(广度)。机制深挖见 ../divedeep/(深度);
 > **代码现状 / 要改哪些文件见 ../features/0004-mock-payment/proposal.md**,此处不重复。
 
@@ -155,7 +155,7 @@
 ## Addendum(执行期细化,追加式)
 
 ### AD1 — 双路评审发现与处置(2026-07-23,内审:会话内全新上下文红队 subagent + 外审:DeepSeek-v4-pro)
-> 按 GOOD.md Phase 2 步骤5,规划稿交内审(会话内全新上下文敌对 subagent,**实读源码**)+ 外审(DeepSeek 异构模型,**只看规划文档**)双路敌对评审,融合后修订计划。原决策 D1–D5 结论**方向不变**;D1 实现细化为 CAS(采纳外审 HIGH#2)、D4 边界描述订正(采纳内审 CONFIRMED)。此处记录发现与处置,作为学习 / 面试资产。**净判定:两路一致——修订后可进 Phase 3**(内审:底子扎实、1 项必修;外审:2 HIGH,其中 1 项被内审源码核对降级)。
+> 按 PLAYBOOK.md Phase 2 步骤5,规划稿交内审(会话内全新上下文敌对 subagent,**实读源码**)+ 外审(DeepSeek 异构模型,**只看规划文档**)双路敌对评审,融合后修订计划。原决策 D1–D5 结论**方向不变**;D1 实现细化为 CAS(采纳外审 HIGH#2)、D4 边界描述订正(采纳内审 CONFIRMED)。此处记录发现与处置,作为学习 / 面试资产。**净判定:两路一致——修订后可进 Phase 3**(内审:底子扎实、1 项必修;外审:2 HIGH,其中 1 项被内审源码核对降级)。
 
 **① 内审实读核对通过(高置信,规划无误):** `getByNumberAndUserId` 确按 `number + user_id` 双条件过滤(归属成立)· `paySuccess`/CAS 用的 `BaseContext` 在 mock 同步请求线程内有值 · 删 `OrderPaymentVO` 引用闭包恰好 3 文件、无管理端/无 test · `WeChatProperties`/`sky.wechat` 删除闭包成立、无其它 `@Value` 注入点 · 前端接缝 + `request.ts` 返回 `Result{code,data,msg}`、`code===1` 判定一致。
 

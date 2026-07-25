@@ -2,7 +2,7 @@
 
 ## 状态: 已采纳(2026-07-22)
 
-> 关联: Requirement/Proposal/Progress → ../features/0002-cend-browse-cart/ | 契约 → ../api-contract/用户端接口.md | 路线图 → ../blueprint.md
+> 关联: Requirement/Proposal/Progress → ../features/0002-cend-browse-cart/ | 契约 → ../api-contract/用户端接口.md | 路线图 → ../blueprint/E01-cend-rebuild.md
 > 定位: 本文件管"**为什么选 A 不选 B**"(广度)。机制深挖见 ../divedeep/(深度);
 > **代码现状 / 要改哪些文件见 ../features/0002-cend-browse-cart/proposal.md**,此处不重复。
 
@@ -118,7 +118,7 @@
 
 ### AD1 — 双路评审发现与处置(2026-07-22,内审全新上下文红队 + DeepSeek-v4-pro 外审)
 
-> 按 GOOD.md Phase 2 步骤5,规划稿交内审(会话内全新上下文敌对 subagent)+ 外审(DeepSeek 异构模型)双路敌对评审,融合后修订计划。原决策 D1–D3 结论不变;此处记录评审挑出的问题与处置,作为学习/面试资产。
+> 按 PLAYBOOK.md Phase 2 步骤5,规划稿交内审(会话内全新上下文敌对 subagent)+ 外审(DeepSeek 异构模型)双路敌对评审,融合后修订计划。原决策 D1–D3 结论不变;此处记录评审挑出的问题与处置,作为学习/面试资产。
 
 **① 两路收敛(高置信,已改进计划):**
 - **测试门 / AC 假阳性**:原"刷新后与后端一致"在 number bug 下**恒绿**(前端忠实显示后端的 1,"一致"永真却掩盖功能坏);且靠肉眼 / console 心算 = 运动员兼裁判。→ AC 与 proposal 测试门改**可证伪绝对断言**(连加 3 次→number=3→刷新仍 3→合计=单价×3),`preview_eval` 数值比对 + 第二浏览器 context 独立验。

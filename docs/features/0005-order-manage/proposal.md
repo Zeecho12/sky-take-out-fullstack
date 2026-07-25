@@ -14,7 +14,7 @@
 - **怎么验证 / 起环境**:**Docker Desktop → `docker start sky-redis` → 后端 jar(:8080,构建前先停旧 jar)→ `PUT /admin/shop/1`(Bearer,Redis 重启后店铺状态丢失需重设)→ 前端 `preview_start` name `user-web` 或 `npm --prefix project-sky-user-vue3 run dev`(:5173)**。测试账号 `s7v_2268`/`123456`(id=8)。类型门 `npm --prefix project-sky-user-vue3 run type-check` exit 0。MySQL 5.7 连库加 `--ssl-mode=DISABLED`。⚠️ jar/Docker/dev server 扛不过 Claude Code 进程重启,新窗口先核环境。
 
 ## 1. 现状(与本改动相关的技术起点)
-> 全局架构见 docs/Backend_scan/BACKEND_OVERVIEW.md;这里只写和 0005 相关的。
+> 全局架构见 docs/backend-scan/BACKEND_OVERVIEW.md;这里只写和 0005 相关的。
 
 **后端 `OrderServiceImpl`(0005 改造对象,均已有端点、不新增):**
 - `pageQueryForUser`(L167):`ordersPageQueryDTO.setUserId(BaseContext.getCurrentId())` → 已按当前用户过滤,**安全,不改**(回归即可)。⚠️ 对应 `user/OrderController.page(int pageNum,int pageSize,Integer status)`(L65,**无 `@RequestParam`、靠参数名绑定 → 参数名是 `pageNum` 不是 `page`**;AD1 HIGH#2)。

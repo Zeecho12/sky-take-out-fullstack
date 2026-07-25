@@ -1,9 +1,17 @@
-# C 端完整重建 —— 蓝图 / 路线图 (Blueprint / Roadmap)
+# C 端完整重建 —— Blueprint / 路线图 (epic E01)
+
+## epic 元信息
+- 编号: **E01**
+- 名称: C 端完整重建(C-End Rebuild)
+- 状态: **已交付收官**(0002→0005 全部合并回 main,2026-07-23)
+- 关联 feature: 0002 / 0003 / 0004 / 0005(见下方路线图表;各 requirement 头「关联」块反向指回本文件)
+- 触发门槛: 一句"重做 C 端"拆成 4 个 feature + 跨功能共享决策(Vant / 整站门槛 / 复用 0001)→ 满足 epic 门槛(≥2 feature)
+- 方法论: epic 层见 `PLAYBOOK.md` §4.2.1
 
 > **备忘录性质**。这是「重做 C 端」这个大工程(epic)的**前瞻路线图**,只记
-> "拆成哪几个 feature、什么顺序、各自一句话范围、当前到哪"。方法论按 feature 组织
-> (GOOD.md),没有 epic 这一层;CLAUDE.md「当前进度」刻意只写"现在"——本文件补的是
-> 二者之间缺失的**跨 feature 前瞻视图**。
+> "拆成哪几个 feature、什么顺序、各自一句话范围、当前到哪"。**epic 这一层已在
+> `PLAYBOOK.md` §4.2.1 正式化**(本文件是它的首个实例);补的是 CLAUDE.md「当前进度」
+> (只写"现在")与 per-feature 文档(只管一个 feature)之间缺失的**跨 feature 前瞻视图**。
 >
 > **纪律(务必遵守,否则会文档漂移)**:
 > 1. 每个 feature **只写一行**;详细范围 / 验收标准以各自 `features/NNNN-*/requirement.md`
@@ -63,4 +71,4 @@
 - **2026-07-23**:**0004「mock 支付」交付并合并回 main**(merge `b08bf8e`,`--no-ff` 保留 Phase 3 三步粒度;DoD 全绿):后端 payment CAS 内部同步 mock(去 openid/微信 pay)+ 去微信基建删干净(类+配置+pom)+ 3 处 refund 换 mock;前端支付页 + 成功页 + 接线。执行期边界订正:`PayNotifyController` 删除由步骤2 提前到步骤1(paySuccess 唯一调用者,Tech Lead 拍板)。epic 推进焦点转向 **0005「订单管理」**(下一个开工的 feature;含 `userCancelById` IDOR + `rejection`/`cancel` 的 `payStatus=REFUND` 口径不一致两笔 backlog)。**C 端重建 epic 仅剩 0005**。
 - **2026-07-23**:**0005「订单管理」立项 + Phase 2 规划 + 双路评审融合 + Tech Lead 复核通过**(分支 `feature/0005-order-manage`,规划提交 `947ca28`):Requirement + ADR-0005 五决策(D1 订单越权 4 处全修 Service 层 / D2 退款口径三处统一置 REFUND、越界补管理端 / D3 历史订单 3 tab+van-list / D4 三页三路由+Menu「我的」入口 / D5 用户中心纯导航壳)+ 契约校准 + Proposal(6 步)已定。**双路评审(内审实读 + 外审 DeepSeek-v4-pro)融合入 AD1**:2 HIGH 必修订正(`details()` 与管理端共用 → 归属改走新增 user-only `getUserOrderDetail`;`historyOrders` 参数名 `pageNum` 非 `page`)+ Q1 再来一单合并不清空 / Q2 保持 3 tab / Q3 催单加 `status==2` 守卫。**实读发现越权是一整片 4 处(非 blueprint 原记的 1 笔)、后端确会改(订正本表原"否")**。待进 Phase 3。**0005 = C 端重建 epic 收官功能。**
 - **2026-07-23**:**0005「订单管理」Phase 3 全 6 步完成 TESTED + Phase 4 非破坏性收尾完成**(分支 `feature/0005-order-manage`,6 个 code commit `353f772`/`a296f2e`/`8b5d584`/`7c961f9`/`91f0ef5`/`a5e4aa0`):后端归属越权 4 处修 + 催单守卫(verifier 8/8)、退款口径三处统一 REFUND+`.equals()`(4/4);前端脚手架 + 历史订单页(van-list 切 tab 缺陷执行期修复)+ 详情页&成功页 orderId 透传接线(端到端 7/7)+ 用户中心&Menu 入口(5/5)。Phase 4:0002→0005 端到端冒烟 A~G 全 PASS(新单 id=18)、ADR-0005 AD2 复核(D1–D5 落地一致 + divedeep backlog 收口=不写 + 契约 `page` 报错码 400→500 校准)、smoke-tests.md 补 section 8。**分支已推远端 origin,待合并回 main(合并后本 epic 0002–0005 全部交付、C 端完整重建收官)。**
-- **2026-07-23**:**0005「订单管理」合并回 main(merge `0fcaca4`,`--no-ff` 保留 Phase 3 六步 + Phase 4 粒度),DoD 全绿**。**至此「C 端完整重建」epic(0002→0005)全部交付收官**:C 端从浏览→加购→下单→(mock)支付→订单管理(历史/详情/取消/催单/再来一单/用户中心)端到端跑通,微信特定实现(登录/支付/小程序客户端)已全部替换为北美技术栈标准实现(账密+JWT / mock 支付 / Vue3 Web)。后端顺带清偿多笔安全/正确性欠债(整站认证统一、地址簿+订单越权 BOLA、事务原子性、退款口径)。**epic 无后续 feature;下一步转向工作流/方法论(GOOD.md)优化,非新功能开发。**
+- **2026-07-23**:**0005「订单管理」合并回 main(merge `0fcaca4`,`--no-ff` 保留 Phase 3 六步 + Phase 4 粒度),DoD 全绿**。**至此「C 端完整重建」epic(0002→0005)全部交付收官**:C 端从浏览→加购→下单→(mock)支付→订单管理(历史/详情/取消/催单/再来一单/用户中心)端到端跑通,微信特定实现(登录/支付/小程序客户端)已全部替换为北美技术栈标准实现(账密+JWT / mock 支付 / Vue3 Web)。后端顺带清偿多笔安全/正确性欠债(整站认证统一、地址簿+订单越权 BOLA、事务原子性、退款口径)。**epic 无后续 feature;下一步转向工作流/方法论(PLAYBOOK.md)优化,非新功能开发。**

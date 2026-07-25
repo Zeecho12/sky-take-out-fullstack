@@ -2,10 +2,10 @@
 
 ## 元信息
 - 编号: 0003
-- 类型: 新功能(C 端重建 epic 的第二块,见 `docs/blueprint.md`)
+- 类型: 新功能(C 端重建 epic 的第二块,见 `docs/blueprint/E01-cend-rebuild.md`)
 - 档位: T3(全栈:前端多页 + 后端改动 + 契约校准;含 ADR 六决策)
 - 状态: 规划中(Phase 2,2026-07-22)
-- 关联: Proposal → ./proposal.md | Progress → ./progress.md | ADR → ../../decisions/0003-addressbook-order.md | 契约 → ../../api-contract/用户端接口.md
+- 关联: Proposal → ./proposal.md | Progress → ./progress.md | ADR → ../../decisions/0003-addressbook-order.md | 契约 → ../../api-contract/用户端接口.md | epic → ../../blueprint/E01-cend-rebuild.md
 
 ## 1. 背景与动机 (Why)
 0002 已让顾客能浏览商品、把想吃的加进购物车(以服务端 `shopping_cart` 为准),但"去结算"仍是占位——购物车里的东西还送不出去。0003 补上「浏览 → **下单** → 支付」链路的中间关键一环:顾客得先有**收货地址**,才能在**结算页**确认订单并提交,生成一笔真实订单(`orders` + `order_detail`)。这是支付(0004)、订单管理(0005)的前置:没有下单,后面无从谈起。

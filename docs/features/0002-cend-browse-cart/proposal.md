@@ -13,7 +13,7 @@
 - **怎么验证**:起 Redis(`docker start sky-redis`)+ 后端 jar(:8080)+ `PUT /admin/shop/1`(Bearer)初始化店铺状态;C 端 `npm --prefix project-sky-user-vue3 run dev`(:5173);用 preview 工具真浏览器端到端验 + 截图。类型门:`npm --prefix project-sky-user-vue3 run type-check`(或 `run build`)应 exit 0。
 
 ## 1. 现状(与本改动相关的技术起点)
-> 全局架构见 docs/Backend_scan/BACKEND_OVERVIEW.md;这里只写和 0002 相关的。
+> 全局架构见 docs/backend-scan/BACKEND_OVERVIEW.md;这里只写和 0002 相关的。
 
 **前端 `project-sky-user-vue3`(0001 交付)**:
 - 已有认证全链路可**直接复用**:`utils/request.ts`(axios 实例 `baseURL:/api`、请求拦截注入 `Authorization: Bearer`、响应拦截 401 兜底跳登录)、`stores/user.ts`(token + user,localStorage 持久)、`router/index.ts`(`beforeEach` 未登录跳 `/login` + redirect 回跳)、`api/user.ts`、`views/{Login,Register,Home,ChangePassword}.vue`。

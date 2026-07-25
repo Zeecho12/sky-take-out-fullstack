@@ -195,7 +195,7 @@ MVP 选**前端丢 token**;Redis 黑名单作为**将来面试级增强**记录�
 
 ### AD4 — R2 外审发现(2026-07-21,DeepSeek-v4-pro + Gemini-3.6-flash 双模型敌对评审)
 
-> 本功能交付后补跑了 Phase 2 的 **R2 外审**(见 GOOD.md §3 Phase 2 步骤5):两个独立异构模型对 ADR+Requirement+Proposal 做敌对评审。**原决策 D1–D5 结论不变**;此处只记评审挑出的问题与处置,作为学习/面试资产 + 后续 backlog。**两家收敛项置信最高**。
+> 本功能交付后补跑了 Phase 2 的 **R2 外审**(见 PLAYBOOK.md §3 Phase 2 步骤5):两个独立异构模型对 ADR+Requirement+Proposal 做敌对评审。**原决策 D1–D5 结论不变**;此处只记评审挑出的问题与处置,作为学习/面试资产 + 后续 backlog。**两家收敛项置信最高**。
 
 **① 两家收敛的硬伤(高置信,优先处理):**
 - **D2 技术前提表述不准确(事实纠错)**:D2 称"starter-security 进 classpath 即默认拦所有请求,故无法只给 C 端加而不管 admin"——不准确。Spring Security 可用 `WebSecurity.ignoring()`,或多个按 `securityMatcher` 分域的 `SecurityFilterChain`,让 `/admin/**` 绕过 Security 链、继续由老拦截器处理;**"只换 C 端"技术上可行**。→ **决策(选统管全站)不变,但正确理由是"学习价值 / 简历亮点 / 架构统一",不是"技术做不到"**。面试口径按此修正。
