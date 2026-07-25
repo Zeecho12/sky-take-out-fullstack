@@ -469,10 +469,10 @@ public class OrderServiceImpl implements OrderService {
         }
 
         Orders orders = new Orders();
-        orders.setId(orders.getId());
+        orders.setId(orderDB.getId());
 
 //        更新订单状态，状态转为完成
-        orders.setStatus(Orders.CONFIRMED);
+        orders.setStatus(Orders.COMPLETED);
         orders.setDeliveryTime(LocalDateTime.now());
 
         orderMapper.update(orders);
