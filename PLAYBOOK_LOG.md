@@ -51,7 +51,6 @@
 - 升级前:`GOOD.md`(零信息名)装方法论;`docs/WORKFLOW.md`(听着像装 workflow)装命令环境;`docs/Backend_scan/`(PascalCase+下划线)和其余 lowercase-kebab 目录不一致。
 - 驱动问题:名不符实误导冷启动 AI;目录命名不统一。
 - 落点:`GOOD.md`→`PLAYBOOK.md`(接"运营宝典"类比)、`docs/WORKFLOW.md`→`docs/RUNBOOK.md`(运维标准词)、`docs/Backend_scan/`→`docs/backend-scan/`。全仓库引用同步更新。
-- ✅ **附带**:全局 `backend-scan-*` skill(9 个 SKILL.md)输出路径一并改小写 `docs/backend-scan/`(用户采纳 (a),见 B 段末)——以后任何项目跑扫描都输出小写、与本方法论一致。
 
 **A7 — 新建本文件(PLAYBOOK_LOG.md)**
 - 驱动问题:搁置项(下方 B 段)带"重启条件",原先只存在临时 `Draft.md` 里,会随 Draft 删除而丢;方法论演化也无 changelog。
@@ -73,7 +72,3 @@
 - **为什么驳回**:用户认为本项目契约是从网上下载、他本人未审查;判断以后项目不会出现这种错误,不值得为此改方法论。
 - **AI 存疑(记录)**:PLAYBOOK §0 适用范围就是"改造从 GitHub 下载的教学项目",故"契约未审 / 需从代码逆向"是常态而非例外,下个 brownfield 项目大概率同类。
 - **重启条件**:下个项目再撞同类"契约 ↔ 代码漂移",或决定为 brownfield 契约补"入场审"动作时。
-
-### 已决 — `backend-scan-*` skill 输出路径与本项目改名的耦合(2026-07-24)
-- **问题**:A6 把本项目 `docs/Backend_scan/` 改成了 `docs/backend-scan/`,但全局 `backend-scan-*` skill 硬编码输出 `docs/Backend_scan/`,下次跑扫描会重新生成大写目录。
-- **决定(用户 2026-07-24)**:采纳 **(a)** —— 把全局 `~/.claude/skills/backend-scan-*`(9 个 SKILL.md)输出路径统一改小写 `docs/backend-scan/`,一劳永逸;顺带更新 memory `backend-scan-skill-rework`。全局 skill 影响所有未来项目 → 未来下载项目也输出小写、与本方法论一致(不再有大小写漂移)。
