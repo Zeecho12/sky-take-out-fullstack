@@ -173,7 +173,7 @@ context-path 为空（无前缀），故 URL 前缀即 Controller 的 `@RequestM
 
 | 文件（完整路径） | 用途推断（据文件头注释） |
 |---|---|
-| `D:\sky-take-out-fullstack\db\sky.sql` | **全库建表脚本 / schema 源头**。文件以 `CREATE DATABASE IF NOT EXISTS sky_take_out` + 一系列 `DROP TABLE / CREATE TABLE` 开头（address_book、category、dish、setmeal、orders、user、employee 等全部业务表），用于全新导入建库。字段含中文 COMMENT，引擎 InnoDB。 |
-| `D:\sky-take-out-fullstack\docs\features\0001-cend-auth-jwt\0001-migration.sql` | **功能 0001「C 端认证改造」增量迁移脚本**。头注释明确：对【正在运行的库】做原地升级——① `user` 表新增 `username`(唯一索引)+`password` 两列；② `employee` 表 admin 密码迁移为 BCrypt 哈希。用 information_schema 存在性守卫 + PREPARE/EXECUTE 动态 SQL 实现幂等可重跑（MySQL 5.7，库名以 `DATABASE()` 为准）。与 `sky.sql` 内容对齐。 |
+| `D:\CQWM2\db\sky.sql` | **全库建表脚本 / schema 源头**。文件以 `CREATE DATABASE IF NOT EXISTS sky_take_out` + 一系列 `DROP TABLE / CREATE TABLE` 开头（address_book、category、dish、setmeal、orders、user、employee 等全部业务表），用于全新导入建库。字段含中文 COMMENT，引擎 InnoDB。 |
+| `D:\CQWM2\docs\features\0001-cend-auth-jwt\0001-migration.sql` | **功能 0001「C 端认证改造」增量迁移脚本**。头注释明确：对【正在运行的库】做原地升级——① `user` 表新增 `username`(唯一索引)+`password` 两列；② `employee` 表 admin 密码迁移为 BCrypt 哈希。用 information_schema 存在性守卫 + PREPARE/EXECUTE 动态 SQL 实现幂等可重跑（MySQL 5.7，库名以 `DATABASE()` 为准）。与 `sky.sql` 内容对齐。 |
 
 > 补充：`sky-server/src/main/resources/mapper/*.xml`（11 个，与 Mapper 接口同名）是**运行时查询 SQL**（MyBatis 映射），**非建表 schema**，本步骤不读其内容。表结构 DDL 的字段级精读留给 backend-scan-4b-datamodel（它会读取上面两个 `.sql` 的建表内容 + entity 字段）。

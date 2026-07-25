@@ -59,13 +59,13 @@
 - 构建工具：Maven（各层均 `pom.xml`，无 `build.gradle`）；`modelVersion` 4.0.0；父工程继承 `spring-boot-starter-parent` **2.7.3**（即 Spring Boot 2.7.3）。`pom.xml` 未声明 Maven 自身版本，CODE_ROOT 下无 Maven Wrapper（`mvnw`/`.mvn`）。
 - 容器化：**没有**。全局搜索 `**/Dockerfile`、`**/docker-compose.y*ml`、`**/.dockerignore` 均无结果；`.env`/`.env.example` 亦未发现。
 - 部署方式：推测直接 jar 部署——可运行模块 `sky-server` 经 `spring-boot-maven-plugin` 打成可执行 fat jar 后 `java -jar` 运行。
-- SQL 脚本索引（仅登记位置）：全局搜索 `**/*.sql` 命中两处，均**不在 CODE_ROOT 内**——`D:\sky-take-out-fullstack\db\sky.sql`（仓库根，主建表脚本）、`D:\sky-take-out-fullstack\docs\features\0001-cend-auth-jwt\0001-migration.sql`（功能 0001 迁移脚本）。CODE_ROOT (`sky-backend/`) 内无 `.sql`。
+- SQL 脚本索引（仅登记位置）：全局搜索 `**/*.sql` 命中两处，均**不在 CODE_ROOT 内**——`D:\CQWM2\db\sky.sql`（仓库根，主建表脚本）、`D:\CQWM2\docs\features\0001-cend-auth-jwt\0001-migration.sql`（功能 0001 迁移脚本）。CODE_ROOT (`sky-backend/`) 内无 `.sql`。
 
 ### 模块列表
-- `sky-take-out`：`D:\sky-take-out-fullstack\sky-backend\`（根聚合/父工程，`packaging=pom`，不产出运行制品）
-- `sky-common`：`D:\sky-take-out-fullstack\sky-backend\sky-common\`（公共模块：通用工具类、常量、统一返回结果、全局异常等）
-- `sky-pojo`：`D:\sky-take-out-fullstack\sky-backend\sky-pojo\`（数据模型模块：Entity / DTO / VO 等纯数据对象）
-- `sky-server`：`D:\sky-take-out-fullstack\sky-backend\sky-server\`（主服务/启动模块：Controller / Service / Mapper 等业务代码，唯一可运行、对外提供接口的部署单元）
+- `sky-take-out`：`D:\CQWM2\sky-backend\`（根聚合/父工程，`packaging=pom`，不产出运行制品）
+- `sky-common`：`D:\CQWM2\sky-backend\sky-common\`（公共模块：通用工具类、常量、统一返回结果、全局异常等）
+- `sky-pojo`：`D:\CQWM2\sky-backend\sky-pojo\`（数据模型模块：Entity / DTO / VO 等纯数据对象）
+- `sky-server`：`D:\CQWM2\sky-backend\sky-server\`（主服务/启动模块：Controller / Service / Mapper 等业务代码，唯一可运行、对外提供接口的部署单元）
 
 ---
 
@@ -122,7 +122,7 @@
 
 ## SECTION-3: 模块地图
 > SOURCE: docs/backend-scan/PROJECT_S3_MODULES.md
-> spring.application.name：未声明（`application.yml` 只设 `server.port: 8080`）。启动类：`com.sky.SkyApplication`（`D:\sky-take-out-fullstack\sky-backend\sky-server\src\main\java\com\sky\SkyApplication.java`）。基础包：`com.sky`。
+> spring.application.name：未声明（`application.yml` 只设 `server.port: 8080`）。启动类：`com.sky.SkyApplication`（`D:\CQWM2\sky-backend\sky-server\src\main\java\com\sky\SkyApplication.java`）。基础包：`com.sky`。
 > 粒度：Part A 每 Maven 子模块一卡片（打包结构）；Part B 对 `sky-server` 按内部顶层分层包各一卡片（分层架构，均借用主启动类 `SkyApplication`）。各卡片「完整文件清单」已移至 `FILE_INDEX.md`。
 
 ### 启动类注解分析
@@ -154,21 +154,21 @@ public class SkyApplication
 
 ### Part A — Maven 子模块（打包结构）
 
-**sky-common**（`D:\sky-take-out-fullstack\sky-backend\sky-common\src\main\java\com\sky\`）
+**sky-common**（`D:\CQWM2\sky-backend\sky-common\src\main\java\com\sky\`）
 - 职责：公共基础模块——跨层复用工具类（JWT、阿里云 OSS、微信支付、HTTP 客户端）、统一返回封装（`Result`/`PageResult`）、自定义业务异常、常量、`@ConfigurationProperties` 属性绑定类、`ThreadLocal` 上下文（`BaseContext`）、Jackson 序列化定制。
 - 启动类：无（被 `sky-server` 依赖，不独立运行）。
 - 对外暴露：无 HTTP 入口，供 `sky-server` 依赖调用。
 - 依赖谁：不依赖任何内部模块——grep 确认 `sky-common` 下无 `import com.sky.entity/dto/vo`（0 处），故不依赖 `sky-pojo`；仅依赖第三方库（JWT、aliyun-sdk-oss、wechatpay、httpclient，推断）。
 - 文件清单见 FILE_INDEX.md 对应分类。
 
-**sky-pojo**（`D:\sky-take-out-fullstack\sky-backend\sky-pojo\src\main\java\com\sky\`）
+**sky-pojo**（`D:\CQWM2\sky-backend\sky-pojo\src\main\java\com\sky\`）
 - 职责：数据模型模块——纯数据对象。`entity/` 与表映射的实体（PO），`dto/` 接收请求参数，`vo/` 返回给前端的视图对象。只描述数据形状，无业务逻辑。
 - 启动类：无（被 `sky-server` 依赖，不独立运行）。
 - 对外暴露：无 HTTP 入口，作为参数/返回类型被 `sky-server` 各层引用。
 - 依赖谁：不依赖任何内部模块——grep 确认 `sky-pojo` 下无 `import com.sky.properties/utils/result/exception/...`（0 处），故不依赖 `sky-common`；仅依赖 Lombok 等第三方注解库（推断）。
 - 文件清单见 FILE_INDEX.md 对应分类。
 
-**sky-server**（`D:\sky-take-out-fullstack\sky-backend\sky-server\src\main\java\com\sky\`）
+**sky-server**（`D:\CQWM2\sky-backend\sky-server\src\main\java\com\sky\`）
 - 职责：主服务/启动模块——唯一可运行、对外提供 HTTP 接口的部署单元。承载全部业务分层（Controller → Service → Mapper）、Spring Security JWT 认证、AOP 公共字段自动填充、全局异常处理、定时任务与 WebSocket 推送。
 - 启动类：有——`com.sky.SkyApplication`。
 - 对外暴露：有 HTTP 入口。三大 Controller 分组：`controller/admin`（后台管理端）、`controller/user`（C 端顾客）、`controller/notify`（`PayNotifyController` 支付回调）。另有 `websocket/WebSocketServer`（`@ServerEndpoint` 长连接）。
@@ -176,7 +176,7 @@ public class SkyApplication
 - 文件清单见 FILE_INDEX.md 对应分类。
 
 ### Part B — sky-server 内部分层包（分层架构）
-> 均位于 `D:\sky-take-out-fullstack\sky-backend\sky-server\src\main\java\com\sky\` 下，无独立启动类。文件清单见 FILE_INDEX.md。
+> 均位于 `D:\CQWM2\sky-backend\sky-server\src\main\java\com\sky\` 下，无独立启动类。文件清单见 FILE_INDEX.md。
 
 - **controller**（`...\com\sky\controller\`）
   - 职责：HTTP 请求入口层（表现层）——接收请求、参数绑定校验、调 Service、封装 `Result` 返回。按端拆三组：`admin`（后台管理端，路径推断 `/admin/**`）、`user`（C 端顾客，`/user/**`）、`notify`（第三方支付异步回调）。
@@ -403,8 +403,8 @@ C 端顾客（`controller/user`，鉴权推断 ROLE USER，`/user/**`）：
 
 | 文件（完整路径） | 用途推断（据文件头注释） |
 |---|---|
-| `D:\sky-take-out-fullstack\db\sky.sql` | 全库建表脚本 / schema 源头。以 `CREATE DATABASE IF NOT EXISTS sky_take_out` + 一系列 `DROP TABLE / CREATE TABLE` 开头（address_book、category、dish、setmeal、orders、user、employee 等全部业务表）。字段含中文 COMMENT，引擎 InnoDB。 |
-| `D:\sky-take-out-fullstack\docs\features\0001-cend-auth-jwt\0001-migration.sql` | 功能 0001「C 端认证改造」增量迁移脚本。对【正在运行的库】原地升级：① `user` 表新增 `username`(唯一索引)+`password`；② `employee` 表 admin 密码迁移为 BCrypt 哈希。用 information_schema 存在性守卫 + PREPARE/EXECUTE 动态 SQL 幂等可重跑（MySQL 5.7，库名以 `DATABASE()` 为准）。与 `sky.sql` 内容对齐。 |
+| `D:\CQWM2\db\sky.sql` | 全库建表脚本 / schema 源头。以 `CREATE DATABASE IF NOT EXISTS sky_take_out` + 一系列 `DROP TABLE / CREATE TABLE` 开头（address_book、category、dish、setmeal、orders、user、employee 等全部业务表）。字段含中文 COMMENT，引擎 InnoDB。 |
+| `D:\CQWM2\docs\features\0001-cend-auth-jwt\0001-migration.sql` | 功能 0001「C 端认证改造」增量迁移脚本。对【正在运行的库】原地升级：① `user` 表新增 `username`(唯一索引)+`password`；② `employee` 表 admin 密码迁移为 BCrypt 哈希。用 information_schema 存在性守卫 + PREPARE/EXECUTE 动态 SQL 幂等可重跑（MySQL 5.7，库名以 `DATABASE()` 为准）。与 `sky.sql` 内容对齐。 |
 
 > `sky-server/src/main/resources/mapper/*.xml`（11 个，与 Mapper 接口同名）是运行时查询 SQL（MyBatis 映射），非建表 schema。表结构 DDL 字段级精读见 SECTION-6。
 
@@ -434,8 +434,8 @@ C 端顾客（`controller/user`，鉴权推断 ROLE USER，`/user/**`）：
 > 同步性：**全链路同步**，无 `@Async` / `CompletableFuture` / 线程池 / 消息队列，单线程一路走到底再原路返回，无异步分支。
 
 1. **POST /user/order/submit** — C 端顾客发起「用户下单」，请求体 `OrdersSubmitDTO`（字段详见 SECTION-6）。前置：请求已先过浅链 1 的 `JwtAuthenticationFilter`，把 userId 填进 `BaseContext`。
-2. **user/OrderController#submit** [`D:\sky-take-out-fullstack\sky-backend\sky-server\src\main\java\com\sky\controller\user\OrderController.java`] — 接收 `OrdersSubmitDTO`，调 Service，用 `Result.success` 包成统一响应。不含业务逻辑。
-3. **OrderServiceImpl#submitOrder** [`D:\sky-take-out-fullstack\sky-backend\sky-server\src\main\java\com\sky\service\impl\OrderServiceImpl.java`] — 下单核心业务编排（`@Service`）。⚠ **本方法无 `@Transactional`**——3 次写库（insert orders / insertBatch order_detail / delete shopping_cart）不在同一事务内，中途失败可能「有订单无明细 / 购物车已清但订单回滚」。
+2. **user/OrderController#submit** [`D:\CQWM2\sky-backend\sky-server\src\main\java\com\sky\controller\user\OrderController.java`] — 接收 `OrdersSubmitDTO`，调 Service，用 `Result.success` 包成统一响应。不含业务逻辑。
+3. **OrderServiceImpl#submitOrder** [`D:\CQWM2\sky-backend\sky-server\src\main\java\com\sky\service\impl\OrderServiceImpl.java`] — 下单核心业务编排（`@Service`）。⚠ **本方法无 `@Transactional`**——3 次写库（insert orders / insertBatch order_detail / delete shopping_cart）不在同一事务内，中途失败可能「有订单无明细 / 购物车已清但订单回滚」。
    - 3.1 (同步①) **AddressBookMapper#getById** [`...\com\sky\mapper\AddressBookMapper.java`] → MySQL:address_book SELECT 地址（为空 → 抛 `AddressBookBusinessException`）
    - 3.2 (同步②) **外部依赖:百度地图 Web API** — 私有方法 `checkOutOfRange()` 用 `HttpClientUtil` 同步 GET 地理编码 + 路线规划（HTTP 阻塞，落在 `OrderServiceImpl` 内部），距离 >5000 米 → 抛 `OrderBusinessException("超出配送范围")`
    - 3.3 (同步③) **ShoppingCartMapper#list** [`...\com\sky\mapper\ShoppingCartMapper.java`] → MySQL:shopping_cart SELECT 购物车行（userId 取自 `BaseContext`；为空 → 抛 `ShoppingCartBusinessException`）
@@ -448,7 +448,7 @@ C 端顾客（`controller/user`，鉴权推断 ROLE USER，`/user/**`）：
 ### 节点详解
 
 **节点 1：user/OrderController（C 端订单接口）**
-- 文件路径：`D:\sky-take-out-fullstack\sky-backend\sky-server\src\main\java\com\sky\controller\user\OrderController.java`
+- 文件路径：`D:\CQWM2\sky-backend\sky-server\src\main\java\com\sky\controller\user\OrderController.java`
 - 类级注解：`@RestController("userOrderController")`（显式指定 Bean 名，因 admin 端另有同名 `OrderController`，避免 Bean 名冲突）、`@RequestMapping("/user/order")`、`@Slf4j`、`@Api(tags = "C端-订单接口")`（Swagger 分组）
 - 做了什么：表现层入口，接收 `OrdersSubmitDTO`，转调 `orderService.submitOrder(...)`，把 `OrderSubmitVO` 用 `Result.success(...)` 包装。不含业务逻辑。
 - 关键代码片段（LOCK）：
@@ -463,7 +463,7 @@ public Result<OrderSubmitVO> submit(@RequestBody OrdersSubmitDTO ordersSubmitDTO
 ```
 
 **节点 2：OrderServiceImpl（下单核心业务实现）**
-- 文件路径：`D:\sky-take-out-fullstack\sky-backend\sky-server\src\main\java\com\sky\service\impl\OrderServiceImpl.java`
+- 文件路径：`D:\CQWM2\sky-backend\sky-server\src\main\java\com\sky\service\impl\OrderServiceImpl.java`
 - 类级注解：`@Service`、`@Slf4j`（注入 5 个 Mapper + `WeChatPayUtil` + `WebSocketServer`）
 - 做了什么：下单业务编排中心。① `addressBookMapper.getById` 校验收货地址；② 私有方法 `checkOutOfRange(...)` 同步调百度地图 Web API（`HttpClientUtil.doGet`）配送范围校验，超 5000 米抛 `OrderBusinessException("超出配送范围")`；③ 从 `BaseContext.getCurrentId()` 取当前用户 id（由浅链 1 的 JWT 过滤器写入），`shoppingCartMapper.list` 查购物车，空则抛 `ShoppingCartBusinessException`；④ `BeanUtils.copyProperties` 组装 `Orders`（状态「待付款」`PENDING_PAYMENT`、支付状态「未支付」`UN_PAID`、订单号取 `System.currentTimeMillis()`），`orderMapper.insert` 落库；⑤ 遍历购物车转 `OrderDetail` 后 `orderDetailMapper.insertBatch` 批量落明细；⑥ `shoppingCartMapper.deleteByUserId` 清空购物车；最后 builder 出 `OrderSubmitVO`。**本方法无 `@Transactional`——多步写库不是原子操作，是可写进 ADR / divedeep 的真实观察点。**
 - 关键代码片段（LOCK）：
@@ -480,7 +480,7 @@ shoppingCartMapper.deleteByUserId(currentId);   // 清理购物车
 ```
 
 **节点 3：OrderMapper（数据访问层，主链代表性 Mapper）**
-- 文件路径：`D:\sky-take-out-fullstack\sky-backend\sky-server\src\main\java\com\sky\mapper\OrderMapper.java`
+- 文件路径：`D:\CQWM2\sky-backend\sky-server\src\main\java\com\sky\mapper\OrderMapper.java`
 - 做了什么：**原生 MyBatis Mapper 接口**（类级 `@Mapper` 被扫描，**非 MyBatis-Plus**，不继承 `BaseMapper`）。接口只声明方法签名，真实 SQL 在同名 `sky-server/src/main/resources/mapper/OrderMapper.xml`（本步不读 XML）。主链用 `void insert(Orders order)`——插入订单主表并（由 XML 的 `useGeneratedKeys`/`keyProperty`）回填自增主键 id 供明细外键使用。链路另外 3 个 Mapper（`AddressBookMapper`/`ShoppingCartMapper`/`OrderDetailMapper`）职责同构，按「代表性 Mapper 取 1 个」规则不单独建卡。
 - 关键代码片段（LOCK，接口签名，SQL 在 XML 中）：
 ```java
@@ -518,7 +518,7 @@ if (distance > 5000) {
   2. `JwtAuthenticationFilter#doFilterInternal` — 读 `Authorization: Bearer`，解析 JWT
   3. `JwtUtil.parseJWT`（sky-common 工具）→ 取 sub(userId)/role
   4. 写入 SecurityContext（权限 `ROLE_<role>`）+ BaseContext（当前用户 id）→ 放行 `filterChain.doFilter`
-- 有意思的节点：`JwtAuthenticationFilter` — `D:\sky-take-out-fullstack\sky-backend\sky-server\src\main\java\com\sky\security\JwtAuthenticationFilter.java`
+- 有意思的节点：`JwtAuthenticationFilter` — `D:\CQWM2\sky-backend\sky-server\src\main\java\com\sky\security\JwtAuthenticationFilter.java`
 - 关键代码片段（LOCK）：
 ```java
 String header = request.getHeader("Authorization");
@@ -541,7 +541,7 @@ if (header != null && header.startsWith("Bearer ")) {
   2. `OrderServiceImpl#reminder` — 查订单存在性 + 组装 `{type,orderId,content}` map
   3. `WebSocketServer#sendToAllClient` — 遍历 sessionMap 群发 JSON 文本
   4. 商家端浏览器 WebSocket 客户端 — 收到即弹「来单/催单」提醒
-- 有意思的节点：`WebSocketServer` — `D:\sky-take-out-fullstack\sky-backend\sky-server\src\main\java\com\sky\websocket\WebSocketServer.java`
+- 有意思的节点：`WebSocketServer` — `D:\CQWM2\sky-backend\sky-server\src\main\java\com\sky\websocket\WebSocketServer.java`
 - 关键代码片段（LOCK）：
 ```java
 @ServerEndpoint("/ws/{sid}")   // 端点 ws://localhost:8080/ws/{sid}（本步实读确认，S4 原为推断）
@@ -563,7 +563,7 @@ public class WebSocketServer {
   2. `user/SetmealController#list` `@Cacheable(cacheNames="setmealCache", key="#categoryId")`
      - 命中：Spring Cache 直接从 Redis 取 → 不进方法体、不查库
      - 未命中：执行方法体 `setmealService.list(...)` → 查库 → 返回值自动写回 Redis
-- 有意思的节点：`user/SetmealController` — `D:\sky-take-out-fullstack\sky-backend\sky-server\src\main\java\com\sky\controller\user\SetmealController.java`
+- 有意思的节点：`user/SetmealController` — `D:\CQWM2\sky-backend\sky-server\src\main\java\com\sky\controller\user\SetmealController.java`
 - 关键代码片段（LOCK）：
 ```java
 @GetMapping("/list")
@@ -582,7 +582,7 @@ public Result<List<Setmeal>> list(Long categoryId) {
 
 ## SECTION-6: 核心数据模型快照
 > 派生章节。SOURCE: PROJECT_S4B_DATAMODEL.md（主源）+ SECTION-3~5（回退）
-> ORM：**MyBatis**（非 MyBatis-Plus——entity 上无 `@TableName`/`@TableId`/`@TableField`/`@TableLogic`，映射靠 mapper XML + 驼峰开关 `map-underscore-to-camel-case: true`）。schema 真相源：`D:\sky-take-out-fullstack\db\sky.sql` 的 `CREATE TABLE`；功能 0001 增量迁移 `0001-migration.sql`。
+> ORM：**MyBatis**（非 MyBatis-Plus——entity 上无 `@TableName`/`@TableId`/`@TableField`/`@TableLogic`，映射靠 mapper XML + 驼峰开关 `map-underscore-to-camel-case: true`）。schema 真相源：`D:\CQWM2\db\sky.sql` 的 `CREATE TABLE`；功能 0001 增量迁移 `0001-migration.sql`。
 > 逻辑删除：**未发现**（全 11 表无 `is_deleted`/`deleted` 软删列，全 entity 无 `@TableLogic`）→ 推断物理删除。
 > 公共字段：`create_time`/`update_time`/`create_user`/`update_user` 四件套仅 `category`/`dish`/`setmeal`/`employee` 四张管理端维护表；由 `aspect/AutoFillAspect` 拦截 `@AutoFill` Mapper 方法自动填充（`create_user`/`update_user` 取自 `BaseContext`）。`user`/`shopping_cart` 只有 `create_time`；`orders` 用业务语义时间字段；`address_book`/`dish_flavor`/`order_detail`/`setmeal_dish` 无公共时间字段。
 > 初始化数据：无独立 `data.sql`；`sky.sql` 内联少量 INSERT（category 10 行、dish 24 行、dish_flavor 24 行、employee 1 行 admin）。`sky.sql` 已是功能 0001 改造后最终形态，与 `0001-migration.sql` 对齐无冲突。
@@ -605,7 +605,7 @@ public Result<List<Setmeal>> list(Long categoryId) {
 | User | user | `sky-pojo\...\entity\User.java` | 一一对应（10 列↔10 字段）；`idNumber`↔`id_number`。含功能 0001 的 username/password |
 
 ### 6.2 字段详情（逐表）
-> 🔐 = 敏感字段。来源均为 `D:\sky-take-out-fullstack\db\sky.sql`。
+> 🔐 = 敏感字段。来源均为 `D:\CQWM2\db\sky.sql`。
 
 **address_book —— 地址簿（用户收货地址）**
 | 字段 | 类型 | 可空 | 默认值 | 说明 |

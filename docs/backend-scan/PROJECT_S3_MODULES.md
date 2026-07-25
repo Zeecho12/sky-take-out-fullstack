@@ -3,7 +3,7 @@
 > 项目名称：sky-take-out（苍穹外卖）
 > 项目类型：多模块单体（Multi-Module Monolith）—— Maven 聚合工程，仅 `sky-server` 可运行
 > spring.application.name：未声明（`application.yml` 中只设置了 `server.port: 8080`，无 `spring.application.name` 字段）
-> 启动类：`com.sky.SkyApplication`（`D:\sky-take-out-fullstack\sky-backend\sky-server\src\main\java\com\sky\SkyApplication.java`）
+> 启动类：`com.sky.SkyApplication`（`D:\CQWM2\sky-backend\sky-server\src\main\java\com\sky\SkyApplication.java`）
 > 基础包路径：三个子模块统一使用 `com.sky`（即 `src/main/java/com/sky/`）
 
 > 粒度说明（多模块单体双粒度）：
@@ -47,7 +47,7 @@ public class SkyApplication
 
 ### Part A — Maven 子模块粒度（打包结构）
 
-📦 模块：**sky-common**（路径：`D:\sky-take-out-fullstack\sky-backend\sky-common\src\main\java\com\sky\`）
+📦 模块：**sky-common**（路径：`D:\CQWM2\sky-backend\sky-common\src\main\java\com\sky\`）
 
 完整文件清单：
 - constant/
@@ -93,7 +93,7 @@ public class SkyApplication
 ├── 对外暴露：无 HTTP 入口，通过包间/模块间方法调用对外服务（供 `sky-server` 依赖调用）。
 └── 依赖谁：不依赖任何内部模块——已 grep 确认 `sky-common` 下无 `import com.sky.entity/dto/vo`（0 处），故不依赖 `sky-pojo`；仅依赖第三方库（JWT、aliyun-sdk-oss、wechatpay、httpclient，依据 S1/S2 及 `utils/` `properties/` 目录内容推断）。
 
-📦 模块：**sky-pojo**（路径：`D:\sky-take-out-fullstack\sky-backend\sky-pojo\src\main\java\com\sky\`）
+📦 模块：**sky-pojo**（路径：`D:\CQWM2\sky-backend\sky-pojo\src\main\java\com\sky\`）
 
 完整文件清单：
 - dto/
@@ -156,7 +156,7 @@ public class SkyApplication
 ├── 对外暴露：无 HTTP 入口，通过包间/模块间方法调用对外服务（作为参数/返回类型被 `sky-server` 各层引用）。
 └── 依赖谁：不依赖任何内部模块——已 grep 确认 `sky-pojo` 下无 `import com.sky.properties/utils/result/exception/...`（0 处），故不依赖 `sky-common`；仅依赖 Lombok 等第三方注解库（依据目录纯数据对象内容推断）。
 
-📦 模块：**sky-server**（路径：`D:\sky-take-out-fullstack\sky-backend\sky-server\src\main\java\com\sky\`）
+📦 模块：**sky-server**（路径：`D:\CQWM2\sky-backend\sky-server\src\main\java\com\sky\`）
 
 完整文件清单：
 - SkyApplication.java（启动类，位于 `com.sky` 根包）
@@ -240,13 +240,13 @@ public class SkyApplication
   - WebSocketServer.java
 
 ├── 职责：主服务/启动模块——唯一可运行、对外提供 HTTP 接口的部署单元。承载全部业务分层（Controller → Service → Mapper）、Spring Security JWT 认证、AOP 公共字段自动填充、全局异常处理、定时任务与 WebSocket 推送。
-├── 启动类：有——`com.sky.SkyApplication`（`D:\sky-take-out-fullstack\sky-backend\sky-server\src\main\java\com\sky\SkyApplication.java`）。
+├── 启动类：有——`com.sky.SkyApplication`（`D:\CQWM2\sky-backend\sky-server\src\main\java\com\sky\SkyApplication.java`）。
 ├── 对外暴露：有 HTTP 入口。三大 Controller 分组：`controller/admin`（后台管理端，员工/分类/菜品/套餐/订单/报表/店铺/工作台/通用上传）、`controller/user`（C 端顾客，用户/分类/菜品/套餐/购物车/地址簿/订单/店铺）、`controller/notify`（`PayNotifyController` 支付回调）。另有 `websocket/WebSocketServer`（`@ServerEndpoint` WebSocket 长连接，推断）。详见 Part B `controller` 卡片。
 └── 依赖谁：依赖 `sky-common`（`Result`/`PageResult`、`JwtUtil`/`AliOssUtil`/`WeChatPayUtil`、异常、常量、`BaseContext`、`@ConfigurationProperties`）与 `sky-pojo`（`entity`/`dto`/`vo` 作为各层参数与返回类型）——推断依据：`sky-server` 含 controller/service/mapper 业务代码，必然引用上述基础类型，且它是聚合工程中唯一装配业务的运行模块。不依赖其他内部模块（无第 4 个子模块）。
 
 ### Part B — sky-server 内部分层包粒度（分层架构）
 
-> 以下各包均位于 `D:\sky-take-out-fullstack\sky-backend\sky-server\src\main\java\com\sky\` 下；均无独立启动类，统一借用主启动类 `com.sky.SkyApplication`。
+> 以下各包均位于 `D:\CQWM2\sky-backend\sky-server\src\main\java\com\sky\` 下；均无独立启动类，统一借用主启动类 `com.sky.SkyApplication`。
 
 📦 包：**controller**（路径：`...\com\sky\controller\`）
 

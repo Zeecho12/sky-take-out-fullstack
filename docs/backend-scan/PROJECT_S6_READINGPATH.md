@@ -11,8 +11,8 @@
 
 第 1 站：配置文件——看懂项目的出生点与外部连接点
   目标文件：
-    - D:\sky-take-out-fullstack\sky-backend\sky-server\src\main\resources\application.yml
-    - D:\sky-take-out-fullstack\sky-backend\sky-server\src\main\resources\application-dev.yml
+    - D:\CQWM2\sky-backend\sky-server\src\main\resources\application.yml
+    - D:\CQWM2\sky-backend\sky-server\src\main\resources\application-dev.yml
   阅读重点：`server.port`(8080)、`spring.profiles.active: dev`；`spring.datasource.druid.*` 里的 `${sky.datasource.*}` 占位符如何由 `application-dev.yml` 的 `sky.datasource.*` 填值（连到 `jdbc:mysql://localhost:3306/sky_take_out`）；`spring.redis.*`；`mybatis.mapper-locations: classpath:mapper/*.xml`、`mybatis.type-aliases-package: com.sky.entity`、`map-underscore-to-camel-case: true`；`sky.jwt.secret-key` / `sky.jwt.ttl`。**重点是"占位符 + 填值"两份文件配合，不是同名 key 覆盖。**
   读完后你能理解：项目跑在哪个端口、连哪个 MySQL / Redis、配置是"骨架(application.yml) + dev 填值(application-dev.yml)"的组织方式、MyBatis 去哪里找 SQL 映射文件与实体别名。
   理由：
@@ -21,7 +21,7 @@
 
 第 2 站：启动类 SkyApplication——看懂全站能力开关
   目标文件：
-    - D:\sky-take-out-fullstack\sky-backend\sky-server\src\main\java\com\sky\SkyApplication.java
+    - D:\CQWM2\sky-backend\sky-server\src\main\java\com\sky\SkyApplication.java
   阅读重点：类上的 5 个注解及其开启的能力——`@SpringBootApplication`（以 `com.sky` 为根扫描 Controller/Service/Mapper/Config）、`@EnableTransactionManagement`（让 `@Transactional` 生效）、`@EnableCaching`（让 `@Cacheable`/`@CacheEvict` 生效，后端为 Redis）、`@EnableScheduling`（让 `task` 包的 `@Scheduled` 生效）、`@Slf4j`。只读类声明头，不读 `main` 方法体。
   读完后你能理解：整个项目开启了哪些框架能力（事务、缓存、定时任务）、Spring 从哪个包开始扫描并装配所有 Bean。
   理由：
@@ -30,12 +30,12 @@
 
 第 3 站：建表脚本 + 核心实体——看懂项目在处理什么"东西"
   目标文件：
-    - D:\sky-take-out-fullstack\db\sky.sql
-    - D:\sky-take-out-fullstack\sky-backend\sky-pojo\src\main\java\com\sky\entity\Orders.java
-    - D:\sky-take-out-fullstack\sky-backend\sky-pojo\src\main\java\com\sky\entity\OrderDetail.java
-    - D:\sky-take-out-fullstack\sky-backend\sky-pojo\src\main\java\com\sky\entity\ShoppingCart.java
-    - D:\sky-take-out-fullstack\sky-backend\sky-pojo\src\main\java\com\sky\entity\AddressBook.java
-    - D:\sky-take-out-fullstack\sky-backend\sky-pojo\src\main\java\com\sky\entity\User.java
+    - D:\CQWM2\db\sky.sql
+    - D:\CQWM2\sky-backend\sky-pojo\src\main\java\com\sky\entity\Orders.java
+    - D:\CQWM2\sky-backend\sky-pojo\src\main\java\com\sky\entity\OrderDetail.java
+    - D:\CQWM2\sky-backend\sky-pojo\src\main\java\com\sky\entity\ShoppingCart.java
+    - D:\CQWM2\sky-backend\sky-pojo\src\main\java\com\sky\entity\AddressBook.java
+    - D:\CQWM2\sky-backend\sky-pojo\src\main\java\com\sky\entity\User.java
   阅读重点：`sky.sql` 里 11 张表的字段与 COMMENT，尤其 `orders.status`（1 待付款…6 已取消）、`orders.pay_status`（0 未支付 / 1 已支付 / 2 退款）的合法值；表之间靠 `xxx_id` **逻辑关联、无物理外键**；`create_time/update_time/create_user/update_user` 公共四件套只在 category/dish/setmeal/employee 出现；`orders` 里 phone/address/consignee 等"下单快照"字段。实体侧对照 `Orders` 的 `PENDING_PAYMENT`/`UN_PAID` 等静态常量与列的对应。
   读完后你能理解：项目围绕哪 11 个数据实体运转、订单状态机有哪些合法值、表关系靠约定的 `xxx_id` 维系、为什么订单要冗余存地址/手机号快照。
   理由：
@@ -44,11 +44,11 @@
 
 第 4 站：主链数据访问层 OrderMapper（+ 同名 XML）——看懂下单是怎么存取数据的
   目标文件：
-    - D:\sky-take-out-fullstack\sky-backend\sky-server\src\main\java\com\sky\mapper\OrderMapper.java
-    - D:\sky-take-out-fullstack\sky-backend\sky-server\src\main\java\com\sky\mapper\AddressBookMapper.java
-    - D:\sky-take-out-fullstack\sky-backend\sky-server\src\main\java\com\sky\mapper\ShoppingCartMapper.java
-    - D:\sky-take-out-fullstack\sky-backend\sky-server\src\main\java\com\sky\mapper\OrderDetailMapper.java
-    - D:\sky-take-out-fullstack\sky-backend\sky-server\src\main\resources\mapper\OrderMapper.xml
+    - D:\CQWM2\sky-backend\sky-server\src\main\java\com\sky\mapper\OrderMapper.java
+    - D:\CQWM2\sky-backend\sky-server\src\main\java\com\sky\mapper\AddressBookMapper.java
+    - D:\CQWM2\sky-backend\sky-server\src\main\java\com\sky\mapper\ShoppingCartMapper.java
+    - D:\CQWM2\sky-backend\sky-server\src\main\java\com\sky\mapper\OrderDetailMapper.java
+    - D:\CQWM2\sky-backend\sky-server\src\main\resources\mapper\OrderMapper.xml
   阅读重点：这是**原生 MyBatis** 接口（类级 `@Mapper` 被扫描，非 MyBatis-Plus，不继承 BaseMapper），接口里只有方法签名，真实 SQL 在同名 XML 里。重点看主链要用的 `OrderMapper#insert`（配合 XML 的 `useGeneratedKeys`/`keyProperty` 回填自增 id）、`AddressBookMapper#getById`、`ShoppingCartMapper#list`/`deleteByUserId`、`OrderDetailMapper#insertBatch`。对照 `OrderMapper.xml` 看一条 `insert` 长什么样即可，其余 XML 按需查。
   读完后你能理解：下单链路每一步落到数据库上究竟做了哪种 CRUD、MyBatis "接口声明 + XML 写 SQL"的分工、insert 后自增主键怎么回填给后续明细当外键。
   理由：
@@ -57,7 +57,7 @@
 
 第 5 站：主链业务逻辑层 OrderServiceImpl#submitOrder——看懂下单的完整业务编排
   目标文件：
-    - D:\sky-take-out-fullstack\sky-backend\sky-server\src\main\java\com\sky\service\impl\OrderServiceImpl.java
+    - D:\CQWM2\sky-backend\sky-server\src\main\java\com\sky\service\impl\OrderServiceImpl.java
   阅读重点：只聚焦 `submitOrder` 一个方法的六步编排——① `addressBookMapper.getById` 校验收货地址（空则抛 `AddressBookBusinessException`）；② 私有方法 `checkOutOfRange` 同步调百度地图 API 做配送范围校验（>5km 抛"超出配送范围"）；③ `BaseContext.getCurrentId()` 取当前用户 id + `shoppingCartMapper.list` 查购物车；④ 组装 `Orders`（status=`PENDING_PAYMENT`、payStatus=`UN_PAID`、number=`System.currentTimeMillis()`）后 `orderMapper.insert`；⑤ 购物车逐条转 `OrderDetail` 后 `insertBatch`；⑥ `deleteByUserId` 清空购物车。**特别注意：本方法没有 `@Transactional`，三次写库不在同一事务内，中途失败会数据不一致——这是可写进 ADR / divedeep 的真实观察点。**
   读完后你能理解：一次"下单"的完整业务规则与数据流（校验→组装→落库→清车）、为什么下单后订单是"待付款"而非已支付、以及多步写库缺事务的一致性风险。
   理由：
@@ -66,7 +66,7 @@
 
 第 6 站：主链表现层 user/OrderController——看懂对外接口长什么样
   目标文件：
-    - D:\sky-take-out-fullstack\sky-backend\sky-server\src\main\java\com\sky\controller\user\OrderController.java
+    - D:\CQWM2\sky-backend\sky-server\src\main\java\com\sky\controller\user\OrderController.java
   阅读重点：类级 `@RestController("userOrderController")`（**显式指定 Bean 名**，因为 admin 端另有同名 `OrderController`，避免 Bean 名冲突）、`@RequestMapping("/user/order")`；方法级 `@PostMapping("/submit")` + `@RequestBody OrdersSubmitDTO` 参数绑定；方法体只有一行转调 `orderService.submitOrder(...)` + `Result.success(...)` 封装。注意完整 URL = 空 context-path + `/user/order` + `/submit` = `POST /user/order/submit`。
   读完后你能理解：HTTP 请求怎么进入下单链路、URL 前缀怎么由类级+方法级注解拼出来、返回值怎么被统一封装成 `Result`、表现层为什么"很薄"。
   理由：
@@ -75,7 +75,7 @@
 
 第 7 站：鉴权浅链 JwtAuthenticationFilter——看懂请求进业务前的身份识别
   目标文件：
-    - D:\sky-take-out-fullstack\sky-backend\sky-server\src\main\java\com\sky\security\JwtAuthenticationFilter.java
+    - D:\CQWM2\sky-backend\sky-server\src\main\java\com\sky\security\JwtAuthenticationFilter.java
   阅读重点：`doFilterInternal` 读请求头 `Authorization: Bearer`、截取 token、`JwtUtil.parseJWT` 解析出 `sub`(userId) 与 `role`，组装 `UsernamePasswordAuthenticationToken`（权限 `ROLE_<role>`）写入 `SecurityContext`，并 `BaseContext.setCurrentId(userId)` 塞进 ThreadLocal；继承 `OncePerRequestFilter` 保证每请求只过一次，`finally` 里 `removeCurrentId()` 防线程复用串号。（授权规则 `/admin/**`=ADMIN、`/user/**`=USER 在 `SecurityConfig`，本站不展开配置类。）
   读完后你能理解：无状态（stateless）JWT 认证怎么运作、主链第 5 站里凭空出现的 `BaseContext.getCurrentId()` 的 userId 到底是谁在什么时候塞进去的。
   理由：
@@ -84,7 +84,7 @@
 
 第 8 站：推送浅链 WebSocketServer——看懂服务端如何主动推送
   目标文件：
-    - D:\sky-take-out-fullstack\sky-backend\sky-server\src\main\java\com\sky\websocket\WebSocketServer.java
+    - D:\CQWM2\sky-backend\sky-server\src\main\java\com\sky\websocket\WebSocketServer.java
   阅读重点：`@ServerEndpoint("/ws/{sid}")` 声明长连接端点（`ws://localhost:8080/ws/{sid}`）、用静态 `Map<String,Session> sessionMap` 保存所有会话、`sendToAllClient` 遍历群发 `sendText`。注意它的调用入口是 `OrderServiceImpl#paySuccess`（支付成功来单提醒 type=1）和 `#reminder`（C 端催单 type=2），**都不在主链 `submit` 上**（下单只到"待付款"，此时还没推送）。
   读完后你能理解：服务器怎么突破 HTTP"客户端问、服务端才答"的被动模型，一有新单/催单就主动把消息推给商家端浏览器，而不用商家端轮询。
   理由：
@@ -93,7 +93,7 @@
 
 第 9 站：缓存浅链 user/SetmealController——看懂声明式缓存
   目标文件：
-    - D:\sky-take-out-fullstack\sky-backend\sky-server\src\main\java\com\sky\controller\user\SetmealController.java
+    - D:\CQWM2\sky-backend\sky-server\src\main\java\com\sky\controller\user\SetmealController.java
   阅读重点：方法 `list` 上的 `@Cacheable(cacheNames = "setmealCache", key = "#categoryId")`——命中则直接从 Redis 取、不进方法体、不查库；未命中则执行 `setmealService.list(...)` 查库并把返回值自动写回 Redis；key 用 SpEL `#categoryId` 按分类分桶。写侧配套是 `admin/SetmealController` 的 `@CacheEvict(cacheNames="setmealCache")`（管理端改套餐时清缓存）。
   读完后你能理解：`@Cacheable` 声明式缓存（Declarative Caching）怎么用一个注解把"查缓存→未命中查库→回填"的样板逻辑交给框架，从而给高频只读接口降压、减少打到 MySQL 的请求。
   理由：
@@ -104,12 +104,12 @@
 
 | 文件/目录 | 跳过原因（40 字以内） | 什么时候再回来看 |
 |---|---|---|
-| D:\sky-take-out-fullstack\sky-backend\sky-common\src\main\java\com\sky\utils\（AliOssUtil / HttpClientUtil / JwtUtil / WeChatPayUtil） | 工具类，脱离调用场景单独读没有上下文 | 读主线代码遇到不认识的工具方法（如 JwtUtil.parseJWT）时，再点进去看 |
-| D:\sky-take-out-fullstack\sky-backend\sky-common\src\main\java\com\sky\exception\ + sky-server\...\handler\GlobalExceptionHandler.java | 异常与全局兜底逻辑，格式固定，不影响业务流程理解 | 学完主线业务后，作为"统一错误响应规范"扩展阅读 |
-| D:\sky-take-out-fullstack\sky-backend\sky-common\src\main\java\com\sky\constant\ + enumeration\ | 常量与枚举，是被引用的值，无独立逻辑 | 主线代码引用到某常量（如 StatusConstant.ENABLE）时顺手点进去 |
-| D:\sky-take-out-fullstack\sky-backend\sky-pojo\src\main\java\com\sky\dto\ + vo\ | 纯数据对象，字段已在 S4B 数据模型登记过 | 读 Service/Controller 遇到某 DTO/VO 想确认字段时，回 S4B 或点进去 |
-| D:\sky-take-out-fullstack\sky-backend\sky-server\src\main\java\com\sky\aspect\AutoFillAspect.java + annotation\AutoFill.java | AOP 横切增强（自动填公共字段），非主线业务逻辑 | 读到 category/dish/setmeal 的 create_time 想知道谁填的时候 |
-| D:\sky-take-out-fullstack\sky-backend\sky-server\src\main\java\com\sky\config\（Oss/Redis/WebMvc/Security/WebSocket Configuration） | Bean 装配类，属基础设施而非业务流程 | 学完鉴权浅链后回看 SecurityConfig 的过滤器链/授权规则 |
-| D:\sky-take-out-fullstack\sky-backend\sky-server\src\main\java\com\sky\task\（OrderTask / WebSocketTask / MyTask） | 定时任务，由调度器触发，非请求主线 | 学完订单主链后，想了解超时订单如何自动流转时 |
-| D:\sky-take-out-fullstack\sky-backend\sky-server\src\main\java\com\sky\controller\notify\PayNotifyController.java | 支付回调入口，微信遗留、待改造（功能 0002） | 做功能 0002「支付 mock」或研究异步回调时 |
-| D:\sky-take-out-fullstack\sky-backend\sky-server\src\main\java\com\sky\controller\admin\（Report / WorkSpace / Shop / Common Controller）+ service\impl\ReportServiceImpl.java | 报表/工作台/店铺/上传等外围管理端功能，与核心下单链路无关 | 学完核心链路后，按兴趣挑报表聚合或 OSS 上传单独读 |
+| D:\CQWM2\sky-backend\sky-common\src\main\java\com\sky\utils\（AliOssUtil / HttpClientUtil / JwtUtil / WeChatPayUtil） | 工具类，脱离调用场景单独读没有上下文 | 读主线代码遇到不认识的工具方法（如 JwtUtil.parseJWT）时，再点进去看 |
+| D:\CQWM2\sky-backend\sky-common\src\main\java\com\sky\exception\ + sky-server\...\handler\GlobalExceptionHandler.java | 异常与全局兜底逻辑，格式固定，不影响业务流程理解 | 学完主线业务后，作为"统一错误响应规范"扩展阅读 |
+| D:\CQWM2\sky-backend\sky-common\src\main\java\com\sky\constant\ + enumeration\ | 常量与枚举，是被引用的值，无独立逻辑 | 主线代码引用到某常量（如 StatusConstant.ENABLE）时顺手点进去 |
+| D:\CQWM2\sky-backend\sky-pojo\src\main\java\com\sky\dto\ + vo\ | 纯数据对象，字段已在 S4B 数据模型登记过 | 读 Service/Controller 遇到某 DTO/VO 想确认字段时，回 S4B 或点进去 |
+| D:\CQWM2\sky-backend\sky-server\src\main\java\com\sky\aspect\AutoFillAspect.java + annotation\AutoFill.java | AOP 横切增强（自动填公共字段），非主线业务逻辑 | 读到 category/dish/setmeal 的 create_time 想知道谁填的时候 |
+| D:\CQWM2\sky-backend\sky-server\src\main\java\com\sky\config\（Oss/Redis/WebMvc/Security/WebSocket Configuration） | Bean 装配类，属基础设施而非业务流程 | 学完鉴权浅链后回看 SecurityConfig 的过滤器链/授权规则 |
+| D:\CQWM2\sky-backend\sky-server\src\main\java\com\sky\task\（OrderTask / WebSocketTask / MyTask） | 定时任务，由调度器触发，非请求主线 | 学完订单主链后，想了解超时订单如何自动流转时 |
+| D:\CQWM2\sky-backend\sky-server\src\main\java\com\sky\controller\notify\PayNotifyController.java | 支付回调入口，微信遗留、待改造（功能 0002） | 做功能 0002「支付 mock」或研究异步回调时 |
+| D:\CQWM2\sky-backend\sky-server\src\main\java\com\sky\controller\admin\（Report / WorkSpace / Shop / Common Controller）+ service\impl\ReportServiceImpl.java | 报表/工作台/店铺/上传等外围管理端功能，与核心下单链路无关 | 学完核心链路后，按兴趣挑报表聚合或 OSS 上传单独读 |

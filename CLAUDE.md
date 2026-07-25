@@ -28,9 +28,9 @@
 ## 三、当前进度
 
 - **Phase**:**无进行中 feature**。功能 0005「C 端重建④:订单管理」**已交付并合并回 main(merge `0fcaca4`,`--no-ff`,2026-07-23)**,DoD 全绿。**「C 端完整重建」epic(0002→0005)全部交付收官**:C 端浏览→加购→下单→(mock)支付→订单管理(历史/详情/取消/催单/再来一单/用户中心)端到端跑通,微信特定实现(登录/支付/小程序客户端)已全部换成账密+JWT / mock 支付 / Vue3 Web;顺带清偿多笔安全/正确性欠债(整站认证统一、地址簿+订单越权 BOLA、事务原子性、退款口径)。0005 六 code commit `353f772`(D1 越权)/`a296f2e`(D2 退款口径)/`8b5d584`(脚手架)/`7c961f9`(List 含 van-list 修复)/`91f0ef5`(Detail+接线)/`a5e4aa0`(Center+入口);验证后端 8/8+4/4、前端 preview 逐步 PASS + 端到端冒烟 A~G。(0004 `b08bf8e`、0003 `3365f69`、0002 `df53f0b`、0001 `b02590b` 均已交付。)
-- **进行中**:无 feature。刚完成一次**仓库结构整理 chore**:三端目录统一改名(`sky-take-out`→`sky-backend`、`project-sky-admin-vue-ts`→`sky-admin-web`、`project-sky-user-vue3`→`sky-user-web`)+ `sky.sql`→`db/` + 全量引用更新(含 backend-scan 派生文档批量 sed);已 `--no-ff` 合并 main(`ce5778b`)并 push。焦点仍是工作流 / 方法论(PLAYBOOK.md)优化。
-- **⚠️ 待用户手动**:**根目录 `D:\CQWM2` → `sky-take-out-fullstack` 改名尚未做**(会话内无法改自身工作根)。文档绝对路径**已按目标态烤入 `D:\sky-take-out-fullstack`**——所以改名前它与实际 `D:\CQWM2` 暂不一致(相对路径不受影响);改名须同步移动记忆目录 `~/.claude/projects/D--CQWM2`。下一步:用户改完根名从新路径重开,再续工作流探讨。
-- **git/环境**:`main` HEAD = merge `ce5778b`;顶层现为 `sky-backend/ sky-admin-web/ sky-user-web/ db/`;epic 路线图见 `docs/blueprint/E01-cend-rebuild.md`。起环境 / 踩坑 / 账号见 `docs/RUNBOOK.md`;新会话先核 env(`java`/8080/6379/`docker ps`;⚠️ jar/Docker/dev server 扛不过进程重启;admin-web dev server 需 `NODE_OPTIONS=--openssl-legacy-provider`)。冒烟基线 `docs/smoke-tests.md`。
+- **进行中**:无 feature。刚完成**仓库结构整理 chore**:三端目录改名(`sky-take-out`→`sky-backend`、`project-sky-admin-vue-ts`→`sky-admin-web`、`project-sky-user-vue3`→`sky-user-web`)+ `sky.sql`→`db/` + 全量引用更新;`--no-ff` 合并 main 并 push。**根目录维持 `D:\CQWM2` 不变**(曾议改名对齐 GitHub 仓库名 sky-take-out-fullstack,已放弃)。焦点仍是工作流 / 方法论(PLAYBOOK.md)优化。
+- **下一步**:继续与用户探讨 PLAYBOOK.md / 工作流(用户在新窗口发起);无排期 feature,要开新功能再走 PLAYBOOK.md 5 阶段。
+- **git/环境**:顶层为 `sky-backend/ sky-admin-web/ sky-user-web/ db/`;epic 路线图见 `docs/blueprint/E01-cend-rebuild.md`。起环境 / 踩坑 / 账号见 `docs/RUNBOOK.md`;新会话先核 env(`java`/8080/6379/`docker ps`;⚠️ jar/Docker/dev server 扛不过进程重启)。admin-web dev server 的 OpenSSL 坑已修:`launch.json` 用 `env` 注入 `NODE_OPTIONS=--openssl-legacy-provider`。冒烟基线 `docs/smoke-tests.md`。
 
 > 本节是**当前快照**,只写"现在":**覆盖式更新**(改写这几行,不往下追加历史),
 > 永远保持这个长度。完成了什么、里程碑历史,看 `git log` 和各功能的 `progress.md`,

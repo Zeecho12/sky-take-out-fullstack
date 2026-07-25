@@ -2,10 +2,10 @@
 
 > 项目名称：sky-take-out（苍穹外卖）
 > ORM 框架：**MyBatis**（依据：S2/S3 技术栈；启动类无 `@MapperScan` 集中声明，Mapper 接口用 `@Mapper` 被扫描；`application.yml` 配置 `mybatis.mapper-locations: classpath:mapper/*.xml` + `mybatis.type-aliases-package: com.sky.entity`。**非 MyBatis-Plus**——entity 上无 `@TableName`/`@TableId`/`@TableField`/`@TableLogic` 任何 MyBatis-Plus 注解，映射靠 mapper XML + 驼峰开关）
-> schema 来源模式：**DDL 脚本模式**——仓库带独立全库建表脚本 `D:\sky-take-out-fullstack\db\sky.sql`，以其中 `CREATE TABLE` 为真相源；entity 只作映射校对。功能 0001 另有增量迁移 `0001-migration.sql`（见下）。
+> schema 来源模式：**DDL 脚本模式**——仓库带独立全库建表脚本 `D:\CQWM2\db\sky.sql`，以其中 `CREATE TABLE` 为真相源；entity 只作映射校对。功能 0001 另有增量迁移 `0001-migration.sql`（见下）。
 > 命名映射约定：`mybatis.configuration.map-underscore-to-camel-case: true`（依据 S4 关键配置项索引）→ 数据库下划线列名自动映射到 Java 驼峰属性，例如列 `order_time` ↔ 属性 `orderTime`、`create_user` ↔ `createUser`、`id_number` ↔ `idNumber`。全项目 entity 均**无**显式字段级映射注解，全靠此开关。
 > 本步骤读取的真实文件：
-> - DDL：`D:\sky-take-out-fullstack\db\sky.sql`（全库建表脚本，主源）、`D:\sky-take-out-fullstack\docs\features\0001-cend-auth-jwt\0001-migration.sql`（功能 0001 增量迁移）
+> - DDL：`D:\CQWM2\db\sky.sql`（全库建表脚本，主源）、`D:\CQWM2\docs\features\0001-cend-auth-jwt\0001-migration.sql`（功能 0001 增量迁移）
 > - entity（11 个，仅读字段声明与注解，未读方法体）：`sky-backend\sky-pojo\src\main\java\com\sky\entity\` 下的 `AddressBook.java` `Category.java` `Dish.java` `DishFlavor.java` `Employee.java` `OrderDetail.java` `Orders.java` `Setmeal.java` `SetmealDish.java` `ShoppingCart.java` `User.java`
 > - dto（23 个）：`...\com\sky\dto\` 下全部 23 个 DTO/Query 类（见清单）
 > - vo（17 个）：`...\com\sky\vo\` 下全部 17 个 VO 类（见清单）
@@ -26,7 +26,7 @@
 ## 表结构
 
 ### 表：`address_book` —— 地址簿（用户收货地址）
-> 来源：`D:\sky-take-out-fullstack\db\sky.sql`
+> 来源：`D:\CQWM2\db\sky.sql`
 
 | 字段 | 类型 | 可空 | 默认值 | 说明 |
 |---|---|---|---|---|
@@ -50,7 +50,7 @@
 - 关联：`user_id` → `user.id`（逻辑关联，无显式外键）
 
 ### 表：`category` —— 菜品及套餐分类
-> 来源：`D:\sky-take-out-fullstack\db\sky.sql`
+> 来源：`D:\CQWM2\db\sky.sql`
 
 | 字段 | 类型 | 可空 | 默认值 | 说明 |
 |---|---|---|---|---|
@@ -70,7 +70,7 @@
 - 有内联 INSERT 初始数据（10 行，未读具体行）
 
 ### 表：`dish` —— 菜品
-> 来源：`D:\sky-take-out-fullstack\db\sky.sql`
+> 来源：`D:\CQWM2\db\sky.sql`
 
 | 字段 | 类型 | 可空 | 默认值 | 说明 |
 |---|---|---|---|---|
@@ -92,7 +92,7 @@
 - 有内联 INSERT 初始数据（24 行，未读具体行）
 
 ### 表：`dish_flavor` —— 菜品口味关系表
-> 来源：`D:\sky-take-out-fullstack\db\sky.sql`
+> 来源：`D:\CQWM2\db\sky.sql`
 
 | 字段 | 类型 | 可空 | 默认值 | 说明 |
 |---|---|---|---|---|
@@ -107,7 +107,7 @@
 - 有内联 INSERT 初始数据（24 行，未读具体行）
 
 ### 表：`employee` —— 员工信息（管理端账号）
-> 来源：`D:\sky-take-out-fullstack\db\sky.sql`（admin 密码已是功能 0001 迁移后的 BCrypt 哈希）
+> 来源：`D:\CQWM2\db\sky.sql`（admin 密码已是功能 0001 迁移后的 BCrypt 哈希）
 
 | 字段 | 类型 | 可空 | 默认值 | 说明 |
 |---|---|---|---|---|
@@ -130,7 +130,7 @@
 - 有内联 INSERT（1 行：admin 管理员账号，未读明文值——密码为 BCrypt 哈希）
 
 ### 表：`order_detail` —— 订单明细表
-> 来源：`D:\sky-take-out-fullstack\db\sky.sql`
+> 来源：`D:\CQWM2\db\sky.sql`
 
 | 字段 | 类型 | 可空 | 默认值 | 说明 |
 |---|---|---|---|---|
@@ -149,7 +149,7 @@
 - 关联：`order_id` → `orders.id`（逻辑关联，一订单多明细）；`dish_id` → `dish.id` / `setmeal_id` → `setmeal.id`（逻辑关联，快照式）
 
 ### 表：`orders` —— 订单表
-> 来源：`D:\sky-take-out-fullstack\db\sky.sql`
+> 来源：`D:\CQWM2\db\sky.sql`
 
 | 字段 | 类型 | 可空 | 默认值 | 说明 |
 |---|---|---|---|---|
@@ -184,7 +184,7 @@
 - 说明：大量字段是「下单瞬间的快照」（phone/address/consignee/user_name），与 `user`/`address_book` 当前值可能不同——这是外卖订单常见的反规范化设计（下单后地址改了不影响历史订单）
 
 ### 表：`setmeal` —— 套餐
-> 来源：`D:\sky-take-out-fullstack\db\sky.sql`
+> 来源：`D:\CQWM2\db\sky.sql`
 
 | 字段 | 类型 | 可空 | 默认值 | 说明 |
 |---|---|---|---|---|
@@ -205,7 +205,7 @@
 - 关联：`category_id` → `category.id`（逻辑关联）；被 `setmeal_dish.setmeal_id`、`order_detail.setmeal_id`、`shopping_cart.setmeal_id` 逻辑引用
 
 ### 表：`setmeal_dish` —— 套餐菜品关系（多对多连接表）
-> 来源：`D:\sky-take-out-fullstack\db\sky.sql`
+> 来源：`D:\CQWM2\db\sky.sql`
 
 | 字段 | 类型 | 可空 | 默认值 | 说明 |
 |---|---|---|---|---|
@@ -221,7 +221,7 @@
 - 关联：`setmeal_id` → `setmeal.id`、`dish_id` → `dish.id`（逻辑关联）——本表是 `setmeal` ∞─∞ `dish` 的**连接表**
 
 ### 表：`shopping_cart` —— 购物车
-> 来源：`D:\sky-take-out-fullstack\db\sky.sql`
+> 来源：`D:\CQWM2\db\sky.sql`
 
 | 字段 | 类型 | 可空 | 默认值 | 说明 |
 |---|---|---|---|---|
@@ -241,7 +241,7 @@
 - 关联：`user_id` → `user.id`（逻辑关联，一用户一车多条）；`dish_id`/`setmeal_id` → `dish.id`/`setmeal.id`（逻辑关联）
 
 ### 表：`user` —— 用户信息（C 端顾客账号）
-> 来源：`D:\sky-take-out-fullstack\db\sky.sql`（已含功能 0001 新增的 username/password/idx_username）；增量来自 `0001-migration.sql`
+> 来源：`D:\CQWM2\db\sky.sql`（已含功能 0001 新增的 username/password/idx_username）；增量来自 `0001-migration.sql`
 
 | 字段 | 类型 | 可空 | 默认值 | 说明 |
 |---|---|---|---|---|
