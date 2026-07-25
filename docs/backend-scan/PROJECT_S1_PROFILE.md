@@ -3,9 +3,9 @@
 > 项目名称：sky-take-out（苍穹外卖）
 > 项目类型：多模块单体（Multi-Module Monolith）—— 基于 Spring Boot 的 Maven 聚合工程
 > 扫描来源：
-> - 已读到：`sky-take-out/pom.xml`（根聚合 POM）、CODE_ROOT 目录结构（depth=2）
+> - 已读到：`sky-backend/pom.xml`（根聚合 POM）、CODE_ROOT 目录结构（depth=2）
 > - 已全局搜索确认容器化与 SQL：`**/Dockerfile`、`**/docker-compose.y*ml`、`**/.dockerignore`、`**/*.sql`
-> - 显式未发现：CODE_ROOT 根目录下无 `README.md` / `README.*`；无 `NOTE.md`（git 状态显示 `sky-take-out/NOTE.md` 已删除）；无 `.env` / `.env.example`
+> - 显式未发现：CODE_ROOT 根目录下无 `README.md` / `README.*`；无 `NOTE.md`（git 状态显示 `sky-backend/NOTE.md` 已删除）；无 `.env` / `.env.example`
 > - 说明：CODE_ROOT 下存在 `NOTE/` 文件夹（内为源码精读学习笔记，非项目说明文档），本步骤仅从其文件名读取业务线索，未读取其正文；`Dockerfile` / `docker-compose` / `.dockerignore` 三者全局搜索均无结果
 
 ---
@@ -25,13 +25,13 @@
 - 构建工具：Maven（依据 CODE_ROOT 根目录存在 `pom.xml`，各子模块亦为 `pom.xml`，无 `build.gradle`）。POM `modelVersion` 为 4.0.0；父工程继承 `spring-boot-starter-parent` **2.7.3**（`pom.xml` `<parent>` 段第 6-10 行），即 Spring Boot 2.7.3。`pom.xml` 未声明 Maven 自身版本，CODE_ROOT 下亦未见 Maven Wrapper（`mvnw` / `.mvn`）。
 - 容器化：没有。已全局搜索 `**/Dockerfile`、`**/docker-compose.y*ml`、`**/.dockerignore` 三类通配符，**均无结果**，据此判定无容器化配置；`.env` / `.env.example` 亦未发现。
 - 部署方式：未发现容器化配置，推测为直接 jar 包部署——可运行模块为 `sky-server`，经 `spring-boot-maven-plugin` 打成可执行 fat jar 后 `java -jar` 运行。
-  - 数据库脚本索引（本步骤仅登记位置，不读内容）：全局搜索 `**/*.sql` 命中两处，均**不在 CODE_ROOT 内**——`D:\CQWM2\sky.sql`（仓库根，主建表脚本）、`D:\CQWM2\docs\features\0001-cend-auth-jwt\0001-migration.sql`（功能 0001 迁移脚本）。CODE_ROOT (`sky-take-out/`) 内未见 `.sql` 文件。
+  - 数据库脚本索引（本步骤仅登记位置，不读内容）：全局搜索 `**/*.sql` 命中两处，均**不在 CODE_ROOT 内**——`D:\sky-take-out-fullstack\db\sky.sql`（仓库根，主建表脚本）、`D:\sky-take-out-fullstack\docs\features\0001-cend-auth-jwt\0001-migration.sql`（功能 0001 迁移脚本）。CODE_ROOT (`sky-backend/`) 内未见 `.sql` 文件。
 
 ## 模块列表
-- `sky-take-out`：`D:\CQWM2\sky-take-out\`（根聚合/父工程，`packaging=pom`，不产出运行制品）
-- `sky-common`：`D:\CQWM2\sky-take-out\sky-common\`（公共模块，含独立 `pom.xml`；推测存放通用工具类、常量、统一返回结果、全局异常等，供其他模块依赖）
-- `sky-pojo`：`D:\CQWM2\sky-take-out\sky-pojo\`（数据模型模块，含独立 `pom.xml`；推测存放 Entity / DTO / VO 等纯数据对象定义）
-- `sky-server`：`D:\CQWM2\sky-take-out\sky-server\`（主服务/启动模块，含独立 `pom.xml`；推测存放 Controller / Service / Mapper 等业务代码，为唯一可运行、对外提供接口的部署单元）
+- `sky-take-out`：`D:\sky-take-out-fullstack\sky-backend\`（根聚合/父工程，`packaging=pom`，不产出运行制品）
+- `sky-common`：`D:\sky-take-out-fullstack\sky-backend\sky-common\`（公共模块，含独立 `pom.xml`；推测存放通用工具类、常量、统一返回结果、全局异常等，供其他模块依赖）
+- `sky-pojo`：`D:\sky-take-out-fullstack\sky-backend\sky-pojo\`（数据模型模块，含独立 `pom.xml`；推测存放 Entity / DTO / VO 等纯数据对象定义）
+- `sky-server`：`D:\sky-take-out-fullstack\sky-backend\sky-server\`（主服务/启动模块，含独立 `pom.xml`；推测存放 Controller / Service / Mapper 等业务代码，为唯一可运行、对外提供接口的部署单元）
 
 > 说明：模块名与路径来自根 `pom.xml` 的 `<modules>` 声明及 depth=2 目录结构；模块职责为基于模块命名的**初步推断**，各子模块内部确切职责与依赖将由后续 S2/S3 深入核实，本步骤未读取子模块 `pom.xml`。
 

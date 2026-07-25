@@ -8,7 +8,7 @@
 - 关联: Proposal → ./proposal.md | Progress → ./progress.md | ADR → ../../decisions/0005-order-manage.md | 契约 → ../../api-contract/用户端接口.md | epic → ../../blueprint/E01-cend-rebuild.md
 
 ## 1. 背景与动机 (Why)
-0002→0003→0004 已把 C 端「浏览 → 下单 → 支付」主链跑通:顾客能浏览菜品、加购、填地址结算下单、mock 支付变「已支付/待接单」。但**支付成功后就断了**——[Order/Created.vue](../../../project-sky-user-vue3/src/views/Order/Created.vue) 成功页那个"查看订单"按钮还是 0004 留下的 `disabled` 占位(注释写着"0005 接管"),顾客**看不到自己下过哪些单、看不了详情、不能取消、不能催单、不能再来一单,也没有一个"我的/个人中心"入口**。0005 补上订单生命周期的下半段,给 C 端重建 epic 收官。
+0002→0003→0004 已把 C 端「浏览 → 下单 → 支付」主链跑通:顾客能浏览菜品、加购、填地址结算下单、mock 支付变「已支付/待接单」。但**支付成功后就断了**——[Order/Created.vue](../../../sky-user-web/src/views/Order/Created.vue) 成功页那个"查看订单"按钮还是 0004 留下的 `disabled` 占位(注释写着"0005 接管"),顾客**看不到自己下过哪些单、看不了详情、不能取消、不能催单、不能再来一单,也没有一个"我的/个人中心"入口**。0005 补上订单生命周期的下半段,给 C 端重建 epic 收官。
 
 同时 0005 要清掉订单相关后端的两类历史欠债(实读 `OrderServiceImpl` 坐实,比 blueprint 记的两笔更宽):
 - **越权(IDOR)一整片**:C 端 5 个订单端点里,只有历史订单查询(`pageQueryForUser`)按当前用户过滤;**订单详情 `details`、用户取消 `userCancelById`、再来一单 `repetition`、催单 `reminder` 四处都只按 `id` 取数、无 `user_id` 归属校验** → 用户可拿别人订单 id 看他人订单(泄露地址/电话/收货人)、取消他人订单、把他人订单菜品灌进自己购物车、对他人订单催单。这是 OWASP API Security Top 1(BOLA/IDOR),0004 评审已把 `userCancelById` 记进 0005 backlog,本次实读发现范围更大,**一并按 0003 D6 修法收紧**。

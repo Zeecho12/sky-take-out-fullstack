@@ -10,7 +10,7 @@
 - **当前**:**0004 DONE —— 已交付合并 main**(merge `b08bf8e` `--no-ff` + Phase 4 收尾 `cea9571`,2026-07-23)。DoD 全绿(代码 + 测试 + requirement/proposal/progress + ADR)。Phase 3 三步:步骤1 `75ae4bd`(payment CAS 内部同步 mock:`getByNumberAndUserId` 取单校验存在+归属 → 原子 CAS `updateToPaidIfUnpaid`(`WHERE ... pay_status=0`,影响行数 0 拒"该订单已支付"/1 推来单提醒)→ `payment` void、`OrderController` 返 `Result.success()`;删 `paySuccess`/`OrderPaymentVO`/`PayNotifyController`(提前,Tech Lead 拍板)/`userMapper`/openid/微信 `pay`)。步骤2 `5412f57`(删 `WeChatPayUtil`/`WeChatProperties`/`sky.wechat` 配置(2 文件)/两处 pom `wechatpay-apache-httpclient`;3 处 refund 逐处枚举换 mock log,`rejection`/`cancel` 的 `payStatus=REFUND` 口径不一致留 0005)。步骤3(前端,待提交):`api/order.ts` 补 `payment` + `OrdersPaymentDTO`;新增 `Order/Pay.vue`(金额 + 支付方式单选 + 确认支付,`submitting` 防双击);`Order/Created.vue` 改成支付成功页(查看订单禁用标注 0005);路由 `/order-pay`(登录门槛);`Order/Confirm.vue` 落点 `/order-created`→`/order-pay`(query `orderNumber`/`orderAmount` 键名不变全链透传)。测试门全绿:后端 4+3 门(curl+DB+grep 归零)、前端 `type-check` EXIT=0 + 端到端 5 门(`preview_network`:去支付→`/order-pay` 金额一致 / 确认支付 `PUT payment` `code:1`→`/order-created` DB `status=2/pay_status=1` / 成功页返回菜单+查看订单禁用+query 带 orderNumber / 负例已支付单 `code:0` toast 不跳 / 回归 `/menu`+`/order-confirm`)。
 - **下一步**:0004 已收工。**epic 焦点转 0005「订单管理」立项 + Phase 2 规划**(历史订单 tab 分页 / 详情 / 催单 / 再来一单 / 取消 / 用户中心);开工背两笔 0004 遗留 backlog:`userCancelById` IDOR(仿 0003 D6 归属修法)+ `rejection`/`cancel` 不置 `payStatus=REFUND` 的口径不一致。**未做的收尾**:divedeep(CAS / check-then-act 竞态深挖笔记)按需另写;派生文档 `BACKEND_OVERVIEW` 按铁律 7 留 C 端重建 epic 收口(仅剩 0005)再生。
 - **别碰**:0005 的功能实现;`reference/`(只读)。0004 代码已冻结交付。
-- **怎么验证 / 起环境**:**Docker Desktop → `docker start sky-redis` → 后端 jar(:8080,构建前先停旧 jar)→ `PUT /admin/shop/1`(Bearer,Redis 重启后店铺状态丢失需重设)→ 前端 `preview_start` name `user-web` 或 `npm --prefix project-sky-user-vue3 run dev`(:5173)**。测试账号 `s7v_2268`/`123456`(id=8,openid NULL)。类型门 `npm --prefix project-sky-user-vue3 run type-check` exit 0。MySQL 5.7 连库加 `--ssl-mode=DISABLED`。⚠️ jar/Docker/dev server 扛不过 Claude Code 进程重启,新窗口先核环境。
+- **怎么验证 / 起环境**:**Docker Desktop → `docker start sky-redis` → 后端 jar(:8080,构建前先停旧 jar)→ `PUT /admin/shop/1`(Bearer,Redis 重启后店铺状态丢失需重设)→ 前端 `preview_start` name `user-web` 或 `npm --prefix sky-user-web run dev`(:5173)**。测试账号 `s7v_2268`/`123456`(id=8,openid NULL)。类型门 `npm --prefix sky-user-web run type-check` exit 0。MySQL 5.7 连库加 `--ssl-mode=DISABLED`。⚠️ jar/Docker/dev server 扛不过 Claude Code 进程重启,新窗口先核环境。
 
 ## 1. 现状(与本改动相关的技术起点)
 > 全局架构见 docs/backend-scan/BACKEND_OVERVIEW.md;这里只写和 0004 相关的。
@@ -23,7 +23,7 @@
 - `utils/WeChatPayUtil`(`pay`/`refund`)+ `properties/WeChatProperties`:微信支付基建。`WeChatProperties` **仅被** `PayNotifyController` + `WeChatPayUtil` 引用(grep 实证);`sky.wechat.*` 配置仅经其 `@ConfigurationProperties` 绑定。**0004 全删。**
 - `weChatPayUtil.refund(...)` **3 处调用**:`userCancelById`(L287)、`rejection`(L400)、`cancel`(L432)——取消 / 拒单流程(0005 / 管理端)。删 `WeChatPayUtil` 前必须先把这 3 处换成 mock,否则**编译失败**。
 
-**前端 `project-sky-user-vue3`(0002/0003 交付,可复用):**
+**前端 `sky-user-web`(0002/0003 交付,可复用):**
 - `Order/Confirm.vue`:结算页,下单成功后 `router.push('/order-created')`(L71)——**0004 改成 push 支付页**。
 - `Order/Created.vue`:0003 "订单已创建"占位页(读 `route.query.orderNumber/orderAmount`,写着"支付功能即将上线(0004)")——**0004 改造成支付成功页**。
 - `api/order.ts`:仅有 `submitOrder`——**0004 补 `payment`**。
@@ -61,7 +61,7 @@
 
 ## 3. 会动的关键文件
 
-**后端 `sky-take-out/`:**
+**后端 `sky-backend/`:**
 - `sky-server/.../service/impl/OrderServiceImpl.java` —— payment() 重写(D1+D2+D3:去 openid / 去 `pay` / 校验存在+归属 / 原子 CAS 置位 + 推送 / 简化返回)+ **删 `paySuccess` 方法**(推送并入 payment)+ 删 `userMapper` 字段 + `weChatPayUtil` 字段 + `JSONObject`/import;3 处 `refund` → mock log(D4,逐处枚举见 §2)。【步骤1 + 步骤2】
 - `sky-server/.../service/OrderService.java` —— `payment` 签名改 `void`(去 `throws Exception`)+ **删 `paySuccess` 接口方法** + 删 `OrderPaymentVO` import。【步骤1】
 - `sky-server/.../mapper/OrderMapper.java` + `sky-server/src/main/resources/mapper/OrderMapper.xml` —— **新增原子方法** `updateToPaidIfUnpaid`(条件 `WHERE ... AND pay_status=0` 的 CAS UPDATE,返回影响行数;命名 Phase 3 定)。【步骤1】
@@ -72,9 +72,9 @@
 - `sky-common/.../properties/WeChatProperties.java` —— **删**。【步骤2】
 - `sky-server/src/main/resources/application.yml` —— 删 `sky.wechat` 映射块(L47–56)。【步骤2】
 - `sky-server/src/main/resources/application-dev.yml` —— 删 `sky.wechat` 值块(L19–28,含明文商户号 / 证书路径)。【步骤2】
-- `sky-take-out/pom.xml`(L121–122)+ `sky-take-out/sky-common/pom.xml`(L49–50)—— **删** `wechatpay-apache-httpclient` 依赖(删类后成孤儿;grep 门抓不到,须显式删)(AD1 内审)。【步骤2】
+- `sky-backend/pom.xml`(L121–122)+ `sky-backend/sky-common/pom.xml`(L49–50)—— **删** `wechatpay-apache-httpclient` 依赖(删类后成孤儿;grep 门抓不到,须显式删)(AD1 内审)。【步骤2】
 
-**前端 `project-sky-user-vue3/`:**
+**前端 `sky-user-web/`:**
 - `src/api/order.ts` —— 补 `payment(data)` → `PUT /user/order/payment`。【步骤3】
 - `src/types/business.ts`(或就近)—— 增 `OrdersPaymentDTO` 类型(如需)。【步骤3】
 - `src/views/Order/Pay.vue` —— **新增**支付页(金额 + 支付方式单选 + 确认支付)。【步骤3】

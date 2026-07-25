@@ -7,8 +7,8 @@
 
 ## 一、这是什么
 
-- **代码**:`sky-take-out/`（Java monolith 后端,MyBatis + MySQL + Redis）
-  + `project-sky-admin-vue-ts/`（Vue 后台管理前端）。
+- **代码**:`sky-backend/`（Java monolith 后端,MyBatis + MySQL + Redis）
+  + `sky-admin-web/`（Vue 后台管理前端）。
 - **目标**:学习工业级全栈项目 + 准备北美后端 SDE 面试。把项目里的微信特定实现
   （微信登录 / 微信支付 / 小程序客户端）替换成北美技术栈标准实现,产出一个能写进
   简历的项目 + 一套面试笔记。

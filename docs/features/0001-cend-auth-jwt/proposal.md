@@ -7,10 +7,10 @@
 - 关联: Requirement → ./requirement.md | Progress → ./progress.md | ADR → ../../decisions/0001-cend-auth-local-jwt-spring-security.md | 契约 → ../../api-contract/
 
 ## ⭐ 交接头(给下一个窗口 / subagent —— 覆盖式,永远只写"现在")
-- **当前**: 功能 0001 **已交付并合并回 `main`**(merge `b02590b`);步骤 1–7 全部 TESTED、DoD 全绿。后端全站统一 Spring Security + 单套 JWT;admin 前端认证头已迁 Bearer;C 端新工程 `project-sky-user-vue3` 全链路跑通;冒烟基线 `docs/smoke-tests.md` 全绿。
+- **当前**: 功能 0001 **已交付并合并回 `main`**(merge `b02590b`);步骤 1–7 全部 TESTED、DoD 全绿。后端全站统一 Spring Security + 单套 JWT;admin 前端认证头已迁 Bearer;C 端新工程 `sky-user-web` 全链路跑通;冒烟基线 `docs/smoke-tests.md` 全绿。
 - **下一步**: 本功能已收口。剩余均为按需项:(a)从 ADR-0001 的 divedeep backlog 挑深读笔记(Spring Security Filter 链 / 认证时序 / `OncePerRequestFilter`);(b)openid 支付遗留 → 功能 0002;(c)里程碑再生 `docs/BACKEND_OVERVIEW.md`。
 - **别碰**: `reference/`(只读)、`.backup-original-git/`、`.tools/`;`OrderServiceImpl.payment()` 的 openid 调用(留给 0002)。
-- **怎么验证**: 构建/起 jar/前端命令见 `docs/RUNBOOK.md` 常用命令;构建前先停 jar(`Get-CimInstance Win32_Process` 找 `sky-server-...jar` → `Stop-Process -Id <pid> -Force`);DB 迁移/校验用 `mysql.exe ... --ssl-mode=DISABLED sky_take_out < docs\features\0001-cend-auth-jwt\0001-migration.sql`(可重跑);C 端 `npm --prefix project-sky-user-vue3 run dev`(:5173,需后端 :8080)。
+- **怎么验证**: 构建/起 jar/前端命令见 `docs/RUNBOOK.md` 常用命令;构建前先停 jar(`Get-CimInstance Win32_Process` 找 `sky-server-...jar` → `Stop-Process -Id <pid> -Force`);DB 迁移/校验用 `mysql.exe ... --ssl-mode=DISABLED sky_take_out < docs\features\0001-cend-auth-jwt\0001-migration.sql`(可重跑);C 端 `npm --prefix sky-user-web run dev`(:5173,需后端 :8080)。
 
 ## 1. 现状(与本改动相关的技术起点)
 > 只写和本功能相关的;全局架构看 BACKEND_OVERVIEW。
@@ -31,7 +31,7 @@
 - **sky-pojo**:`entity/User`、`dto/UserLoginDTO`、新增 `UserRegisterDTO`/`UserChangePasswordDTO`、`UserLoginVO`。
 - **sky-common**:`JwtProperties`(清双 secret,留单套)。
 - **DB**:`user` 加列;`employee` seed 密码迁 BCrypt(脚本 `docs/features/0001-cend-auth-jwt/0001-migration.sql`)。
-- **前端**:`project-sky-admin-vue-ts`(token 头改 Bearer);**新建** `project-sky-user-vue3`(Vue3+Vite+TS+Pinia)。
+- **前端**:`sky-admin-web`(token 头改 Bearer);**新建** `sky-user-web`(Vue3+Vite+TS+Pinia)。
 
 ## 4. 实施清单(每步一个测试门;标串行依赖)
 - [x] 步骤1: DB 迁移——`user` 加 `username`(唯一)+`password`;`employee` seed 密码 MD5→BCrypt  [依赖: 无] —— TESTED

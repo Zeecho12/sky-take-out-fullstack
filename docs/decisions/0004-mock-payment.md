@@ -100,7 +100,7 @@
 - **`rejection`(L400–406)**:`String refund = weChatPayUtil.refund(...)` **有赋值**,紧接 L406 `log.info("申请退款：{}", refund)` **用到该变量** → 须**删赋值 + 删/改后续 log**(每处 **2 条语句**),合并成一句 `log.info("模拟退款(mock),订单号:{}", ordersDB.getNumber());`。
 - **`cancel`(L432–438)**:同构,同上处理。
 
-即"改 3 处"而非"改 3 行";其中 2 处各含依赖 `refund` 变量的后继 log 行。删除清单:`controller/notify/PayNotifyController.java`、`utils/WeChatPayUtil.java`、`properties/WeChatProperties.java`、`application.yml`/`application-dev.yml` 的 `sky.wechat.*` 块、`OrderServiceImpl` 的 `weChatPayUtil` 字段 + import;**并删 pom 的微信支付依赖**(`sky-take-out/pom.xml` + `sky-common/pom.xml` 的 `wechatpay-apache-httpclient`,删类后成孤儿,AD1 内审补)。
+即"改 3 处"而非"改 3 行";其中 2 处各含依赖 `refund` 变量的后继 log 行。删除清单:`controller/notify/PayNotifyController.java`、`utils/WeChatPayUtil.java`、`properties/WeChatProperties.java`、`application.yml`/`application-dev.yml` 的 `sky.wechat.*` 块、`OrderServiceImpl` 的 `weChatPayUtil` 字段 + import;**并删 pom 的微信支付依赖**(`sky-backend/pom.xml` + `sky-common/pom.xml` 的 `wechatpay-apache-httpclient`,删类后成孤儿,AD1 内审补)。
 
 > 用户拍板(2026-07-23):同意 A,接受 0004 越界改 cancel/rejection(仅拆外呼,不动语义 / 前置校验)。
 
@@ -121,7 +121,7 @@
 ### 决策
 - **上游**:`Order/Confirm.vue` 下单成功 → push **支付页**(新增,携 `orderNumber` / `amount`,沿用 0003 的 query 透传,不引新 store)。
 - **支付页**:显示金额 + 支付方式单选(mock,如"微信支付(模拟)")+ "确认支付";点击 → `PUT /user/order/payment {orderNumber, payMethod:1}` → `code===1` 跳成功页,否则错误提示不跳(对齐 reference `code!==1` 分支)。**不做** 15min 倒计时业务(最低可用)。
-- **下游**:把 0003 占位页 [Created.vue](../../../project-sky-user-vue3/src/views/Order/Created.vue) **改造成支付成功页**("下单成功";"返回菜单"可用;**"查看订单"禁用 / 占位**,标注 0005 接管)。
+- **下游**:把 0003 占位页 [Created.vue](../../../sky-user-web/src/views/Order/Created.vue) **改造成支付成功页**("下单成功";"返回菜单"可用;**"查看订单"禁用 / 占位**,标注 0005 接管)。
 - **失败/取消**:reference 本无 `wx.requestPayment` fail/cancel 回调,mock 顺势不做失败分支。
 
 ---
@@ -164,7 +164,7 @@
 
 **③ 内审独有(实读 CONFIRMED,已改进计划):**
 - **D4「只换一行」字面不成立(唯一 MUST-FIX)**:`rejection`(L400/L406)、`cancel`(L432/L438)是 `String refund = weChatPayUtil.refund(...)` + 后续 `log.info(..., refund)`,只换 refund 那行会 `String=void` 或 `refund` 悬空 → **编译失败**。→ D4 改为**逐处枚举**:`userCancelById` 换 1 句;`rejection`/`cancel` 各删赋值 + 后继 log(2 句)。"3 行"更正为"3 处、2 处含后继 log"。
-- **pom 微信支付依赖残留(SHOULD-FIX)**:`wechatpay-apache-httpclient`(`sky-take-out/pom.xml` + `sky-common/pom.xml`)删类后成孤儿、grep 门抓不到 → 删除清单补两处 pom `<dependency>`,让"删干净"名副其实。
+- **pom 微信支付依赖残留(SHOULD-FIX)**:`wechatpay-apache-httpclient`(`sky-backend/pom.xml` + `sky-common/pom.xml`)删类后成孤儿、grep 门抓不到 → 删除清单补两处 pom `<dependency>`,让"删干净"名副其实。
 - **步骤2 测试门「退款无外呼」删类后近恒真(不可证伪)**→ 主证据改挂 **grep 归零 + 日志见"模拟退款" + 订单已取消(DB 查)**,"无外呼"降为辅助(同 0003"注入点致恒真"教训)。
 - **payment 重写后 `userMapper` 字段 + `JSONObject` import 悬空(仅告警)**→ 步骤1 顺手删。
 

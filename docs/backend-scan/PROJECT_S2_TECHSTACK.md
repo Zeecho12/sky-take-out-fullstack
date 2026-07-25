@@ -2,10 +2,10 @@
 
 > 项目名称：sky-take-out（苍穹外卖）——外卖 / 餐饮点餐系统后端（商家管理端 + 顾客 C 端）
 > 扫描范围（只读依赖与版本相关部分，未读 `.java` / `.yml` / `<build>` / `<plugins>`）：
-> - `sky-take-out/pom.xml`（根聚合 POM）：读了 `<properties>`（第 20-33 行，集中定义版本号）与 `<dependencyManagement>`（第 34-126 行，锁定各依赖版本）——本项目版本号大多集中在这里。
-> - `sky-take-out/sky-common/pom.xml`：`<dependencies>`（第 12-52 行）
-> - `sky-take-out/sky-pojo/pom.xml`：`<dependencies>`（第 12-26 行）
-> - `sky-take-out/sky-server/pom.xml`：`<dependencies>`（第 12-123 行，唯一可运行模块，依赖最全）
+> - `sky-backend/pom.xml`（根聚合 POM）：读了 `<properties>`（第 20-33 行，集中定义版本号）与 `<dependencyManagement>`（第 34-126 行，锁定各依赖版本）——本项目版本号大多集中在这里。
+> - `sky-backend/sky-common/pom.xml`：`<dependencies>`（第 12-52 行）
+> - `sky-backend/sky-pojo/pom.xml`：`<dependencies>`（第 12-26 行）
+> - `sky-backend/sky-server/pom.xml`：`<dependencies>`（第 12-123 行，唯一可运行模块，依赖最全）
 > - 版本约定：Spring 全家桶 starter 未显式写版本，由根 pom `<parent>` 继承的 `spring-boot-starter-parent` **2.7.3** 统一管理，本文标记为「父 pom 管理（2.7.3）」；其余第三方库版本来自根 pom `<properties>` + `<dependencyManagement>`，标记为「根 pom 管理」。
 
 ---

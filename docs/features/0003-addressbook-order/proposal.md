@@ -10,12 +10,12 @@
 - **当前**:**Phase 3 执行全部完成,5 步均 TESTED 并 commit(5 代码 + 5 文档 commit)**。后端:步骤1 `b2e2389`(去百度 + `@Transactional` + 下单读地址归属 + `amount>0`,4 门);步骤2 `e1ebbf0`(地址簿越权 Service 层,5 门)。前端:步骤3 `28958d3`(脚手架 api/类型/4 路由);步骤4 `f19d218`(地址簿列表 + 新增-编辑,含编辑不吞默认 + 负例);步骤5 `d0fdbaa`(结算页 + 下单 + 成功页 + CartBar 接线 + 地址选择模式,端到端下单闭环)。Requirement 全部 AC 已硬验通过。
 - **下一步(Phase 4 验证收尾,待 Tech Lead 拍板)**:合并回 `main`(**未合并,等 Tech Lead 决策**)+ 复核 ADR(D1–D6 结论均落地)+ 更新 CLAUDE.md 快照 / blueprint + 视需要再生派生文档。**别碰**:0004(支付)/0005(订单管理)。
 - **别碰**:支付(0004)/ 订单管理(0005)的代码与页面;`reference/`(只读);后端**除** `OrderServiceImpl.submitOrder`(去百度 + 事务)与 `AddressBookMapper`(越权修复)**之外**一律不动;0002 已交付代码**除 CartBar"去结算"接线**外不动。
-- **怎么验证**:`docker start sky-redis` → 后端 jar(:8080,**构建前先停旧 jar**)→ `PUT /admin/shop/1`(Bearer)初始化店铺 → 前端 `npm --prefix project-sky-user-vue3 run dev`(:5173)。测试账号 `s7v_2268`/`123456`(id=8)。类型门 `npm --prefix project-sky-user-vue3 run type-check` exit 0。MySQL 5.7 连库加 `--ssl-mode=DISABLED`。
+- **怎么验证**:`docker start sky-redis` → 后端 jar(:8080,**构建前先停旧 jar**)→ `PUT /admin/shop/1`(Bearer)初始化店铺 → 前端 `npm --prefix sky-user-web run dev`(:5173)。测试账号 `s7v_2268`/`123456`(id=8)。类型门 `npm --prefix sky-user-web run type-check` exit 0。MySQL 5.7 连库加 `--ssl-mode=DISABLED`。
 
 ## 1. 现状(与本改动相关的技术起点)
 > 全局架构见 docs/backend-scan/BACKEND_OVERVIEW.md;这里只写和 0003 相关的。
 
-**前端 `project-sky-user-vue3`(0002 交付,可复用):**
+**前端 `sky-user-web`(0002 交付,可复用):**
 - **购物车 cart store**(`stores/cart.ts`,服务端为准:fetch/add/sub/clean + `totalCount`/`totalAmount`)—— 结算页直接复用取明细。
 - **认证 / 请求基座**:`stores/user.ts`(token+user)、`utils/request.ts`(`/api` 代理、Bearer 注入、401 兜底)、`router/index.ts`(`beforeEach` 登录门槛、`/menu` 落地)、Vant **全量引入**、`api/` 模块模式、`ProductImage` 占位图。
 - **CartBar 的"去结算"目前是占位 / 打烊置灰**(0002 收尾补的打烊置灰)。
@@ -57,13 +57,13 @@
 
 ## 3. 会动的关键文件
 
-**后端 `sky-take-out/sky-server/`:**
+**后端 `sky-backend/sky-server/`:**
 - `.../service/impl/OrderServiceImpl.java` —— 删 `checkOutOfRange`(L562–618)+ 删 `submitOrder:86` 调用 + `submitOrder` 加 `@Transactional`(import `org.springframework.transaction.annotation.Transactional`)+ **校验 `addressBookId` 归属当前用户**(D6)+ **`amount<=0` 拒**(D4);删 `@Value` 的 `ak`/`shopAddress` 字段(内审确认仅类内自引用,可删)。【步骤1】
 - `.../service/impl/AddressBookServiceImpl.java` —— **D6 越权修复(Service 层)**:`getById` 取回比对 owner、`update`/`deleteById` 先 `setUserId(BaseContext.getCurrentId())`(delete 先取回校验)再落库;**不改 `AddressBookMapper` 签名**。【步骤2】
 - `.../resources/mapper/AddressBookMapper.xml` —— `update` 的 `<where>` 视实现或加 `and user_id = #{userId}`(配合 Service 注入的 userId);`getById` **不动**。Phase 3 读现状定最终落点。【步骤2】
 - `src/main/resources/application.yml` —— 移除 `sky.shop.address` / `sky.baidu.ak`(内审确认是字面量、非 `${}` 占位,可删)。【步骤1】
 
-**前端 `project-sky-user-vue3/`:**
+**前端 `sky-user-web/`:**
 - `package.json` —— 增 `@vant/area-data`。【步骤3】
 - `src/api/address.ts` / `src/api/order.ts` —— 新增(复用 `request.ts`)。【步骤3】
 - `src/types/business.ts`(或就近)—— 增 `AddressBook` / `OrdersSubmitDTO` / `OrderSubmitVO` 等类型。【步骤3】
