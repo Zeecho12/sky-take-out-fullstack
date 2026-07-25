@@ -11,7 +11,7 @@
 - **下一步**:**Phase 4(验证收尾 + 合并回 main)**。清单:①端到端冒烟(0002-0005 主链一次跑通,尤其 0005 历史/详情/动作)+ 更新 `docs/smoke-tests.md`(如需);②合并 `feature/0005-order-manage` 回 `main`(一功能一次合并,铁律 2);③复核 ADR-0005(决策落地是否与实现一致)+ 收口 divedeep backlog(ADR 判定本功能无"高含金量必单开"链路,越权修复作为第 2 个 BOLA 实例并入鉴权主题即可——Phase 4 与 Tech Lead 确认);④契约校准:`用户端接口.md` line64 / ADR AD1 HIGH#2 把 `page` 报错"400"改为"400/500(缺参异常,均非 Result)"(verifier 实测 500);⑤再生派生文档(BACKEND_OVERVIEW 等,如里程碑需要);⑥更新 blueprint(epic C 端重建 0002-0005 收官)+ CLAUDE.md 快照。DoD(铁律 4):代码+测试+文档+ADR 全更新才算 DONE。**未做**:Phase 4 全部。
 - **别碰**:`reference/`(只读);后端订单代码(步骤1/2 已定稿);共用的 `details()`/`OrderMapper.getById` 签名;已完成的类型/api/路由 + `List.vue` + `Detail.vue` + `Created/Pay/Confirm`(步骤3/4/5 定稿,别再改);`Menu/Index.vue` 既有店铺/菜单逻辑(步骤6 只**加**一个「我的」入口,别动既有);其余 0002–0004 已交付代码不动。
 - **环境现状**:新 jar(PID 3188)在 :8080 运行(含步骤1+2);`sky-redis` up(店铺营业中);**C 端 dev server `user-web` 在 :5173**(serverId 每次 `preview_list` 查;**验证前先 `preview_resize` mobile**——预览初始 `innerHeight=0` 会让 van-list 不触发 @load);MySQL 5.7 本机 `localhost:3306/sky_take_out` root/123456(`--ssl-mode=DISABLED`,client `D:\HSPJAVA\mysql-5.7.19-winx64\bin\mysql.exe`)。⚠️ 环境扛不过 Claude Code 进程重启,新窗口先核 `java`/8080/6379/`docker ps` + preview_list。**登录注入捷径**(路由受登录门槛):preview_eval `fetch('/api/user/user/login',{method:'POST',...})` 拿 token → `localStorage.setItem('sky_user_token',token)`+`sky_user_info`(`{id,username}`)→ reload。账号 `s7v_2268`/`123456`(id=8)。测试数据:甲(id=8)约 16 单(step5 消耗:13 已取消;剩 status1=14/15、status2=16/17、订单 8 有真实明细、其余 status6);步骤6 是纯导航壳无需订单数据(`select id,status,pay_status from orders where user_id=8` 复核)。购物车留有 step5 合并结果 {草鱼,馒头}(不影响步骤6)。
-- **怎么验证 / 起环境**:**Docker Desktop → `docker start sky-redis` → 后端 jar(:8080,构建前先停旧 jar)→ `PUT /admin/shop/1`(Bearer,Redis 重启后店铺状态丢失需重设)→ 前端 `preview_start` name `user-web` 或 `npm --prefix project-sky-user-vue3 run dev`(:5173)**。测试账号 `s7v_2268`/`123456`(id=8)。类型门 `npm --prefix project-sky-user-vue3 run type-check` exit 0。MySQL 5.7 连库加 `--ssl-mode=DISABLED`。⚠️ jar/Docker/dev server 扛不过 Claude Code 进程重启,新窗口先核环境。
+- **怎么验证 / 起环境**:**Docker Desktop → `docker start sky-redis` → 后端 jar(:8080,构建前先停旧 jar)→ `PUT /admin/shop/1`(Bearer,Redis 重启后店铺状态丢失需重设)→ 前端 `preview_start` name `user-web` 或 `npm --prefix sky-user-web run dev`(:5173)**。测试账号 `s7v_2268`/`123456`(id=8)。类型门 `npm --prefix sky-user-web run type-check` exit 0。MySQL 5.7 连库加 `--ssl-mode=DISABLED`。⚠️ jar/Docker/dev server 扛不过 Claude Code 进程重启,新窗口先核环境。
 
 ## 1. 现状(与本改动相关的技术起点)
 > 全局架构见 docs/backend-scan/BACKEND_OVERVIEW.md;这里只写和 0005 相关的。
@@ -27,7 +27,7 @@
 - `OrderMapper.getById(Long id)`:单参,用户端 3 处 + 管理端 4 处共用 → **不改签名**(D1/D2 均 Service 层做)。
 - 常量:`Orders.{PENDING_PAYMENT=1,TO_BE_CONFIRMED=2,...,CANCELLED=6}`、`{UN_PAID=0,PAID=1,REFUND=2}`;`MessageConstant.{ORDER_NOT_FOUND,ORDER_STATUS_ERROR}` 现成可复用。
 
-**前端 `project-sky-user-vue3`(0002–0004 交付,可复用):**
+**前端 `sky-user-web`(0002–0004 交付,可复用):**
 - `api/order.ts`:仅 `submitOrder`/`payment`(风格:`request.method<unknown, Result<VO>>(path, data?)` + 顶部契约注释)。GET+query 抄 `dish.ts`(`{ params }`),GET/path 抄 `setmeal.ts`/`address.ts`(模板字符串)。
 - `utils/request.ts`:拦截器返回**整个 `Result{code,data,msg}`** → 判成功 `res.code===1`;Bearer 注入 + 401 兜底。
 - `router/index.ts`:`meta.public` 白名单登录门槛,新路由不写即受保护;懒加载。
@@ -74,12 +74,12 @@
 
 ## 3. 会动的关键文件
 
-**后端 `sky-take-out/sky-server/`:**
+**后端 `sky-backend/sky-server/`:**
 - `.../service/impl/OrderServiceImpl.java` —— D1:`userCancelById`/`reminder`/`repetition` 补 Service 层归属校验(`repetition` 先取单)+ `reminder` 加 `status==2` 守卫 + **新增 user-only 方法 `getUserOrderDetail(id)`**(归属 + 装配,`details()` 不动)【步骤1】;D2:`rejection`/`cancel` 补 `setPayStatus(REFUND)` + 三处已支付判断用 `Orders.PAID.equals(payStatus)`【步骤2】。**`getById` 签名 / `OrderMapper` / 共用的 `details()` 不动。**
 - `.../service/OrderService.java` —— 加 `getUserOrderDetail(Long id)` 接口方法【步骤1】。
 - `.../controller/user/OrderController.java` —— `details` 改调 `orderService.getUserOrderDetail(id)`(管理端 `admin/OrderController` 不动)【步骤1】。
 
-**前端 `project-sky-user-vue3/`:**
+**前端 `sky-user-web/`:**
 - `src/types/business.ts` —— 补 `Order`/`OrderDetail`/`OrderDetailItem`/`PageResult<T>`。【步骤3】
 - `src/api/order.ts` —— 补 `historyOrders(page,pageSize,status)`/`orderDetail(id)`/`reminder(id)`/`repetition(id)`/`cancel(id)`。【步骤3】
 - `src/router/index.ts` —— 加 `/order-list`(order-list)、`/order-detail/:id`(order-detail)、`/user`(user-center),登录门槛。【步骤3】

@@ -4,13 +4,13 @@
     {
       "name": "user-web",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["--prefix", "project-sky-user-vue3", "run", "dev"],
+      "runtimeArgs": ["--prefix", "sky-user-web", "run", "dev"],
       "port": 5173
     },
     {
       "name": "admin-web",
       "runtimeExecutable": "cmd",
-      "runtimeArgs": ["/c", "set \"NODE_OPTIONS=--openssl-legacy-provider\" && npm --prefix project-sky-admin-vue-ts run serve"],
+      "runtimeArgs": ["/c", "set \"NODE_OPTIONS=--openssl-legacy-provider\" && npm --prefix sky-admin-web run serve"],
       "port": 8888
     }
   ]

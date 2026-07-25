@@ -13,7 +13,7 @@
 ## 现状 / 环境事实(侦察结果)
 - 后端: Spring Boot 2.7.3,Maven 多模块(sky-common / sky-pojo / sky-server),
   MyBatis + MySQL + Redis + knife4j + JWT(jjwt)+ 阿里云 OSS + POI + 微信支付。
-- 前端: project-sky-admin-vue-ts(Vue 2.6 + TS 3.6 + Vue CLI 3.11 + webpack 4)。
+- 前端: sky-admin-web(Vue 2.6 + TS 3.6 + Vue CLI 3.11 + webpack 4)。
 - 只读参考: reference/mp-weixin(微信小程序源码)。
 - 本机环境:
   - JDK: 用 **17**(JAVA_HOME=D:\Program\hspjdk17,17.0.5 LTS);PATH 上另有 JDK 21(不用)。
@@ -26,7 +26,7 @@
   - winget / wsl / docker:均可用。
 - 已有分析资产(用户先前产出,Phase 1 可复用):docs/BACKEND_OVERVIEW.md、
   docs/api-contract/*.html、docs/divedeep/*、
-  sky-take-out/backend_scan/PROJECT_S1-S5.md、sky-take-out/NOTE*。
+  sky-backend/backend_scan/PROJECT_S1-S5.md、sky-backend/NOTE*。
 - ⚠ 安全提醒: application-dev.yml 内含阿里云 OSS / 微信密钥(疑似课程公开示例密钥)。
   本地仓库无泄露风险;**将来推送到你自己的 GitHub 前必须清理**(列为后续任务)。
 

@@ -44,7 +44,7 @@
 - **关联**: commit <步骤5>
 
 ### 步骤6 (07-19) — 最小 C 端 Web(Vue3+Vite+TS+Pinia)【功能实现至此全部完成】
-- **改了什么**: 新建独立工程 `project-sky-user-vue3/`(与 admin 分离):①`vite.config.ts` dev proxy `/api`→:8080(rewrite 剥前缀)绕 CORS;②`utils/request.ts` axios 注入 Bearer + 响应 401 清态跳登录;③`stores/user.ts`(Pinia)存 token/user 持久化 localStorage;④`router` 守卫;⑤`views/` 注册/登录/改密/首页(手写最小表单);⑥`api/user.ts` 对齐契约四端点。不碰后端。
+- **改了什么**: 新建独立工程 `sky-user-web/`(与 admin 分离):①`vite.config.ts` dev proxy `/api`→:8080(rewrite 剥前缀)绕 CORS;②`utils/request.ts` axios 注入 Bearer + 响应 401 清态跳登录;③`stores/user.ts`(Pinia)存 token/user 持久化 localStorage;④`router` 守卫;⑤`views/` 注册/登录/改密/首页(手写最小表单);⑥`api/user.ts` 对齐契约四端点。不碰后端。
 - **验证**: Proposal 步骤6 测试门 —— 真浏览器端到端打实时后端:注册→自动登录进首页(`POST /api/user/user/register`=200);受保护端点带 Bearer(`GET /api/user/addressBook/list`=200/data:[]);改密(`PUT .../password`=200)→自动登出→新密码重登(证改密真生效);登出(localStorage 清空);路由守卫拦未登录。全绿。
 - **发现/踩坑/临场决策**: Vite 无需 admin 工程的 `--openssl-legacy-provider`。
 - **关联**: commit <步骤6>

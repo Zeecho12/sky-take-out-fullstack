@@ -25,7 +25,7 @@
   - `rejection`(L349–353,管理端拒单):`if (payStatus == Orders.PAID)` 只 log 模拟退款,**不置 `payStatus=REFUND`** → 退了款但状态停在"已支付"。
   - `cancel`(L370–388,管理端取消):`if (payStatus == 1)`(**字面量,非 `Orders.PAID`**)只 log,**不置 `payStatus=REFUND`**。
   - `rejection`/`cancel` 由 `controller/admin/OrderController`(L84/L98)调用 = **管理端**;0004 D4 明确"这个既有不一致留 0005"。
-- **前端现状**(`project-sky-user-vue3` 实读,0002–0004 交付):
+- **前端现状**(`sky-user-web` 实读,0002–0004 交付):
   - `api/order.ts` 仅 `submitOrder`/`payment`;`request.ts` 拦截器返回**整个 `Result{code,data,msg}`** → 判成功用 `res.code===1`;路由靠 `meta.public` 白名单,新路由不写即受登录保护;Vant **全量引入**(`van-tabs`/`van-list`/`van-pull-refresh`/`van-dialog` 直接可用);`types/business.ts` 无 `Order`/`OrderDetail`/`PageResult<T>`(需新增)。
   - **无全局 tabbar / 无"我的"入口**:`App.vue` 只有 `<router-view>`,Menu 顶栏只有店名 + 营业 tag。用户当前**无路径到达"我的/订单"**——0005 需新增导航入口(从零)。
   - `Created.vue`(0004 成功页)「查看订单」`disabled` + 注释"0005 接管";query 只透传了 `orderNumber`/`orderAmount`,**没有订单 id**(Confirm→Pay→Created 链路把 submit 返回的 `id` 丢了)。

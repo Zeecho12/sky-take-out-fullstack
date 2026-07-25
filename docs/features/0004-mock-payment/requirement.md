@@ -8,7 +8,7 @@
 - 关联: Proposal → ./proposal.md | Progress → ./progress.md | ADR → ../../decisions/0004-mock-payment.md | 契约 → ../../api-contract/用户端接口.md | epic → ../../blueprint/E01-cend-rebuild.md
 
 ## 1. 背景与动机 (Why)
-0003 已让顾客能把购物车"下单"成一笔真实订单(`orders` + `order_detail`),但下单成功后只落到一个"订单已创建"**占位页**([Order/Created.vue](../../../project-sky-user-vue3/src/views/Order/Created.vue)),写着"支付功能即将上线(0004)"——**订单永远停在"待付款"状态,付不了款、进不了后续流程**。0004 补上「浏览 → 下单 → **支付**」链路的最后一环:顾客在支付页确认支付后,订单变为"已支付 / 待接单",并落到支付成功页。
+0003 已让顾客能把购物车"下单"成一笔真实订单(`orders` + `order_detail`),但下单成功后只落到一个"订单已创建"**占位页**([Order/Created.vue](../../../sky-user-web/src/views/Order/Created.vue)),写着"支付功能即将上线(0004)"——**订单永远停在"待付款"状态,付不了款、进不了后续流程**。0004 补上「浏览 → 下单 → **支付**」链路的最后一环:顾客在支付页确认支付后,订单变为"已支付 / 待接单",并落到支付成功页。
 
 同时 0004 要清理支付链路上的微信历史包袱:①`OrderServiceImpl.payment()` 调 `weChatPayUtil.pay(...)` 走真实微信 JSAPI 支付,**需要真实商户证书**、fresh 环境跑不通;②它还依赖 `user.getOpenid()`——而 0001 已把微信登录换成账密 + JWT,账密用户**没有 openid**,这条依赖是 0001 遗留的坏接缝;③`PayNotifyController`(微信异步回调)+ `WeChatPayUtil` + `WeChatProperties` + `sky.wechat.*` 配置(含明文商户号 / 证书路径)整套微信支付基建都用不上了。0004 用 **mock 支付**替换:内部同步置已支付,去微信、去 openid、删干净微信支付基建。这与 epic「把微信特定实现替换成北美技术栈标准实现」目标一致(呼应 0001 去微信登录、0003 去百度配送)。
 

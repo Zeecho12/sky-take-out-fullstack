@@ -145,7 +145,7 @@
 - **观察**:app 现有 `styles.css` 有全局 `button` 金色主题,会渗进 Vant 按钮(Vant 主按钮显示金色而非 Vant 蓝)。纯外观、学习项目可接受(UI 只求能跑);如需纯净 Vant 主题,后续给点餐页容器加作用域样式即可。面试点:**全局 CSS 与组件库样式的层叠/污染**。
 
 ### AD3 — 类型检查固化进 build(执行期,2026-07-22 步骤7 Gate G)
-- **问题**:`project-sky-user-vue3` 的 `npm run build` 原本只有 `vite build`。Vite 用 **esbuild** 转译 TS——esbuild 为速度只做"逐文件剥掉类型注解",**不做跨文件类型检查**;因此类型错误(传错 prop 类型、用了不存在的字段等)会被**静默放过进产物**。步骤7 验收(Gate G)实测暴露:`npm run build` 通过 ≠ 类型正确。
+- **问题**:`sky-user-web` 的 `npm run build` 原本只有 `vite build`。Vite 用 **esbuild** 转译 TS——esbuild 为速度只做"逐文件剥掉类型注解",**不做跨文件类型检查**;因此类型错误(传错 prop 类型、用了不存在的字段等)会被**静默放过进产物**。步骤7 验收(Gate G)实测暴露:`npm run build` 通过 ≠ 类型正确。
 - **决策**(用户 2026-07-22 拍板):把类型检查**固化进项目**——加 `vue-tsc@^2.1.10` 到 devDependencies(`typescript` 已有 `^5.6.3`),新增 `"type-check": "vue-tsc --noEmit"` 脚本,并把 `"build"` 改为 `"vue-tsc --noEmit && vite build"`(build 先跑类型检查,有类型错误即 fail)。全项目实测 `type-check` / `build` 均 exit 0、零类型错误。
 - **理由 / trade-off**:build 略慢(多一遍全量类型检查)换取"**类型错误不进产物**"的正确性门,学习项目值得。这正是 create-vue 官方脚手架把 `type-check`(vue-tsc)与 `build-only`(vite build)拆成两个脚本、再用 `npm-run-all` 并行的原因。本项目选**串行 `&&`** 而非引 `npm-run-all`:零新增运行时/工具依赖、最简;代价是两步串行(非并行)略慢——学习项目量级可忽略。
 - **面试要点**:

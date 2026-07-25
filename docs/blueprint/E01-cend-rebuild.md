@@ -24,7 +24,7 @@
 
 ## 背景
 
-"重做 C 端" = 照 `reference/` 的微信小程序,把 C 端 Web(`project-sky-user-vue3`)
+"重做 C 端" = 照 `reference/` 的微信小程序,把 C 端 Web(`sky-user-web`)
 **端到端重建**,业务行为与 reference **完全一致**,UI 只保最低标准(能跑就行);并把
 微信特定实现替换掉——微信登录已在 0001 换成账密 + JWT,**微信支付本次(0004)换成 mock
 并顺手解掉 0001 遗留的 `OrderServiceImpl.payment()` openid 依赖**。

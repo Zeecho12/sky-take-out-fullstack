@@ -2,13 +2,13 @@
 
 > 项目名称：sky-take-out（苍穹外卖）
 > 本步骤读取的真实 .java 源文件（仅列实际读过方法体/签名的文件，完整路径）：
-> - `D:\CQWM2\sky-take-out\sky-server\src\main\java\com\sky\controller\user\OrderController.java`（主链 Controller）
-> - `D:\CQWM2\sky-take-out\sky-server\src\main\java\com\sky\service\impl\OrderServiceImpl.java`（主链 Service；同时含浅链「推送」的 `reminder`/`paySuccess` 方法体）
-> - `D:\CQWM2\sky-take-out\sky-server\src\main\java\com\sky\mapper\OrderMapper.java`（主链代表性 Mapper 接口，原生 MyBatis）
-> - `D:\CQWM2\sky-take-out\sky-server\src\main\java\com\sky\security\JwtAuthenticationFilter.java`（浅链「鉴权」）
-> - `D:\CQWM2\sky-take-out\sky-server\src\main\java\com\sky\websocket\WebSocketServer.java`（浅链「推送」承载节点）
-> - `D:\CQWM2\sky-take-out\sky-server\src\main\java\com\sky\controller\user\SetmealController.java`（浅链「缓存」，`@Cacheable`）
-> - `D:\CQWM2\sky-take-out\sky-server\src\main\java\com\sky\controller\user\DishController.java`（为识别缓存机制而读，实为手动 RedisTemplate 缓存，列入「未展开」）
+> - `D:\sky-take-out-fullstack\sky-backend\sky-server\src\main\java\com\sky\controller\user\OrderController.java`（主链 Controller）
+> - `D:\sky-take-out-fullstack\sky-backend\sky-server\src\main\java\com\sky\service\impl\OrderServiceImpl.java`（主链 Service；同时含浅链「推送」的 `reminder`/`paySuccess` 方法体）
+> - `D:\sky-take-out-fullstack\sky-backend\sky-server\src\main\java\com\sky\mapper\OrderMapper.java`（主链代表性 Mapper 接口，原生 MyBatis）
+> - `D:\sky-take-out-fullstack\sky-backend\sky-server\src\main\java\com\sky\security\JwtAuthenticationFilter.java`（浅链「鉴权」）
+> - `D:\sky-take-out-fullstack\sky-backend\sky-server\src\main\java\com\sky\websocket\WebSocketServer.java`（浅链「推送」承载节点）
+> - `D:\sky-take-out-fullstack\sky-backend\sky-server\src\main\java\com\sky\controller\user\SetmealController.java`（浅链「缓存」，`@Cacheable`）
+> - `D:\sky-take-out-fullstack\sky-backend\sky-server\src\main\java\com\sky\controller\user\DishController.java`（为识别缓存机制而读，实为手动 RedisTemplate 缓存，列入「未展开」）
 >
 > 数据对象（DTO/VO/Entity）一律不在本步读取，按 skill 规则引用 `PROJECT_S4B_DATAMODEL.md`（下称 S4B）。
 
@@ -44,14 +44,14 @@ POST /user/order/submit  ──  C 端顾客发起「用户下单」，请求体
   │ （请求进入前已先过浅链 1 的 JwtAuthenticationFilter，把 userId 填进 BaseContext）
   ▼
 [user/OrderController#submit]  ──  接收 OrdersSubmitDTO，调 Service，用 Result.success 包成统一响应
-  D:\CQWM2\sky-take-out\sky-server\src\main\java\com\sky\controller\user\OrderController.java
+  D:\sky-take-out-fullstack\sky-backend\sky-server\src\main\java\com\sky\controller\user\OrderController.java
   │
   ▼
 [OrderServiceImpl#submitOrder]  ──  下单核心业务：校验 → 组装订单 → 落库 → 清车（@Service，注意本方法无 @Transactional）
-  D:\CQWM2\sky-take-out\sky-server\src\main\java\com\sky\service\impl\OrderServiceImpl.java
+  D:\sky-take-out-fullstack\sky-backend\sky-server\src\main\java\com\sky\service\impl\OrderServiceImpl.java
   │
   ├──▶(同步①)[AddressBookMapper#getById]  ──  查收货地址，为空则抛 AddressBookBusinessException
-  │         D:\CQWM2\sky-take-out\sky-server\src\main\java\com\sky\mapper\AddressBookMapper.java
+  │         D:\sky-take-out-fullstack\sky-backend\sky-server\src\main\java\com\sky\mapper\AddressBookMapper.java
   │         │
   │         └──▶ [MySQL:address_book]  ──  SELECT 地址
   │
@@ -59,17 +59,17 @@ POST /user/order/submit  ──  C 端顾客发起「用户下单」，请求体
   │         （HTTP 阻塞调用，落在 OrderServiceImpl 内部，非本项目类）
   │
   ├──▶(同步③)[ShoppingCartMapper#list]  ──  查当前用户购物车（userId 取自 BaseContext），为空则抛 ShoppingCartBusinessException
-  │         D:\CQWM2\sky-take-out\sky-server\src\main\java\com\sky\mapper\ShoppingCartMapper.java
+  │         D:\sky-take-out-fullstack\sky-backend\sky-server\src\main\java\com\sky\mapper\ShoppingCartMapper.java
   │         │
   │         └──▶ [MySQL:shopping_cart]  ──  SELECT 购物车行
   │
   ├──▶(同步④)[OrderMapper#insert]  ──  写 orders 主表（status=PENDING_PAYMENT 待付款, payStatus=UN_PAID, number=时间戳），回填自增 id
-  │         D:\CQWM2\sky-take-out\sky-server\src\main\java\com\sky\mapper\OrderMapper.java  ★代表性 Mapper 节点（详解见下）
+  │         D:\sky-take-out-fullstack\sky-backend\sky-server\src\main\java\com\sky\mapper\OrderMapper.java  ★代表性 Mapper 节点（详解见下）
   │         │
   │         └──▶ [MySQL:orders]  ──  INSERT 一行订单
   │
   ├──▶(同步⑤)[OrderDetailMapper#insertBatch]  ──  把购物车每条转 OrderDetail（快照 name/image/amount），批量写 order_detail
-  │         D:\CQWM2\sky-take-out\sky-server\src\main\java\com\sky\mapper\OrderDetailMapper.java
+  │         D:\sky-take-out-fullstack\sky-backend\sky-server\src\main\java\com\sky\mapper\OrderDetailMapper.java
   │         │
   │         └──▶ [MySQL:order_detail]  ──  INSERT 多行明细
   │
@@ -90,7 +90,7 @@ HTTP 200  Result{code:1, data: OrderSubmitVO, msg:null}
 ## 节点详解
 
 📍 节点 1：[user/OrderController]（C 端订单接口）
-   文件路径：`D:\CQWM2\sky-take-out\sky-server\src\main\java\com\sky\controller\user\OrderController.java`
+   文件路径：`D:\sky-take-out-fullstack\sky-backend\sky-server\src\main\java\com\sky\controller\user\OrderController.java`
    类级别注解：`@RestController("userOrderController")`（显式指定 Bean 名，因 admin 端另有同名 `OrderController`，避免 Bean 名冲突）、`@RequestMapping("/user/order")`、`@Slf4j`、`@Api(tags = "C端-订单接口")`（Swagger 分组）
    在这里做了什么：表现层入口，接收下单请求体 `OrdersSubmitDTO`，转调 `orderService.submitOrder(...)`，把返回的 `OrderSubmitVO` 用 `Result.success(...)` 包成统一响应格式。不含任何业务逻辑。
    关键代码片段：
@@ -105,7 +105,7 @@ HTTP 200  Result{code:1, data: OrderSubmitVO, msg:null}
    ```
 
 📍 节点 2：[OrderServiceImpl]（下单核心业务实现）
-   文件路径：`D:\CQWM2\sky-take-out\sky-server\src\main\java\com\sky\service\impl\OrderServiceImpl.java`
+   文件路径：`D:\sky-take-out-fullstack\sky-backend\sky-server\src\main\java\com\sky\service\impl\OrderServiceImpl.java`
    类级别注解：`@Service`、`@Slf4j`（本类注入了 5 个 Mapper + `WeChatPayUtil` + `WebSocketServer`）
    在这里做了什么：下单业务的编排中心。依次做：① `addressBookMapper.getById` 校验收货地址；② 私有方法 `checkOutOfRange(...)` 同步调**百度地图 Web API**（`HttpClientUtil.doGet`）做配送范围校验，超 5000 米抛 `OrderBusinessException("超出配送范围")`；③ 从 `BaseContext.getCurrentId()` 取当前用户 id（由浅链 1 的 JWT 过滤器写入），`shoppingCartMapper.list` 查购物车，空则抛 `ShoppingCartBusinessException`；④ `BeanUtils.copyProperties` 组装 `Orders`（状态置「待付款」`PENDING_PAYMENT`、支付状态「未支付」`UN_PAID`、订单号取 `System.currentTimeMillis()`），`orderMapper.insert` 落库；⑤ 遍历购物车转 `OrderDetail` 后 `orderDetailMapper.insertBatch` 批量落明细；⑥ `shoppingCartMapper.deleteByUserId` 清空购物车；最后 builder 出 `OrderSubmitVO` 返回。**注意：本 `submitOrder` 方法体上没有 `@Transactional`——一次请求里 3 次写库（insert orders / insertBatch order_detail / delete shopping_cart）不在同一事务内，中途失败可能产生「有订单无明细 / 购物车已清但订单回滚」的不一致；这是可写进 ADR / divedeep 的真实观察点，非生产级严谨。**（Orders 常量含义、OrdersSubmitDTO/OrderSubmitVO 字段详见 S4B）
    关键代码片段：
@@ -122,7 +122,7 @@ HTTP 200  Result{code:1, data: OrderSubmitVO, msg:null}
    ```
 
 📍 节点 3：[OrderMapper]（数据访问层，主链代表性 Mapper）
-   文件路径：`D:\CQWM2\sky-take-out\sky-server\src\main\java\com\sky\mapper\OrderMapper.java`
+   文件路径：`D:\sky-take-out-fullstack\sky-backend\sky-server\src\main\java\com\sky\mapper\OrderMapper.java`
    在这里做了什么：**原生 MyBatis Mapper 接口**（类级 `@Mapper` 被扫描注册，**非 MyBatis-Plus**，不继承 `BaseMapper`）。接口里只声明方法签名，真实 SQL 写在同名映射文件 `sky-server/src/main/resources/mapper/OrderMapper.xml` 里（本步按 skill 约定不读 XML）。主链用到的是 `void insert(Orders order)`——插入订单主表并（由 XML 的 `useGeneratedKeys`/`keyProperty` 配置）回填自增主键 id 供后续明细外键使用。链路另外 3 个 Mapper（`AddressBookMapper`/`ShoppingCartMapper`/`OrderDetailMapper`）职责同构，按「代表性 Mapper 取 1 个」规则不单独建卡，仅在主链箭头图中列出。
    关键代码片段（接口签名，SQL 在 XML 中）：
    ```java
@@ -168,7 +168,7 @@ HTTP 200  Result{code:1, data: OrderSubmitVO, msg:null}
      ▼
    写入 SecurityContext（权限 ROLE_<role>）+ BaseContext（当前用户 id）→ 放行 filterChain.doFilter
    ```
-   有意思的节点：`JwtAuthenticationFilter` —— `D:\CQWM2\sky-take-out\sky-server\src\main\java\com\sky\security\JwtAuthenticationFilter.java`
+   有意思的节点：`JwtAuthenticationFilter` —— `D:\sky-take-out-fullstack\sky-backend\sky-server\src\main\java\com\sky\security\JwtAuthenticationFilter.java`
    关键代码片段：
    ```java
    String header = request.getHeader("Authorization");
@@ -196,7 +196,7 @@ HTTP 200  Result{code:1, data: OrderSubmitVO, msg:null}
      ▼
    [商家端浏览器 WebSocket 客户端]  ──  收到即弹「来单/催单」提醒
    ```
-   有意思的节点：`WebSocketServer` —— `D:\CQWM2\sky-take-out\sky-server\src\main\java\com\sky\websocket\WebSocketServer.java`
+   有意思的节点：`WebSocketServer` —— `D:\sky-take-out-fullstack\sky-backend\sky-server\src\main\java\com\sky\websocket\WebSocketServer.java`
    关键代码片段：
    ```java
    @ServerEndpoint("/ws/{sid}")   // 端点 ws://localhost:8080/ws/{sid}（本步实读确认，S4 原为推断）
@@ -221,7 +221,7 @@ HTTP 200  Result{code:1, data: OrderSubmitVO, msg:null}
      ├──▶ 命中：Spring Cache 直接从 Redis 取 → 不进方法体、不查库
      └──▶ 未命中：执行方法体 setmealService.list(...) → 查库 → 返回值自动写回 Redis
    ```
-   有意思的节点：`user/SetmealController` —— `D:\CQWM2\sky-take-out\sky-server\src\main\java\com\sky\controller\user\SetmealController.java`
+   有意思的节点：`user/SetmealController` —— `D:\sky-take-out-fullstack\sky-backend\sky-server\src\main\java\com\sky\controller\user\SetmealController.java`
    关键代码片段：
    ```java
    @GetMapping("/list")

@@ -10,12 +10,12 @@
 - **当前**:**0002 DONE ✅ —— 已合并回 main(merge `df53f0b`)+ Phase 4 收尾完成(commit `842dbe5`:CLAUDE.md 快照 / ADR-0002 AD3 类型检查固化 / blueprint 里程碑 / smoke-tests 第 7 段)**。步骤 1–7 全 TESTED、requirement 11 条 AC 全绿(含验收阶段补的"打烊去结算置灰"AC)。派生文档 BACKEND_OVERVIEW 无需再生(后端仅 1 行 SQL 修正)。main 领先 `origin/main`,**未推送**(待 Tech Lead 定)。
 - **下一步**:本功能结束,不再有 0002 工作。C 端重建 epic 下一块 = **0003「地址簿 + 下单」**(新建 `docs/features/0003-*/` 文件夹,按 Phase 2 立项:Requirement + ADR(如需)→ 校准契约 → 拆 Proposal → 双路评审 → Phase 3 每步派 subagent)。
 - **别碰**:后端**除 `ShoppingCartMapper.updateNumberById` 一行外**一律不动;地址/下单(0003)、支付(0004)、订单管理(0005)相关代码与页面;`reference/`(只读)。
-- **怎么验证**:起 Redis(`docker start sky-redis`)+ 后端 jar(:8080)+ `PUT /admin/shop/1`(Bearer)初始化店铺状态;C 端 `npm --prefix project-sky-user-vue3 run dev`(:5173);用 preview 工具真浏览器端到端验 + 截图。类型门:`npm --prefix project-sky-user-vue3 run type-check`(或 `run build`)应 exit 0。
+- **怎么验证**:起 Redis(`docker start sky-redis`)+ 后端 jar(:8080)+ `PUT /admin/shop/1`(Bearer)初始化店铺状态;C 端 `npm --prefix sky-user-web run dev`(:5173);用 preview 工具真浏览器端到端验 + 截图。类型门:`npm --prefix sky-user-web run type-check`(或 `run build`)应 exit 0。
 
 ## 1. 现状(与本改动相关的技术起点)
 > 全局架构见 docs/backend-scan/BACKEND_OVERVIEW.md;这里只写和 0002 相关的。
 
-**前端 `project-sky-user-vue3`(0001 交付)**:
+**前端 `sky-user-web`(0001 交付)**:
 - 已有认证全链路可**直接复用**:`utils/request.ts`(axios 实例 `baseURL:/api`、请求拦截注入 `Authorization: Bearer`、响应拦截 401 兜底跳登录)、`stores/user.ts`(token + user,localStorage 持久)、`router/index.ts`(`beforeEach` 未登录跳 `/login` + redirect 回跳)、`api/user.ts`、`views/{Login,Register,Home,ChangePassword}.vue`。
 - 工程配置:Vite 端口 5173、`/api`→`http://localhost:8080` 代理(rewrite 去 `/api`)、`@`→`src` 别名、TS strict。
 - **缺**:任何业务 UI、UI 组件库、业务 API 模块、购物车 store、商品图片方案。
@@ -46,7 +46,7 @@
 - **图片**:`ProductImage` prop 支持动态 URL(当前恒传占位图),为将来 S3 留过渡位。
 - **setmeal/dish 缓存**:api 层按 setmealId 做 `Map<id, Promise>` 轻缓存,重复开弹层不重复请求。
 
-## 3. 会动的关键文件(前端 `project-sky-user-vue3/` + 后端一行 bugfix)
+## 3. 会动的关键文件(前端 `sky-user-web/` + 后端一行 bugfix)
 - **后端**:`sky-server/src/main/resources/mapper/ShoppingCartMapper.xml` —— 改 `updateNumberById`:`set amount = #{amount}` → `set number = #{number}`(**唯一后端改动**,步骤1)
 - `package.json` —— 增 `vant`(**全量引入**,见 ADR AD2;不再需要 unplugin / vite 插件)
 - `src/main.ts` —— 改:`import Vant from 'vant'` + `import 'vant/lib/index.css'` + `app.use(Vant)`

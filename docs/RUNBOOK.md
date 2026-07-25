@@ -7,21 +7,21 @@
 
 ## 本机环境
 - JDK17:`D:\Program\hspjdk17`
-- Maven:`D:\CQWM2\.tools\apache-maven-3.9.9`
+- Maven:`D:\sky-take-out-fullstack\.tools\apache-maven-3.9.9`
 - MySQL 5.7 客户端:`D:\HSPJAVA\mysql-5.7.19-winx64\bin\mysql.exe`(库 `sky_take_out`,root / 123456)
 - Redis:Docker 容器 `sky-redis`
 
 ## 常用命令
 - 起 Redis:`docker start sky-redis`(首次:`docker run -d -p 6379:6379 --name sky-redis redis`)
-- 后端构建:`& 'D:\CQWM2\.tools\apache-maven-3.9.9\bin\mvn.cmd' -f 'D:\CQWM2\sky-take-out\pom.xml' clean package -DskipTests`
-- 后端启动:`& 'D:\Program\hspjdk17\bin\java.exe' -jar 'D:\CQWM2\sky-take-out\sky-server\target\sky-server-1.0-SNAPSHOT.jar'`
+- 后端构建:`& 'D:\sky-take-out-fullstack\.tools\apache-maven-3.9.9\bin\mvn.cmd' -f 'D:\sky-take-out-fullstack\sky-backend\pom.xml' clean package -DskipTests`
+- 后端启动:`& 'D:\Program\hspjdk17\bin\java.exe' -jar 'D:\sky-take-out-fullstack\sky-backend\sky-server\target\sky-server-1.0-SNAPSHOT.jar'`
 - knife4j 接口文档:http://localhost:8080/doc.html
-- admin 前端:在 `project-sky-admin-vue-ts` 下 `$env:NODE_OPTIONS='--openssl-legacy-provider'; npm run serve`(http://localhost:8888)
-- C 端前端:`npm --prefix project-sky-user-vue3 run dev`(http://localhost:5173,需后端 :8080;首次先 `npm install --prefix project-sky-user-vue3`)
+- admin 前端:在 `sky-admin-web` 下 `$env:NODE_OPTIONS='--openssl-legacy-provider'; npm run serve`(http://localhost:8888)
+- C 端前端:`npm --prefix sky-user-web run dev`(http://localhost:5173,需后端 :8080;首次先 `npm install --prefix sky-user-web`)
 - 登录冒烟:`curl -s -X POST http://localhost:8080/admin/employee/login -H "Content-Type: application/json" -d '{\"username\":\"admin\",\"password\":\"123456\"}'`
 
 ## 起环境顺序 + 测试账号
-- **起环境顺序**:Docker Desktop → `docker start sky-redis` → 后端 jar(:8080,构建前先停旧 jar)→ admin `PUT /admin/shop/1` 初始化店铺(Redis 重启后状态丢失需重设)→ C 端 dev server(:5173,`npm --prefix project-sky-user-vue3 run dev`)。
+- **起环境顺序**:Docker Desktop → `docker start sky-redis` → 后端 jar(:8080,构建前先停旧 jar)→ admin `PUT /admin/shop/1` 初始化店铺(Redis 重启后状态丢失需重设)→ C 端 dev server(:5173,`npm --prefix sky-user-web run dev`)。
 - **测试账号**:C 端 `s7v_2268`/`123456`(id=8);admin `admin`/`123456`。dish/setmeal/shop 依赖 Redis。
 - **新会话先核 env**:`java`(sky-server jar 在否)/ 端口 8080 / 6379 / `docker ps`——jar/Docker/dev server 扛不过 Claude Code 进程重启。
 

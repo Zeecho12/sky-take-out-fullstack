@@ -15,9 +15,9 @@
 ## 前置:起依赖和服务
 1. MySQL —— 本机 5.7,库 `sky_take_out`(11 表)已就绪
 2. Redis: `docker start sky-redis`
-3. 后端: `& 'D:\Program\hspjdk17\bin\java.exe' -jar 'D:\CQWM2\sky-take-out\sky-server\target\sky-server-1.0-SNAPSHOT.jar'`
-4. admin 前端: 在 `project-sky-admin-vue-ts` 下 `$env:NODE_OPTIONS='--openssl-legacy-provider'; npm run serve`(:8888)
-5. C 端前端(0001 新增): 首次 `npm install --prefix project-sky-user-vue3`;起 `npm --prefix project-sky-user-vue3 run dev`(:5173,Vite 无需 openssl 老参数)
+3. 后端: `& 'D:\Program\hspjdk17\bin\java.exe' -jar 'D:\sky-take-out-fullstack\sky-backend\sky-server\target\sky-server-1.0-SNAPSHOT.jar'`
+4. admin 前端: 在 `sky-admin-web` 下 `$env:NODE_OPTIONS='--openssl-legacy-provider'; npm run serve`(:8888)
+5. C 端前端(0001 新增): 首次 `npm install --prefix sky-user-web`;起 `npm --prefix sky-user-web run dev`(:5173,Vite 无需 openssl 老参数)
 6. 店铺状态初始化(否则 `/user/shop/status` 因 Redis 无 `SHOP_STATUS` 键 → `getStatus` 对 null 拆箱 NPE → 500):
    登录 admin 拿 token 后 `curl -X PUT http://localhost:8080/admin/shop/1 -H "Authorization: Bearer <TOKEN>"`。
    **走 admin 接口写**,保证与后端 `RedisTemplate` 的序列化器一致;**勿用裸 `redis-cli set`**(会写成纯字符串,`getStatus` 里 `(Integer)` 强转失败)。
