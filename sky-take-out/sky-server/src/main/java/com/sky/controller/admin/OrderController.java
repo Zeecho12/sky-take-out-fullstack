@@ -57,7 +57,7 @@ public class OrderController {
      */
     @GetMapping("/details/{id}")
     @ApiOperation("查询订单详情")
-    public Result<OrderVO> details(Long id) {
+    public Result<OrderVO> details(@PathVariable("id") Long id) {
         OrderVO details = orderService.details(id);
         return Result.success(details);
     }
@@ -118,7 +118,7 @@ public class OrderController {
      */
     @PutMapping("/complete/{id}")
     @ApiOperation("完成订单")
-    public Result complete(Long id) {
+    public Result complete(@PathVariable("id") Long id) {
         orderService.complete(id);
         return Result.success();
     }
