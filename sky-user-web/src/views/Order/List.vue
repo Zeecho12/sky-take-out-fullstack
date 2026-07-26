@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { showToast, showConfirmDialog } from 'vant'
 import { historyOrders, reminder, repetition } from '@/api/order'
 import { useCartStore } from '@/stores/cart'
+import ProductImage from '@/components/ProductImage.vue'
 import type { Order } from '@/types/business'
 
 const router = useRouter()
@@ -113,6 +114,7 @@ async function onRepeat(o: Order) {
   <div class="order-list">
     <van-nav-bar title="历史订单" left-text="返回" left-arrow @click-left="router.back()" />
 
+    <div class="page">
     <van-tabs v-model:active="activeTab" sticky>
       <van-tab v-for="t in tabs" :key="t.title" :title="t.title" />
     </van-tabs>
@@ -136,19 +138,13 @@ async function onRepeat(o: Order) {
         <div class="card-time">{{ o.orderTime }}</div>
 
         <div class="card-dishes">
-          <van-image
+          <div
             v-for="(d, idx) in o.orderDetailList.slice(0, 4)"
             :key="idx"
-            :src="d.image"
-            width="48"
-            height="48"
-            radius="4"
-            fit="cover"
+            class="dish-thumb"
           >
-            <template #error>
-              <div class="dish-ph">{{ d.name?.slice(0, 2) || '菜' }}</div>
-            </template>
-          </van-image>
+            <ProductImage :alt="d.name" />
+          </div>
         </div>
 
         <div class="card-foot">
@@ -163,19 +159,36 @@ async function onRepeat(o: Order) {
 
       <van-empty v-if="finished && list.length === 0" description="暂无订单" />
     </van-list>
+    </div>
   </div>
 </template>
 
 <style scoped>
-.order-list { min-height: 100vh; background: #f7f8fa; padding-bottom: 16px; }
-.order-card { background: #fff; margin: 8px; border-radius: 8px; padding: 12px 14px; cursor: pointer; }
+.order-list { min-height: 100vh; background: var(--c-bg); }
+.page { max-width: 760px; margin: 0 auto; padding: 16px 16px 24px; }
+
+.order-card {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r);
+  box-shadow: var(--shadow-sm);
+  margin: 14px 0 0;
+  padding: 16px 18px;
+  cursor: pointer;
+  transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+}
+.order-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--c-border-2);
+}
 .card-head { display: flex; align-items: center; justify-content: space-between; }
-.order-no { font-size: 13px; color: #969799; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.order-status { font-size: 14px; font-weight: 600; color: #ee0a24; margin-left: 8px; flex-shrink: 0; }
-.card-time { font-size: 12px; color: #c8c9cc; margin-top: 4px; }
-.card-dishes { display: flex; gap: 8px; margin: 10px 0; flex-wrap: wrap; }
-.dish-ph { width: 48px; height: 48px; border-radius: 4px; background: #f2f3f5; color: #969799; font-size: 12px; display: flex; align-items: center; justify-content: center; }
-.card-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 6px; }
-.amount { font-size: 16px; font-weight: 700; color: #ee0a24; }
+.order-no { font-size: 13px; color: var(--c-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.order-status { font-size: 14px; font-weight: 700; color: var(--c-accent-strong); margin-left: 8px; flex-shrink: 0; }
+.card-time { font-size: 12px; color: var(--c-muted); margin-top: 4px; }
+.card-dishes { display: flex; gap: 10px; margin: 12px 0; flex-wrap: wrap; }
+.dish-thumb { width: 52px; height: 52px; border-radius: var(--r-sm); overflow: hidden; flex: none; background: var(--c-surface-2); border: 1px solid var(--c-border); }
+.card-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 8px; }
+.amount { font-size: 17px; font-weight: 700; color: var(--c-price); }
 .btns { display: flex; gap: 8px; }
 </style>

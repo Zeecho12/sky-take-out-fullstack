@@ -129,6 +129,7 @@ onMounted(async () => {
       @click-left="router.back()"
     />
 
+    <div class="page">
     <van-form @submit="onSubmit">
       <van-cell-group inset>
         <van-field v-model="form.consignee" label="收货人" placeholder="请输入收货人姓名" />
@@ -178,6 +179,7 @@ onMounted(async () => {
         </van-button>
       </div>
     </van-form>
+    </div>
 
     <van-popup v-model:show="showArea" position="bottom" round>
       <van-area
@@ -191,6 +193,14 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-.addr-edit { min-height: 100vh; background: #f7f8fa; }
-.submit { margin: 16px; }
+.addr-edit { min-height: 100vh; background: var(--c-bg); }
+.page { max-width: 760px; margin: 0 auto; padding: 20px 16px 96px; }
+.page :deep(.van-cell-group--inset) {
+  margin: 0;
+  border: 1px solid var(--c-border);
+  border-radius: var(--r);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+.submit { margin: 20px 0 0; }
 </style>

@@ -48,9 +48,9 @@ watch(
 </template>
 
 <style scoped>
-.sp { padding: 16px; max-height: 60vh; overflow: auto; }
-.title { margin: 0 0 12px; }
+.sp { padding: 20px 16px 24px; max-height: 70vh; overflow: auto; max-width: 560px; margin: 0 auto; }
+.title { margin: 0 0 16px; font-size: 17px; font-weight: 700; color: var(--c-text); }
 .loading { display: block; text-align: center; padding: 16px; }
-.thumb { width: 40px; height: 40px; margin-right: 8px; flex: none; }
-.empty { color: #999; text-align: center; padding: 16px; }
+.thumb { width: 44px; height: 44px; margin-right: 10px; flex: none; border-radius: var(--r-sm); overflow: hidden; }
+.empty { color: var(--c-muted); text-align: center; padding: 24px; }
 </style>

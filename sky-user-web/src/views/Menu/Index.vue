@@ -88,53 +88,57 @@ onMounted(async () => {
 
 <template>
   <div class="menu">
-    <div class="topbar">
-      <span class="shop">苍穹外卖</span>
-      <div class="topbar-right">
-        <van-tag :type="isOpen ? 'success' : 'default'" size="medium">{{ shopText }}</van-tag>
-        <span class="mine" @click="goUser"><van-icon name="user-o" />我的</span>
+    <header class="site-header">
+      <div class="container">
+        <span class="brand">苍穹外卖</span>
+        <div class="hd-right">
+          <van-tag :type="isOpen ? 'success' : 'default'" size="medium" round>{{ shopText }}</van-tag>
+          <span class="mine" @click="goUser"><van-icon name="user-o" />我的</span>
+        </div>
       </div>
-    </div>
+    </header>
 
-    <div class="body">
-      <van-sidebar v-model="activeIndex" class="side" @change="onCatChange">
-        <van-sidebar-item v-for="c in categories" :key="c.id" :title="c.name" />
-      </van-sidebar>
+    <div class="container menu-body">
+      <aside class="cat-rail">
+        <van-sidebar v-model="activeIndex" @change="onCatChange">
+          <van-sidebar-item v-for="c in categories" :key="c.id" :title="c.name" />
+        </van-sidebar>
+      </aside>
 
-      <div class="list">
+      <main class="grid">
         <!-- 菜品 -->
-        <div v-for="d in dishes" :key="'d' + d.id" class="item">
-          <div class="thumb"><ProductImage :alt="d.name" /></div>
-          <div class="info">
-            <div class="name">{{ d.name }}</div>
-            <div class="desc">{{ d.description }}</div>
-            <div class="bottom">
+        <article v-for="d in dishes" :key="'d' + d.id" class="pcard">
+          <div class="pimg"><ProductImage :alt="d.name" /></div>
+          <div class="pbody">
+            <div class="pname">{{ d.name }}</div>
+            <div class="pdesc">{{ d.description }}</div>
+            <div class="pfoot">
               <span class="price">¥{{ d.price.toFixed(2) }}</span>
               <van-button size="small" type="primary" round @click="onAddDish(d)">
-                {{ d.flavors && d.flavors.length ? '选规格' : '+' }}
+                {{ d.flavors && d.flavors.length ? '选规格' : '＋' }}
               </van-button>
             </div>
           </div>
-        </div>
+        </article>
 
         <!-- 套餐 -->
-        <div v-for="s in setmeals" :key="'s' + s.id" class="item">
-          <div class="thumb"><ProductImage :alt="s.name" /></div>
-          <div class="info">
-            <div class="name">{{ s.name }}</div>
-            <div class="desc">{{ s.description }}</div>
-            <div class="bottom">
+        <article v-for="s in setmeals" :key="'s' + s.id" class="pcard">
+          <div class="pimg"><ProductImage :alt="s.name" /></div>
+          <div class="pbody">
+            <div class="pname">{{ s.name }}</div>
+            <div class="pdesc">{{ s.description }}</div>
+            <div class="pfoot">
               <span class="price">¥{{ s.price.toFixed(2) }}</span>
               <span class="acts">
                 <van-button size="small" plain round @click="viewSetmeal(s)">含菜</van-button>
-                <van-button size="small" type="primary" round @click="onAddSetmeal(s)">+</van-button>
+                <van-button size="small" type="primary" round @click="onAddSetmeal(s)">＋</van-button>
               </span>
             </div>
           </div>
-        </div>
+        </article>
 
         <div v-if="!dishes.length && !setmeals.length" class="empty">该分类暂无商品</div>
-      </div>
+      </main>
     </div>
 
     <CartBar :shop-closed="shopStatus === 0" @open="cartDetailShow = true" />
@@ -149,42 +153,145 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-.menu { min-height: 100vh; padding-bottom: 54px; background: #f7f8fa; }
-.topbar {
+.menu {
+  min-height: 100vh;
+  padding-bottom: 88px; /* 给固定购物车条留出空间 */
+  background: var(--c-bg);
+}
+
+/* 右上：营业状态 + 我的 */
+.hd-right { display: flex; align-items: center; gap: 16px; }
+.mine {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--c-text-2);
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: 999px;
+  transition: background .15s, color .15s;
+}
+.mine:hover { background: var(--c-surface); color: var(--c-text); }
+
+/* 两栏：类目栏 + 商品网格 */
+.menu-body {
+  display: grid;
+  grid-template-columns: 196px minmax(0, 1fr);
+  gap: 28px;
+  padding-top: 28px;
+  padding-bottom: 28px;
+}
+
+.cat-rail {
+  position: sticky;
+  top: 88px;
+  align-self: start;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r);
+  box-shadow: var(--shadow-sm);
+  padding: 8px;
+  overflow: hidden;
+}
+.cat-rail :deep(.van-sidebar) { width: 100%; }
+.cat-rail :deep(.van-sidebar-item) {
+  border-radius: var(--r-sm);
+  padding: 14px 14px;
+  font-size: 14.5px;
+  line-height: 1.3;
+  background: transparent;
+}
+.cat-rail :deep(.van-sidebar-item--select) { font-weight: 700; }
+.cat-rail :deep(.van-sidebar-item--select::before) {
+  height: 44%;
+  border-radius: 999px;
+}
+
+/* 商品网格：桌面多列，窄屏自动回落单列 */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(212px, 1fr));
+  gap: 18px;
+  align-content: start;
+}
+
+.pcard {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-sm);
+  transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+}
+.pcard:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--c-border-2);
+}
+
+.pimg {
+  aspect-ratio: 4 / 3;
+  width: 100%;
+  overflow: hidden;
+  background: var(--c-surface-2);
+}
+
+.pbody {
+  padding: 12px 13px 13px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  flex: 1;
+}
+.pname {
+  font-weight: 650;
+  font-size: 15px;
+  color: var(--c-text);
+  line-height: 1.3;
+}
+.pdesc {
+  font-size: 12.5px;
+  color: var(--c-muted);
+  line-height: 1.4;
+  flex: 1;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.pfoot {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
-  background: #fff;
-  border-bottom: 1px solid #eee;
+  gap: 8px;
+  margin-top: 4px;
 }
-.shop { font-size: 18px; font-weight: 700; }
-.topbar-right { display: flex; align-items: center; gap: 12px; }
-.mine { display: inline-flex; align-items: center; gap: 4px; font-size: 14px; color: #323233; cursor: pointer; }
-.body { display: flex; }
-.side { width: 96px; flex: none; }
-.list { flex: 1; padding: 8px; }
-.item {
-  display: flex;
-  gap: 10px;
-  background: #fff;
-  border-radius: 8px;
-  padding: 10px;
-  margin-bottom: 8px;
+.price {
+  color: var(--c-price);
+  font-weight: 800;
+  font-size: 16px;
 }
-.thumb { width: 72px; height: 72px; flex: none; border-radius: 6px; overflow: hidden; }
-.info { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-.name { font-weight: 600; }
-.desc {
-  font-size: 12px;
-  color: #999;
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.bottom { display: flex; align-items: center; justify-content: space-between; margin-top: 6px; }
-.price { color: #ee0a24; font-weight: 700; }
 .acts { display: flex; gap: 6px; }
-.empty { color: #999; text-align: center; padding: 40px 0; }
+
+.empty {
+  grid-column: 1 / -1;
+  color: var(--c-muted);
+  text-align: center;
+  padding: 64px 0;
+}
+
+/* 窄屏：类目栏收窄 */
+@media (max-width: 640px) {
+  .menu-body {
+    grid-template-columns: 84px minmax(0, 1fr);
+    gap: 14px;
+    padding-top: 16px;
+  }
+  .grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+  .cat-rail { top: 80px; padding: 4px; }
+}
 </style>

@@ -92,12 +92,13 @@ onMounted(loadList)
       @click-left="router.back()"
     />
 
-    <div v-if="isSelectMode" class="select-hint">请选择收货地址</div>
+    <div class="page">
+      <div v-if="isSelectMode" class="select-hint">请选择收货地址</div>
 
-    <div class="body">
-      <van-empty v-if="!loading && !list.length" description="还没有收货地址" />
+      <div class="body">
+        <van-empty v-if="!loading && !list.length" description="还没有收货地址" />
 
-      <div v-for="a in list" :key="a.id" class="card" @click="onCardClick(a)">
+        <div v-for="a in list" :key="a.id" class="card" @click="onCardClick(a)">
         <div class="head">
           <span class="name">{{ a.consignee }}</span>
           <span class="phone">{{ a.phone }}</span>
@@ -124,39 +125,59 @@ onMounted(loadList)
           </span>
         </div>
       </div>
+      </div>
     </div>
 
     <div class="footer">
-      <van-button block round type="primary" @click="goAdd">新增地址</van-button>
+      <div class="footer-inner">
+        <van-button block round type="primary" @click="goAdd">新增地址</van-button>
+      </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-.addr-list { min-height: 100vh; padding-bottom: 72px; background: #f7f8fa; }
-.select-hint { padding: 8px 16px 0; color: #969799; font-size: 13px; }
-.body { padding: 8px; }
+.addr-list { min-height: 100vh; background: var(--c-bg); }
+.page { max-width: 760px; margin: 0 auto; padding: 20px 16px 96px; }
+.select-hint { padding: 0 4px 12px; color: var(--c-muted); font-size: 13px; }
+.body { display: flex; flex-direction: column; gap: 12px; }
 .card {
-  background: #fff;
-  border-radius: 8px;
-  padding: 12px;
-  margin-bottom: 8px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r);
+  box-shadow: var(--shadow-sm);
+  padding: 16px;
+  cursor: pointer;
+  transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+}
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--c-border-2);
 }
 .head { display: flex; align-items: center; gap: 8px; }
-.name { font-weight: 600; font-size: 16px; }
-.phone { color: #666; }
+.name { font-weight: 700; font-size: 16px; color: var(--c-text); }
+.phone { color: var(--c-text-2); }
 .badge { margin-left: 4px; }
-.addr { color: #333; margin: 8px 0; font-size: 14px; line-height: 1.4; }
-.ops { display: flex; align-items: center; justify-content: space-between; margin-top: 8px; }
-.right-ops { display: flex; gap: 6px; }
-.is-default { color: #999; font-size: 13px; }
+.addr { color: var(--c-text-2); margin: 10px 0 0; font-size: 14px; line-height: 1.5; }
+.ops {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--c-border);
+}
+.right-ops { display: flex; gap: 8px; }
+.is-default { color: var(--c-muted); font-size: 13px; }
 .footer {
   position: fixed;
   left: 0;
   right: 0;
   bottom: 0;
-  padding: 8px 16px;
-  background: #fff;
-  border-top: 1px solid #eee;
+  padding: 12px 16px;
+  background: var(--c-surface);
+  border-top: 1px solid var(--c-border);
 }
+.footer-inner { max-width: 760px; margin: 0 auto; }
 </style>

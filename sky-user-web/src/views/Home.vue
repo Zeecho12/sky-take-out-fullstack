@@ -40,6 +40,7 @@ async function onLogout() {
     <div class="user-bar">
       <span>👤 {{ userStore.user?.username }}(id: {{ userStore.user?.id }})</span>
     </div>
+    <div class="auth-brand"><span class="brand">苍穹外卖</span></div>
     <h2>苍穹外卖 · 顾客端</h2>
     <p class="link">已登录。可以进入点餐,或验证 token、改密、登出。</p>
 
@@ -57,3 +58,7 @@ async function onLogout() {
     </div>
   </div>
 </template>
+
+<style scoped>
+.auth-brand { display: flex; justify-content: center; margin-bottom: 4px; }
+</style>

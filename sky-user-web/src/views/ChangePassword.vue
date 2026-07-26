@@ -43,6 +43,7 @@ async function onSubmit() {
 
 <template>
   <div class="card">
+    <div class="auth-brand"><span class="brand">苍穹外卖</span></div>
     <h2>修改密码</h2>
     <label>
       旧密码
@@ -58,3 +59,7 @@ async function onSubmit() {
     <p class="link"><router-link to="/home">返回首页</router-link></p>
   </div>
 </template>
+
+<style scoped>
+.auth-brand { display: flex; justify-content: center; margin-bottom: 4px; }
+</style>

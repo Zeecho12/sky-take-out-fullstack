@@ -43,6 +43,7 @@ async function onSubmit() {
 
 <template>
   <div class="card">
+    <div class="auth-brand"><span class="brand">苍穹外卖</span></div>
     <h2>注册 · 苍穹外卖顾客端</h2>
     <label>
       用户名
@@ -61,3 +62,7 @@ async function onSubmit() {
     <p class="link">已有账号?<router-link to="/login">去登录</router-link></p>
   </div>
 </template>
+
+<style scoped>
+.auth-brand { display: flex; justify-content: center; margin-bottom: 4px; }
+</style>
