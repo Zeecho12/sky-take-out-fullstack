@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { showToast, showConfirmDialog } from 'vant'
 import { orderDetail, cancel, reminder, repetition } from '@/api/order'
 import { useCartStore } from '@/stores/cart'
+import ProductImage from '@/components/ProductImage.vue'
 import type { OrderDetail } from '@/types/business'
 
 const route = useRoute()
@@ -97,6 +98,7 @@ async function onRepeat() {
   <div class="order-detail">
     <van-nav-bar title="订单详情" left-text="返回" left-arrow @click-left="router.back()" />
 
+    <div class="page">
     <template v-if="order">
       <div class="status-bar">{{ statusText(order.status) }}</div>
 
@@ -113,9 +115,7 @@ async function onRepeat() {
       <div class="section">
         <div class="section-title">商品明细</div>
         <div v-for="(d, idx) in order.orderDetailList" :key="idx" class="goods-row">
-          <van-image :src="d.image" width="40" height="40" radius="4" fit="cover">
-            <template #error><div class="dish-ph">{{ d.name?.slice(0, 2) || '菜' }}</div></template>
-          </van-image>
+          <div class="dish-thumb"><ProductImage :alt="d.name" /></div>
           <span class="goods-name">{{ d.name }}</span>
           <span class="goods-num">x{{ d.number }}</span>
           <span class="goods-amt">¥{{ d.amount?.toFixed(2) }}</span>
@@ -140,23 +140,44 @@ async function onRepeat() {
     </template>
 
     <van-empty v-else-if="!loading" description="订单不存在" />
+    </div>
   </div>
 </template>
 
 <style scoped>
-.order-detail { min-height: 100vh; background: #f7f8fa; padding-bottom: 16px; }
-.status-bar { background: #ee0a24; color: #fff; font-size: 18px; font-weight: 600; padding: 16px; }
-.section { background: #fff; margin: 8px; border-radius: 8px; overflow: hidden; padding: 12px 14px; }
+.order-detail { min-height: 100vh; background: var(--c-bg); }
+.page { max-width: 760px; margin: 0 auto; padding: 16px 16px 32px; }
+
+.status-bar {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r);
+  box-shadow: var(--shadow-sm);
+  margin: 0 0 14px;
+  padding: 16px 18px;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--c-text);
+}
+.section {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r);
+  box-shadow: var(--shadow-sm);
+  margin: 0 0 14px;
+  overflow: hidden;
+  padding: 14px 16px;
+}
 .addr-head { display: flex; align-items: center; gap: 10px; }
-.addr-head .name { font-weight: 600; font-size: 16px; }
-.addr-head .phone { color: #666; }
-.addr-detail { color: #333; margin-top: 6px; font-size: 14px; line-height: 1.4; }
-.section-title { font-weight: 600; margin-bottom: 8px; }
-.goods-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; font-size: 14px; }
-.dish-ph { width: 40px; height: 40px; border-radius: 4px; background: #f2f3f5; color: #969799; font-size: 12px; display: flex; align-items: center; justify-content: center; }
-.goods-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.goods-num { color: #969799; }
-.goods-amt { color: #333; font-weight: 500; }
-.amount-total :deep(.van-cell__value) { color: #ee0a24; font-weight: 700; }
-.action-bar { display: flex; gap: 8px; justify-content: flex-end; padding: 12px 14px; }
+.addr-head .name { font-weight: 700; font-size: 16px; color: var(--c-text); }
+.addr-head .phone { color: var(--c-text-2); }
+.addr-detail { color: var(--c-text-2); margin-top: 6px; font-size: 14px; line-height: 1.5; }
+.section-title { font-weight: 700; color: var(--c-text); margin-bottom: 10px; }
+.goods-row { display: flex; align-items: center; gap: 12px; padding: 8px 0; font-size: 14px; }
+.dish-thumb { width: 44px; height: 44px; border-radius: var(--r-sm); overflow: hidden; flex: none; background: var(--c-surface-2); border: 1px solid var(--c-border); }
+.goods-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--c-text); }
+.goods-num { color: var(--c-muted); }
+.goods-amt { color: var(--c-text); font-weight: 600; }
+.amount-total :deep(.van-cell__value) { color: var(--c-price); font-weight: 700; }
+.action-bar { display: flex; gap: 8px; justify-content: flex-end; padding: 4px 0 0; }
 </style>

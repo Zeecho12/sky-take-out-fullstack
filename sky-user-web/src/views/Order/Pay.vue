@@ -54,6 +54,7 @@ async function onConfirmPay() {
   <div class="order-pay">
     <van-nav-bar title="收银台" left-text="返回" left-arrow @click-left="router.back()" />
 
+    <div class="page">
     <!-- 金额(醒目) -->
     <div class="amount-box">
       <div class="amount-label">支付金额</div>
@@ -78,40 +79,62 @@ async function onConfirmPay() {
 
     <!-- 底部确认支付 -->
     <div class="pay-bar">
-      <span class="pay-total">¥{{ orderAmount ?? '-' }}</span>
-      <van-button type="primary" round :loading="submitting" @click="onConfirmPay">确认支付</van-button>
+      <div class="pay-inner">
+        <span class="pay-total">¥{{ orderAmount ?? '-' }}</span>
+        <van-button type="primary" round :loading="submitting" @click="onConfirmPay">确认支付</van-button>
+      </div>
+    </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-.order-pay { min-height: 100vh; padding-bottom: 72px; background: #f7f8fa; }
+.order-pay { min-height: 100vh; background: var(--c-bg); }
+.page { max-width: 760px; margin: 0 auto; padding: 20px 16px 96px; }
+
 .amount-box {
-  background: #fff;
-  margin: 8px;
-  border-radius: 8px;
-  padding: 24px 16px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r);
+  box-shadow: var(--shadow-sm);
+  margin: 0 0 14px;
+  padding: 32px 20px;
   text-align: center;
 }
-.amount-label { color: #969799; font-size: 14px; }
-.amount-value { color: #ee0a24; font-size: 32px; font-weight: 700; margin: 8px 0; }
-.order-no { color: #969799; font-size: 12px; }
-.section { background: #fff; margin: 8px; border-radius: 8px; overflow: hidden; }
-.section-title { padding: 12px 14px 4px; font-weight: 600; }
-.pay-way { font-size: 15px; }
+.amount-label { color: var(--c-muted); font-size: 14px; }
+.amount-value { color: var(--c-price); font-size: 34px; font-weight: 700; margin: 10px 0; }
+.order-no { color: var(--c-muted); font-size: 12.5px; }
+
+.section {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r);
+  box-shadow: var(--shadow-sm);
+  margin: 0 0 14px;
+  overflow: hidden;
+}
+.section-title { padding: 14px 16px 6px; font-weight: 700; color: var(--c-text); }
+.pay-way { font-size: 15px; color: var(--c-text); }
+
 .pay-bar {
   position: fixed;
   left: 0;
   right: 0;
   bottom: 0;
-  height: 54px;
-  background: #fff;
-  border-top: 1px solid #eee;
+  height: 60px;
+  background: var(--c-surface);
+  border-top: 1px solid var(--c-border);
+  box-shadow: 0 -1px 2px rgba(24, 24, 24, .04);
+  z-index: 10;
+}
+.pay-inner {
+  max-width: 760px;
+  height: 100%;
+  margin: 0 auto;
+  padding: 0 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 16px;
-  z-index: 10;
 }
-.pay-total { font-size: 16px; font-weight: 700; color: #ee0a24; }
+.pay-total { font-size: 17px; font-weight: 700; color: var(--c-price); }
 </style>

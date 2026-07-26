@@ -66,10 +66,10 @@ function onConfirm() {
 </template>
 
 <style scoped>
-.fp { padding: 16px; }
-.title { margin: 0 0 12px; }
-.grp { margin-bottom: 12px; }
-.grp-name { font-weight: 600; margin-bottom: 6px; }
+.fp { padding: 20px 16px 24px; max-width: 560px; margin: 0 auto; }
+.title { margin: 0 0 16px; font-size: 17px; font-weight: 700; color: var(--c-text); }
+.grp { margin-bottom: 16px; }
+.grp-name { font-weight: 600; margin-bottom: 8px; color: var(--c-text); }
 .opts { display: flex; flex-wrap: wrap; gap: 8px; }
-.confirm { margin-top: 8px; }
+.confirm { margin-top: 12px; }
 </style>

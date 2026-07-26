@@ -46,16 +46,17 @@ function dec(item: ShoppingCart) { cart.sub(toDto(item)) }
 </template>
 
 <style scoped>
-.cd { padding: 16px; max-height: 60vh; overflow: auto; }
-.hd { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
-.title { font-weight: 700; }
-.empty { color: #999; text-align: center; padding: 24px; }
-.row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #f2f2f2; }
-.thumb { width: 48px; height: 48px; flex: none; }
+.cd { padding: 20px 16px 24px; max-height: 70vh; overflow: auto; max-width: 560px; margin: 0 auto; }
+.hd { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.title { font-weight: 700; font-size: 17px; color: var(--c-text); }
+.empty { color: var(--c-muted); text-align: center; padding: 32px; }
+.row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--c-border); }
+.row:last-child { border-bottom: none; }
+.thumb { width: 52px; height: 52px; flex: none; border-radius: var(--r-sm); overflow: hidden; }
 .info { flex: 1; min-width: 0; }
-.name { font-weight: 600; }
-.flavor { font-size: 12px; color: #999; }
-.price { color: #ee0a24; }
-.ctrl { display: flex; align-items: center; gap: 8px; }
-.num { min-width: 20px; text-align: center; }
+.name { font-weight: 600; color: var(--c-text); }
+.flavor { font-size: 12px; color: var(--c-muted); margin-top: 2px; }
+.price { color: var(--c-price); font-weight: 700; margin-top: 4px; }
+.ctrl { display: flex; align-items: center; gap: 10px; }
+.num { min-width: 20px; text-align: center; font-weight: 600; color: var(--c-text); }
 </style>

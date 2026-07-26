@@ -28,6 +28,7 @@ function goMenu() {
 
 <template>
   <div class="order-created">
+    <div class="page">
     <van-icon name="checked" class="ok-icon" />
     <div class="title">下单成功</div>
 
@@ -47,29 +48,36 @@ function goMenu() {
       <!-- 查看订单(0005):有 orderId 跳详情,缺则退化到历史订单(兜底) -->
       <van-button round block class="action-btn" @click="goDetail">查看订单</van-button>
     </div>
+    </div>
   </div>
 </template>
 
 <style scoped>
 .order-created {
   min-height: 100vh;
-  background: #f7f8fa;
-  padding: 48px 24px 24px;
+  background: var(--c-bg);
+}
+.page {
+  max-width: 460px;
+  margin: 0 auto;
+  padding: 64px 20px 48px;
   text-align: center;
 }
-.ok-icon { font-size: 64px; color: #07c160; }
-.title { font-size: 20px; font-weight: 700; margin: 16px 0 24px; }
+.ok-icon { font-size: 60px; color: var(--c-success); }
+.title { font-size: 22px; font-weight: 700; color: var(--c-text); margin: 16px 0 28px; }
 .info {
-  background: #fff;
-  border-radius: 8px;
-  padding: 8px 16px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r);
+  box-shadow: var(--shadow-sm);
+  padding: 6px 18px;
   text-align: left;
 }
-.row { display: flex; justify-content: space-between; padding: 12px 0; }
-.row + .row { border-top: 1px solid #f2f2f2; }
-.k { color: #969799; }
-.v { color: #333; }
-.v.amt { color: #ee0a24; font-weight: 700; }
-.actions { max-width: 320px; margin: 32px auto 0; }
+.row { display: flex; justify-content: space-between; padding: 14px 0; }
+.row + .row { border-top: 1px solid var(--c-border); }
+.k { color: var(--c-muted); }
+.v { color: var(--c-text); font-weight: 500; }
+.v.amt { color: var(--c-price); font-weight: 700; }
+.actions { max-width: 320px; margin: 28px auto 0; }
 .action-btn + .action-btn { margin-top: 12px; }
 </style>
