@@ -1,7 +1,13 @@
 # CQWM2 —— 苍穹外卖学习改造项目
 
 > 这份文件每个新窗口开机自动加载。它是本项目的"宪法":定义我们怎么协作、
-> 铁律有哪些、文档放在哪。**方法论详见 [PLAYBOOK.md](PLAYBOOK.md);本机命令速查见 [docs/RUNBOOK.md](docs/RUNBOOK.md)。**
+> 铁律有哪些、文档放在哪。**本机命令速查见 [docs/RUNBOOK.md](docs/RUNBOOK.md)。**
+>
+> **方法论(PLAYBOOK.md)不在本仓库**,住在项目外的独立仓库、全局唯一一份:
+> 本机 `D:\project-learning-playbook\PLAYBOOK.md`
+> (远端 <https://github.com/Zeecho12/project-learning-playbook>)。
+> **按需用 Read 工具读,绝不 `@import`**——它约 48 KB / 1.2–1.8 万 token,自动加载会违反
+> "自动加载的文档必须有界"。
 
 ---
 
@@ -28,8 +34,8 @@
 ## 三、当前进度
 
 - **Phase**:**无进行中 feature**。功能 0005「C 端重建④:订单管理」**已交付并合并回 main(merge `0fcaca4`,`--no-ff`,2026-07-23)**,DoD 全绿。**「C 端完整重建」epic(0002→0005)全部交付收官**:C 端浏览→加购→下单→(mock)支付→订单管理(历史/详情/取消/催单/再来一单/用户中心)端到端跑通,微信特定实现(登录/支付/小程序客户端)已全部换成账密+JWT / mock 支付 / Vue3 Web;顺带清偿多笔安全/正确性欠债(整站认证统一、地址簿+订单越权 BOLA、事务原子性、退款口径)。0005 六 code commit `353f772`(D1 越权)/`a296f2e`(D2 退款口径)/`8b5d584`(脚手架)/`7c961f9`(List 含 van-list 修复)/`91f0ef5`(Detail+接线)/`a5e4aa0`(Center+入口);验证后端 8/8+4/4、前端 preview 逐步 PASS + 端到端冒烟 A~G。(0004 `b08bf8e`、0003 `3365f69`、0002 `df53f0b`、0001 `b02590b` 均已交付。)
-- **进行中**:无 feature。刚完成**仓库结构整理 chore**:三端目录改名(`sky-take-out`→`sky-backend`、`project-sky-admin-vue-ts`→`sky-admin-web`、`project-sky-user-vue3`→`sky-user-web`)+ `sky.sql`→`db/` + 全量引用更新;`--no-ff` 合并 main 并 push。**根目录维持 `D:\CQWM2` 不变**(曾议改名对齐 GitHub 仓库名 sky-take-out-fullstack,已放弃)。焦点仍是工作流 / 方法论(PLAYBOOK.md)优化。
-- **下一步**:继续与用户探讨 PLAYBOOK.md / 工作流(用户在新窗口发起);无排期 feature,要开新功能再走 PLAYBOOK.md 5 阶段。
+- **进行中**:无 feature。刚完成**方法论抽离 chore**(2026-07-29):`PLAYBOOK.md` / `PLAYBOOK_LOG.md` 移出本仓库 → 独立 public repo `D:\project-learning-playbook`(<https://github.com/Zeecho12/project-learning-playbook>),本仓库只留指针(本文件顶部 + 铁律 1 + 文档地图);同时删除废弃的 `.backup-original-git`(实测 153/159 文件与 baseline `e7ea365` 字节相同,余 6 个仅本机环境微调,零举证价值)。上一个 chore = 仓库结构整理(三端目录改名 `sky-take-out`→`sky-backend`、`project-sky-admin-vue-ts`→`sky-admin-web`、`project-sky-user-vue3`→`sky-user-web` + `sky.sql`→`db/`);**根目录维持 `D:\CQWM2` 不变**(曾议改名对齐 GitHub 仓库名,已放弃)。
+- **下一步**:继续与用户探讨工作流 / 方法论(改 PLAYBOOK 请去独立 repo,不在本仓库);无排期 feature,要开新功能再走 PLAYBOOK 5 阶段。
 - **git/环境**:顶层为 `sky-backend/ sky-admin-web/ sky-user-web/ db/`;epic 路线图见 `docs/blueprint/E01-cend-rebuild.md`。起环境 / 踩坑 / 账号见 `docs/RUNBOOK.md`;新会话先核 env(`java`/8080/6379/`docker ps`;⚠️ jar/Docker/dev server 扛不过进程重启)。admin-web dev server 的 OpenSSL 坑已修:`launch.json` 用 `env` 注入 `NODE_OPTIONS=--openssl-legacy-provider`。冒烟基线 `docs/smoke-tests.md`。
 
 > 本节是**当前快照**,只写"现在":**覆盖式更新**(改写这几行,不往下追加历史),
@@ -41,6 +47,8 @@
 1. **开工前先核 env、先读状态、先复述、后动手**:先核环境(项目能否跑起来——新会话 / 进程重启后
    尤其要核,命令见 `docs/RUNBOOK.md`),再读对应的 `docs/features/NNNN-slug/proposal.md` 的「交接头」
    和实施清单,并向我复述"当前在哪一步 / 下一步做什么 / 打算改哪些文件 / 怎么验证",**我确认后才动手**。
+   **另:走 5 阶段流程 / 开新 feature / 写 ADR / 套任何文档模板前,必须先读 PLAYBOOK 对应章节
+   (§3 流程、§4 文档架构、§9 模板),不得凭记忆办事**——路径见本文件顶部。
 2. **提交粒度**:一步一 commit,一功能一分支(`feature/xxx`),一功能一次合并。
 3. **契约优先(contract-first)**:全栈功能先在 `docs/api-contract/` 定死接口契约,
    再实现;契约定死后前后端才可并行。
@@ -69,8 +77,8 @@
 | 文档 | 类型 | 说明 |
 |---|---|---|
 | `CLAUDE.md`(本文件) | 常驻 | 协作宪法,自动加载 |
-| `PLAYBOOK.md` | 方法论 | 可移植主文档,方法论的唯一真相源 |
-| `PLAYBOOK_LOG.md` | 方法论 | 方法论变更日志 + 搁置背包(随 PLAYBOOK 主副本走) |
+| `PLAYBOOK.md` | 方法论 | **不在本仓库**,在 `D:\project-learning-playbook\`;方法论唯一真相源,按需读 |
+| `PLAYBOOK_LOG.md` | 方法论 | **不在本仓库**,同上目录;方法论变更日志 + 搁置背包 |
 | `docs/RUNBOOK.md` | 项目速查 | 本机命令 / 环境 / 踩坑(不含方法论) |
 | `docs/blueprint/E01-*.md` | 源头/epic | 跨 feature 大工程路线图(每 epic 一文件,如 C 端重建 E01=0002~0005);一行一 feature,里程碑更新 |
 | `docs/features/NNNN-slug/` | 源头/living | 每功能一文件夹:requirement + proposal(含交接头) + progress |
