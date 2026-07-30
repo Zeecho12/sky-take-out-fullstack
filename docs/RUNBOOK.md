@@ -1,6 +1,7 @@
 # RUNBOOK —— CQWM2 运行速查卡
 
-> 方法论(5 阶段、文档体系、模板、协作模型)看 [PLAYBOOK.md](../PLAYBOOK.md),本文件**不复述**。
+> 方法论(5 阶段、文档体系、模板、协作模型)看 `D:\project-learning-playbook\PLAYBOOK.md`
+> (**不在本仓库**;远端 <https://github.com/Zeecho12/project-learning-playbook>),本文件**不复述**。
 > 这里只写"在这台机器、这个项目上具体怎么敲命令 + 踩过的坑"。
 
 ---
